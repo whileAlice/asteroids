@@ -59,13 +59,13 @@ draw_line(Image *image, size_t start_x, size_t start_y, size_t end_x, size_t end
   bool is_steep = abs((int)end_y - (int)start_y) > abs((int)end_x - (int)start_x);
 
   if (is_steep) {
-    swap(&start_x, &start_y);
-    swap(&end_x, &end_y);
+    SWAP(start_x, start_y);
+    SWAP(end_x, end_y);
   }
 
   if (start_x > end_x) {
-    swap(&start_x, &end_x);
-    swap(&start_y, &end_y);
+    SWAP(start_x, end_x);
+    SWAP(start_y, end_y);
   }
 
   float dx = (float)end_x - (float)start_x;

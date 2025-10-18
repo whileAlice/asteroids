@@ -2,14 +2,6 @@
 
 #include "math_utils.h"
 
-void
-swap(size_t *a, size_t *b)
-{
-  size_t temp = *a;
-  *a = *b;
-  *b = temp;
-}
-
 float
 fractional_part(float n)
 {
