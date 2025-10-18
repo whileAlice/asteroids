@@ -45,7 +45,8 @@ draw_pixel_a(Image *image, size_t x, size_t y, Color color)
 }
 
 void
-draw_rectangle(Image *image, size_t origin_x, size_t origin_y, size_t width, size_t height, Color color)
+draw_rectangle(Image *image, size_t origin_x, size_t origin_y,
+               size_t width, size_t height, Color color)
 {
   for (size_t x = origin_x; x < width; ++x) {
     for (size_t y = origin_y; y < height; ++y) {
@@ -55,7 +56,18 @@ draw_rectangle(Image *image, size_t origin_x, size_t origin_y, size_t width, siz
 }
 
 void
-draw_line(Image *image, size_t start_x, size_t start_y, size_t end_x, size_t end_y, Color color) {
+draw_triangle(Image *image, size_t a_x, size_t a_y, size_t b_x,
+              size_t b_y, size_t c_x, size_t c_y, Color color)
+{
+  draw_line(image, a_x, a_y, b_x, b_y, color);
+  draw_line(image, b_x, b_y, c_x, c_y, color);
+  draw_line(image, c_x, c_y, a_x, a_y, color);
+}
+
+void
+draw_line(Image *image, size_t start_x, size_t start_y,
+          size_t end_x, size_t end_y, Color color)
+{
   bool is_steep = abs((int)end_y - (int)start_y) > abs((int)end_x - (int)start_x);
 
   if (is_steep) {
