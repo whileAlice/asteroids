@@ -13,8 +13,9 @@ fractional_part(float n)
 int
 index_from_xy(Image *image, size_t x, size_t y)
 {
-  const int index = image->width * y + x;
+  const int index = image->width * (int)y + (int)x;
   const int max_index = image->width * image->height - 1;
+  assert(max_index >= 0);
 
 	return index >= 0 && index <= max_index ? index : -1;
 }
