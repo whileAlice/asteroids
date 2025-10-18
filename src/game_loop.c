@@ -17,8 +17,8 @@ update(float dt)
 }
 
 void
-draw(Image *image)
+draw(Image *im)
 {
-  clear_image(image, GRAY);
-  draw_line(image, 100, 100, x, y, RED);
+  clear_image(im, GRAY);
+  draw_triangle(im, 20, 150, 200, 140, x, y, RED);
 }
