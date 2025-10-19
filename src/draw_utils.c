@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -31,13 +32,13 @@ draw_pixel_a(Image *image, int x, int y, Color color)
     float alpha_mul = (float)color.a / 255.0f;
 
     Color bg = pixels[index];
-    bg.r = ROUND((float)bg.r * (1 - alpha_mul), uint8_t);
-    bg.g = ROUND((float)bg.g * (1 - alpha_mul), uint8_t);
-    bg.b = ROUND((float)bg.b * (1 - alpha_mul), uint8_t);
+    bg.r = (uint8_t)roundf((float)bg.r * (1 - alpha_mul));
+    bg.g = (uint8_t)roundf((float)bg.g * (1 - alpha_mul));
+    bg.b = (uint8_t)roundf((float)bg.b * (1 - alpha_mul));
 
-    color.r = ROUND((float)color.r * alpha_mul, uint8_t) + bg.r;
-    color.g = ROUND((float)color.g * alpha_mul, uint8_t) + bg.g;
-    color.b = ROUND((float)color.b * alpha_mul, uint8_t) + bg.b;
+    color.r = (uint8_t)roundf((float)color.r * alpha_mul) + bg.r;
+    color.g = (uint8_t)roundf((float)color.g * alpha_mul) + bg.g;
+    color.b = (uint8_t)roundf((float)color.b * alpha_mul) + bg.b;
     color.a = 255;
   }
 
@@ -93,8 +94,8 @@ void
 draw_line(Image *image, Vector2 start, Vector2 end, Color color)
 {
   draw_line_i(image,
-              ROUND(start.x, int), ROUND(start.y, int),
-              ROUND(end.x, int),   ROUND(end.y, int),
+              (int)roundf(start.x), (int)roundf(start.y),
+              (int)roundf(end.x),   (int)roundf(end.y),
               color);
 }
 
@@ -114,8 +115,8 @@ draw_rectangle_f(Image *image, Vector2 origin,
                  Vector2 size, Color color)
 {
   draw_rectangle_fi(image,
-                    ROUND(origin.x, int), ROUND(origin.y, int),
-                    ROUND(size.x, int),   ROUND(size.y, int),
+                    (int)roundf(origin.x), (int)roundf(origin.y),
+                    (int)roundf(size.x),   (int)roundf(size.y),
                     color);
 }
 
@@ -145,8 +146,8 @@ draw_rectangle(Image *image, Vector2 origin, Vector2 size,
                Color border, Color fill)
 {
   draw_rectangle_i(image,
-                   ROUND(origin.x, int), ROUND(origin.y, int),
-                   ROUND(size.x, int),   ROUND(size.y, int),
+                   (int)roundf(origin.x), (int)roundf(origin.y),
+                   (int)roundf(size.x),   (int)roundf(size.y),
                    border, fill);
 }
 
@@ -199,9 +200,9 @@ draw_triangle(Image *image, Vector2 a, Vector2 b,
               Vector2 c, Color border, Color fill)
 {
   draw_triangle_i(image,
-                  ROUND(a.x, int), ROUND(a.y, int),
-                  ROUND(b.x, int), ROUND(b.y, int),
-                  ROUND(c.x, int), ROUND(c.y, int),
+                  (int)roundf(a.x), (int)roundf(a.y),
+                  (int)roundf(b.x), (int)roundf(b.y),
+                  (int)roundf(c.x), (int)roundf(c.y),
                   border, fill);
 }
 
