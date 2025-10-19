@@ -3,11 +3,13 @@
 #include <raylib.h>
 
 #include "config.h"
+#include "pam.h"
 #include "init.h"
 
 #define PIXEL_COUNT BUFFER_WIDTH * BUFFER_HEIGHT
 
 Image image;
+Image img;
 Texture2D texture;
 
 void
@@ -20,14 +22,17 @@ init()
   }
 
   for (size_t i = 0; i < PIXEL_COUNT; ++i) {
-    pixels[i] = RED;
+    pixels[i] = BLUE;
   };
 
+  img = image_from_pam("assets/pikachu_smol.pam");
+
   image = (Image){
-    .data = pixels,
+    .data = img.data,
     .width = BUFFER_WIDTH,
     .height = BUFFER_HEIGHT,
     .mipmaps = 1,
+    // TODO: can this possibly be R8G8B8 without much hassle?
     .format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8,
   };
 
@@ -35,7 +40,7 @@ init()
   SetExitKey(EXIT_KEY);
   SetTargetFPS(60);
 
-  texture = LoadTextureFromImage(image);
+  texture = LoadTextureFromImage(img);
 }
 
 void
@@ -43,6 +48,7 @@ deinit()
 {
   UnloadTexture(texture);
   UnloadImage(image);
+  UnloadImage(img);
 
   CloseWindow();
 }
