@@ -32,4 +32,6 @@ cleandeps:
 
 cleanall: clean cleandeps
 
-.PHONY: clean cleandeps cleanall run
+fresh: cleanall ${BIN}
+
+.PHONY: clean cleandeps cleanall fresh run
