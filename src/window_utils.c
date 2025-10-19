@@ -29,7 +29,7 @@ get_texture_origin_y()
   return GetRenderHeight() % BUFFER_HEIGHT / 2;
 }
 
-size_t
+int
 get_mouse_x()
 {
   const int mouse_x = GetMouseX() - texture_origin_x;
@@ -37,7 +37,7 @@ get_mouse_x()
   return CLAMP(mouse_x / integer_scale, 0, BUFFER_WIDTH - 1);
 }
 
-size_t
+int
 get_mouse_y()
 {
   const int mouse_y = GetMouseY() - texture_origin_y;
