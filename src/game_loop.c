@@ -1,13 +1,12 @@
 #include <raylib.h>
-#include <stdio.h>
 
 #include "game_loop.h"
 #include "draw_utils.h"
 #include "window_utils.h"
 
 // init
-size_t x;
-size_t y;
+int x;
+int y;
 
 void
 update(float dt)
@@ -20,5 +19,5 @@ void
 draw(Image *im)
 {
   clear_image(im, GRAY);
-  draw_triangle(im, 20, 150, 200, 140, x, y, RED);
+  draw_triangle_f(im, x, y, 20, 150, 240, 140, RED);
 }
