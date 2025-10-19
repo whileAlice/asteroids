@@ -55,9 +55,31 @@ draw_rectangle_f(Image *image, size_t origin_x, size_t origin_y,
 }
 
 void
-draw_triangle(Image *image, int a_x, int a_y, int b_x,
-              int b_y, int c_x, int c_y, Color color)
+draw_triangle_f(Image *image, int a_x, int a_y, int b_x,
+                int b_y, int c_x, int c_y, Color color)
 {
+  if (!is_clockwise(a_x, a_y, b_x, b_y, c_x, c_y)) {
+    SWAP(a_x, b_x);
+    SWAP(a_y, b_y);
+  }
+
+  const int min_x = MIN(MIN(a_x, b_x), c_x);
+  const int min_y = MIN(MIN(a_y, b_y), c_y);
+  const int max_x = MAX(MAX(a_x, b_x), c_x);
+  const int max_y = MAX(MAX(a_y, b_y), c_y);
+
+  for (int x = min_x; x <= max_x; ++x) {
+    for (int y = min_y; y <= max_y; ++y) {
+      if (
+        is_clockwise(a_x, a_y, b_x, b_y, x, y) &&
+        is_clockwise(b_x, b_y, c_x, c_y, x, y) &&
+        is_clockwise(c_x, c_y, a_x, a_y, x, y)
+      ) {
+          draw_pixel(image, x, y, color);
+        }
+    }
+  }
+
   draw_line(image, a_x, a_y, b_x, b_y, color);
   draw_line(image, b_x, b_y, c_x, c_y, color);
   draw_line(image, c_x, c_y, a_x, a_y, color);

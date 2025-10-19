@@ -1,6 +1,5 @@
 #pragma once
 
-#include <stddef.h>
 #include <raylib.h>
 
 #define MIN(a, b)          (((a) < (b)) ? (a) : (b))
@@ -10,3 +9,7 @@
 
 /* returns the fractional part of a given floating-point number */
 float fractional_part(float n);
+
+/* checks if a given triangle is clockwise */
+bool is_clockwise(int a_x, int a_y, int b_x,
+                  int b_y, int c_x, int c_y);
