@@ -1,10 +1,10 @@
 #include <assert.h>
+#include <stdio.h>
 #include <stdlib.h>
 
 #include "math_utils.h"
 #include "draw_utils.h"
 
-/* draws a non-alpha-blended pixel */
 void
 draw_pixel(Image *image, size_t x, size_t y, Color color)
 {
@@ -18,7 +18,6 @@ draw_pixel(Image *image, size_t x, size_t y, Color color)
 	pixels[index] = color;
 }
 
-/* draws an alpha-blended pixel */
 void
 draw_pixel_a(Image *image, size_t x, size_t y, Color color)
 {
@@ -45,8 +44,8 @@ draw_pixel_a(Image *image, size_t x, size_t y, Color color)
 }
 
 void
-draw_rectangle(Image *image, size_t origin_x, size_t origin_y,
-               size_t width, size_t height, Color color)
+draw_rectangle_f(Image *image, size_t origin_x, size_t origin_y,
+                 size_t width, size_t height, Color color)
 {
   for (size_t x = origin_x; x < width; ++x) {
     for (size_t y = origin_y; y < height; ++y) {
@@ -56,8 +55,8 @@ draw_rectangle(Image *image, size_t origin_x, size_t origin_y,
 }
 
 void
-draw_triangle(Image *image, size_t a_x, size_t a_y, size_t b_x,
-              size_t b_y, size_t c_x, size_t c_y, Color color)
+draw_triangle(Image *image, int a_x, int a_y, int b_x,
+              int b_y, int c_x, int c_y, Color color)
 {
   draw_line(image, a_x, a_y, b_x, b_y, color);
   draw_line(image, b_x, b_y, c_x, c_y, color);
@@ -116,4 +115,14 @@ clear_image(Image *image, Color color)
   size_t count = image->width * image->height;
 
   while (count--) *addr++ = color;
+}
+
+int
+index_from_xy(Image *image, size_t x, size_t y)
+{
+  const int index = image->width * (int)y + (int)x;
+  const int max_index = image->width * image->height - 1;
+  assert(max_index >= 0);
+
+	return index >= 0 && index <= max_index ? index : -1;
 }

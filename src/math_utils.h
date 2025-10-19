@@ -8,5 +8,5 @@
 #define CLAMP(n, min, max) ((min) > (n)) ? (min) : ((max) < (n)) ? (max) : (n)
 #define SWAP(x, y)         do { typeof(x) _TEMP = x; x = y; y = _TEMP; } while (0)
 
+/* returns the fractional part of a given floating-point number */
 float fractional_part(float n);
-int index_from_xy(Image *image, size_t x, size_t y);
