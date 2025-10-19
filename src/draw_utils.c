@@ -31,13 +31,13 @@ draw_pixel_a(Image *image, int x, int y, Color color)
     float alpha_mul = (float)color.a / 255.0f;
 
     Color bg = pixels[index];
-    bg.r = (uint8_t)((float)bg.r * (1 - alpha_mul) + 0.5f);
-    bg.g = (uint8_t)((float)bg.g * (1 - alpha_mul) + 0.5f);
-    bg.b = (uint8_t)((float)bg.b * (1 - alpha_mul) + 0.5f);
+    bg.r = ROUND((float)bg.r * (1 - alpha_mul), uint8_t);
+    bg.g = ROUND((float)bg.g * (1 - alpha_mul), uint8_t);
+    bg.b = ROUND((float)bg.b * (1 - alpha_mul), uint8_t);
 
-    color.r = (uint8_t)((float)color.r * alpha_mul + 0.5f) + bg.r;
-    color.g = (uint8_t)((float)color.g * alpha_mul + 0.5f) + bg.g;
-    color.b = (uint8_t)((float)color.b * alpha_mul + 0.5f) + bg.b;
+    color.r = ROUND((float)color.r * alpha_mul, uint8_t) + bg.r;
+    color.g = ROUND((float)color.g * alpha_mul, uint8_t) + bg.g;
+    color.b = ROUND((float)color.b * alpha_mul, uint8_t) + bg.b;
     color.a = 255;
   }
 
