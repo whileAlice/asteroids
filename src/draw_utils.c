@@ -45,48 +45,6 @@ draw_pixel_a(Image *image, int x, int y, Color color)
 }
 
 void
-draw_rectangle_f(Image *image, int origin_x, int origin_y,
-                 int width, int height, Color color)
-{
-  for (int x = origin_x; x < width; ++x) {
-    for (int y = origin_y; y < height; ++y) {
-      draw_pixel(image, x, y, color);
-    }
-  }
-}
-
-void
-draw_triangle_f(Image *image, int a_x, int a_y, int b_x,
-                int b_y, int c_x, int c_y, Color color)
-{
-  if (!is_clockwise(a_x, a_y, b_x, b_y, c_x, c_y)) {
-    SWAP(a_x, b_x);
-    SWAP(a_y, b_y);
-  }
-
-  const int min_x = MIN(MIN(a_x, b_x), c_x);
-  const int min_y = MIN(MIN(a_y, b_y), c_y);
-  const int max_x = MAX(MAX(a_x, b_x), c_x);
-  const int max_y = MAX(MAX(a_y, b_y), c_y);
-
-  for (int x = min_x; x <= max_x; ++x) {
-    for (int y = min_y; y <= max_y; ++y) {
-      if (
-        is_clockwise(a_x, a_y, b_x, b_y, x, y) &&
-        is_clockwise(b_x, b_y, c_x, c_y, x, y) &&
-        is_clockwise(c_x, c_y, a_x, a_y, x, y)
-      ) {
-          draw_pixel(image, x, y, color);
-        }
-    }
-  }
-
-  draw_line(image, a_x, a_y, b_x, b_y, color);
-  draw_line(image, b_x, b_y, c_x, c_y, color);
-  draw_line(image, c_x, c_y, a_x, a_y, color);
-}
-
-void
 draw_line(Image *image, int start_x, int start_y,
           int end_x, int end_y, Color color)
 {
@@ -129,6 +87,91 @@ draw_line(Image *image, int start_x, int start_y,
       intersect_y += gradient;
     }
   }
+}
+
+void
+draw_rectangle_f(Image *image, int origin_x, int origin_y,
+                 int width, int height, Color color)
+{
+  for (int x = origin_x; x < width; ++x) {
+    for (int y = origin_y; y < height; ++y) {
+      draw_pixel(image, x, y, color);
+    }
+  }
+}
+
+void
+draw_rectangle_w(Image *image, int origin_x, int origin_y,
+                 int width, int height, Color color)
+{
+  draw_quad_w(image,
+              origin_x,         origin_y,
+              origin_x + width, origin_y,
+              origin_x + width, origin_y + height,
+              origin_x,         origin_y + height,
+              color);
+}
+
+void
+draw_rectangle(Image *image, int origin_x, int origin_y, int width,
+               int height, Color border, Color fill)
+{
+  draw_rectangle_f(image, origin_x, origin_y, width, height, fill);
+  draw_rectangle_w(image, origin_x, origin_y, width, height, border);
+}
+
+void
+draw_triangle_f(Image *image, int a_x, int a_y, int b_x,
+                int b_y, int c_x, int c_y, Color color)
+{
+  if (!is_clockwise(a_x, a_y, b_x, b_y, c_x, c_y)) {
+    SWAP(a_x, b_x);
+    SWAP(a_y, b_y);
+  }
+
+  const int min_x = MIN(MIN(a_x, b_x), c_x);
+  const int min_y = MIN(MIN(a_y, b_y), c_y);
+  const int max_x = MAX(MAX(a_x, b_x), c_x);
+  const int max_y = MAX(MAX(a_y, b_y), c_y);
+
+  for (int x = min_x; x <= max_x; ++x) {
+    for (int y = min_y; y <= max_y; ++y) {
+      if (
+        is_clockwise(a_x, a_y, b_x, b_y, x, y) &&
+        is_clockwise(b_x, b_y, c_x, c_y, x, y) &&
+        is_clockwise(c_x, c_y, a_x, a_y, x, y)
+      ) {
+          draw_pixel(image, x, y, color);
+        }
+    }
+  }
+}
+
+void
+draw_triangle_w(Image *image, int a_x, int a_y, int b_x,
+                int b_y, int c_x, int c_y, Color color)
+{
+  draw_line(image, a_x, a_y, b_x, b_y, color);
+  draw_line(image, b_x, b_y, c_x, c_y, color);
+  draw_line(image, c_x, c_y, a_x, a_y, color);
+}
+
+void
+draw_triangle(Image *image, int a_x, int a_y, int b_x, int b_y,
+              int c_x, int c_y, Color border, Color fill)
+{
+  draw_triangle_f(image, a_x, a_y, b_x, b_y, c_x, c_y, fill);
+  draw_triangle_w(image, a_x, a_y, b_x, b_y, c_x, c_y, border);
+}
+
+void
+draw_quad_w(Image *image, int a_x, int a_y, int b_x, int b_y,
+            int c_x, int c_y, int d_x, int d_y, Color color)
+{
+  draw_line(image, a_x, a_y, b_x, b_y, color);
+  draw_line(image, b_x, b_y, c_x, c_y, color);
+  draw_line(image, c_x, c_y, d_x, d_y, color);
+  draw_line(image, d_x, d_y, a_x, a_y, color);
 }
 
 void
