@@ -3,6 +3,7 @@
 #include <raylib.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <string.h>
 
 #include "pam.h"
@@ -27,8 +28,9 @@ image_from_pam(const char *filename)
 
   const char *header = read_next_line(fp, line, filename, "header");
   if (strcmp(PAM_HEADER, header) != 0) {
-    printf("ERROR: wrong file header for filename: %s; expected: %s, got: %s\n",
+    printf("ERROR: wrong file header for filename: %s; expected: \"%s\", got: \"%s\"\n",
            filename, PAM_HEADER, header);
+    exit(1);
   }
 
   const int width = get_next_value(fp, line, filename, "width");
@@ -44,6 +46,7 @@ image_from_pam(const char *filename)
     exit(1);
   }
 
+  // TODO
   float scale_by = 1.0f;
   if (max_val != 255) {
     scale_by = (float)max_val / 255.0f;
@@ -69,9 +72,9 @@ image_from_pam(const char *filename)
   }
 
   // TODO: connect depth check to TUPLTYPE value check
-  if (strcmp(tupltype_val, "RGB") != 0 ||
+  if (strcmp(tupltype_val, "RGB") != 0 &&
       strcmp(tupltype_val, "RGB_ALPHA") != 0) {
-    printf("ERROR: expected %s value not found in file: %s; got: %s\n",
+    printf("ERROR: expected %s value not found in file: %s; got: \"%s\"\n",
            TUPLTYPE, filename, tupltype_val);
     exit(1);
   }
@@ -84,17 +87,38 @@ image_from_pam(const char *filename)
   }
 
   // TODO: handle other cases
-  assert(strcmp(tupltype_val, RGB_ALPHA) == 0 && depth == 4 && max_val == 255);
+  assert(strcmp(tupltype_val, RGB) == 0 && depth == 3 && max_val == 255);
 
   size_t size = width * height;
+
+  typedef struct Color24 {
+    uint8_t r;
+    uint8_t g;
+    uint8_t b;
+  } Color24;
+
+  Color24 *pixels_24 = (Color24 *)malloc(size * sizeof(Color24));
   Color *pixels = (Color *)malloc(size * sizeof(Color));
 
-  size_t read = fread(pixels, size, sizeof(Color), fp);
+  size_t read = fread(pixels_24, sizeof(Color24), size, fp);
   if (read < size) {
     printf("ERROR: error while reading: %s; expected size: %d, got: %d\n",
            filename, (int)size, (int)read);
     exit(1);
   }
+
+  for (size_t i = 0; i < size; ++i) {
+    Color pixel = {
+      .r = pixels_24[i].r,
+      .g = pixels_24[i].g,
+      .b = pixels_24[i].b,
+      .a = 255
+    };
+
+    pixels[i] = pixel;
+  }
+
+  free(pixels_24);
 
   return (Image){
     .data    = pixels,
@@ -108,13 +132,20 @@ image_from_pam(const char *filename)
 char
 *read_next_line(FILE *fp, char *buffer, const char *filename, const char *name)
 {
-  char *line = fgets(buffer, sizeof(buffer), fp);
+  char tmp[32];
+  char *line = fgets(tmp, sizeof(tmp), fp);
   if (line == NULL) {
     printf("ERROR: couldn't read %s from file: %s\n", name, filename);
     exit(1);
   }
 
-  return line;
+  char *newline = strchr(line, '\n');
+  if (newline != NULL) {
+    *newline = '\0';
+  }
+  // TODO: this shouldn't be necessary...
+  strcpy(buffer, tmp);
+  return buffer;
 }
 
 void
