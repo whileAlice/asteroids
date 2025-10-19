@@ -45,8 +45,8 @@ draw_pixel_a(Image *image, int x, int y, Color color)
 }
 
 void
-draw_line(Image *image, int start_x, int start_y,
-          int end_x, int end_y, Color color)
+draw_line_i(Image *image, int start_x, int start_y,
+            int end_x, int end_y, Color color)
 {
   bool is_steep = abs(end_y - start_y) > abs(end_x - start_x);
 
@@ -90,8 +90,17 @@ draw_line(Image *image, int start_x, int start_y,
 }
 
 void
-draw_rectangle_f(Image *image, int origin_x, int origin_y,
-                 int width, int height, Color color)
+draw_line(Image *image, Vector2 start, Vector2 end, Color color)
+{
+  draw_line_i(image,
+              ROUND(start.x, int), ROUND(start.y, int),
+              ROUND(end.x, int),   ROUND(end.y, int),
+              color);
+}
+
+void
+draw_rectangle_fi(Image *image, int origin_x, int origin_y,
+                  int width, int height, Color color)
 {
   for (int x = origin_x; x < width; ++x) {
     for (int y = origin_y; y < height; ++y) {
@@ -101,28 +110,49 @@ draw_rectangle_f(Image *image, int origin_x, int origin_y,
 }
 
 void
-draw_rectangle_w(Image *image, int origin_x, int origin_y,
-                 int width, int height, Color color)
+draw_rectangle_f(Image *image, Vector2 origin,
+                 Vector2 size, Color color)
 {
-  draw_quad_w(image,
-              origin_x,         origin_y,
-              origin_x + width, origin_y,
-              origin_x + width, origin_y + height,
-              origin_x,         origin_y + height,
-              color);
+  draw_rectangle_fi(image,
+                    ROUND(origin.x, int), ROUND(origin.y, int),
+                    ROUND(size.x, int),   ROUND(size.y, int),
+                    color);
+}
+
+
+void
+draw_rectangle_wi(Image *image, int origin_x, int origin_y,
+                  int width, int height, Color color)
+{
+  draw_quad_wi(image,
+               origin_x,         origin_y,
+               origin_x + width, origin_y,
+               origin_x + width, origin_y + height,
+               origin_x,         origin_y + height,
+               color);
 }
 
 void
-draw_rectangle(Image *image, int origin_x, int origin_y, int width,
-               int height, Color border, Color fill)
+draw_rectangle_i(Image *image, int origin_x, int origin_y, int width,
+                 int height, Color border, Color fill)
 {
-  draw_rectangle_f(image, origin_x, origin_y, width, height, fill);
-  draw_rectangle_w(image, origin_x, origin_y, width, height, border);
+  draw_rectangle_fi(image, origin_x, origin_y, width, height, fill);
+  draw_rectangle_wi(image, origin_x, origin_y, width, height, border);
 }
 
 void
-draw_triangle_f(Image *image, int a_x, int a_y, int b_x,
-                int b_y, int c_x, int c_y, Color color)
+draw_rectangle(Image *image, Vector2 origin, Vector2 size,
+               Color border, Color fill)
+{
+  draw_rectangle_i(image,
+                   ROUND(origin.x, int), ROUND(origin.y, int),
+                   ROUND(size.x, int),   ROUND(size.y, int),
+                   border, fill);
+}
+
+void
+draw_triangle_fi(Image *image, int a_x, int a_y, int b_x,
+                 int b_y, int c_x, int c_y, Color color)
 {
   if (!is_clockwise(a_x, a_y, b_x, b_y, c_x, c_y)) {
     SWAP(a_x, b_x);
@@ -148,30 +178,41 @@ draw_triangle_f(Image *image, int a_x, int a_y, int b_x,
 }
 
 void
-draw_triangle_w(Image *image, int a_x, int a_y, int b_x,
-                int b_y, int c_x, int c_y, Color color)
+draw_triangle_wi(Image *image, int a_x, int a_y, int b_x,
+                 int b_y, int c_x, int c_y, Color color)
 {
-  draw_line(image, a_x, a_y, b_x, b_y, color);
-  draw_line(image, b_x, b_y, c_x, c_y, color);
-  draw_line(image, c_x, c_y, a_x, a_y, color);
+  draw_line_i(image, a_x, a_y, b_x, b_y, color);
+  draw_line_i(image, b_x, b_y, c_x, c_y, color);
+  draw_line_i(image, c_x, c_y, a_x, a_y, color);
 }
 
 void
-draw_triangle(Image *image, int a_x, int a_y, int b_x, int b_y,
-              int c_x, int c_y, Color border, Color fill)
+draw_triangle_i(Image *image, int a_x, int a_y, int b_x, int b_y,
+                int c_x, int c_y, Color border, Color fill)
 {
-  draw_triangle_f(image, a_x, a_y, b_x, b_y, c_x, c_y, fill);
-  draw_triangle_w(image, a_x, a_y, b_x, b_y, c_x, c_y, border);
+  draw_triangle_fi(image, a_x, a_y, b_x, b_y, c_x, c_y, fill);
+  draw_triangle_wi(image, a_x, a_y, b_x, b_y, c_x, c_y, border);
 }
 
 void
-draw_quad_w(Image *image, int a_x, int a_y, int b_x, int b_y,
-            int c_x, int c_y, int d_x, int d_y, Color color)
+draw_triangle(Image *image, Vector2 a, Vector2 b,
+              Vector2 c, Color border, Color fill)
 {
-  draw_line(image, a_x, a_y, b_x, b_y, color);
-  draw_line(image, b_x, b_y, c_x, c_y, color);
-  draw_line(image, c_x, c_y, d_x, d_y, color);
-  draw_line(image, d_x, d_y, a_x, a_y, color);
+  draw_triangle_i(image,
+                  ROUND(a.x, int), ROUND(a.y, int),
+                  ROUND(b.x, int), ROUND(b.y, int),
+                  ROUND(c.x, int), ROUND(c.y, int),
+                  border, fill);
+}
+
+void
+draw_quad_wi(Image *image, int a_x, int a_y, int b_x, int b_y,
+             int c_x, int c_y, int d_x, int d_y, Color color)
+{
+  draw_line_i(image, a_x, a_y, b_x, b_y, color);
+  draw_line_i(image, b_x, b_y, c_x, c_y, color);
+  draw_line_i(image, c_x, c_y, d_x, d_y, color);
+  draw_line_i(image, d_x, d_y, a_x, a_y, color);
 }
 
 void
