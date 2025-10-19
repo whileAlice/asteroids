@@ -1,4 +1,5 @@
-#include "raylib.h"
+#include <raylib.h>
+
 #include "game_loop.h"
 #include "window_loop.h"
 #include "window_utils.h"

@@ -12,7 +12,7 @@ Texture2D texture;
 void
 init()
 {
-  Color *pixels = (Color*)malloc(PIXEL_COUNT * sizeof(Color));
+  Color *pixels = (Color *)malloc(PIXEL_COUNT * sizeof(Color));
 
   for (size_t i = 0; i < PIXEL_COUNT; ++i) {
     pixels[i] = RED;
