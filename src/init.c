@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <stdlib.h>
 #include <raylib.h>
 
@@ -13,6 +14,10 @@ void
 init()
 {
   Color *pixels = (Color *)malloc(PIXEL_COUNT * sizeof(Color));
+  if (pixels == NULL) {
+    printf("ERROR: couldn't allocate buffer memory");
+    exit(1);
+  }
 
   for (size_t i = 0; i < PIXEL_COUNT; ++i) {
     pixels[i] = RED;
