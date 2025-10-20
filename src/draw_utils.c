@@ -14,16 +14,21 @@ draw_pixel(Image *image, int x, int y, Color3 color)
   if (index == -1) return;
 
 	Color3 *pixels = (Color3 *)image->data;
-
 	pixels[index] = color;
 }
 
 void
-draw_pixel_a(Image *image, int x, int y, Color color)
+draw_pixel_unsafe(Image *image, int x, int y, Color3 color)
 {
-  int index = index_from_xy(image, x, y);
-  if (index == -1) return;
+  size_t index = index_from_xy_unsafe(image, x, y);
 
+	Color3 *pixels = (Color3 *)image->data;
+	pixels[index] = color;
+}
+
+static void
+internal_draw_pixel_a(Image *image, int x, int y, Color color, size_t index)
+{
   Color3 *pixels = (Color3 *)image->data;
   uint8_t a = color.a;
 
@@ -40,6 +45,23 @@ draw_pixel_a(Image *image, int x, int y, Color color)
     pixels[index].g = (pixels[index].g * (255 - a) + color.g * a + 128) / 255;
     pixels[index].b = (pixels[index].b * (255 - a) + color.b * a + 128) / 255;
   }
+}
+
+void
+draw_pixel_a(Image *image, int x, int y, Color color)
+{
+  int index = index_from_xy(image, x, y);
+  if (index == -1) return;
+
+  internal_draw_pixel_a(image, x, y, color, index);
+}
+
+void
+draw_pixel_a_unsafe(Image *image, int x, int y, Color color)
+{
+  size_t index = index_from_xy_unsafe(image, x, y);
+
+  internal_draw_pixel_a(image, x, y, color, index);
 }
 
 void
@@ -101,9 +123,18 @@ void
 draw_rectangle_fi(Image *image, int origin_x, int origin_y,
                   int width, int height, Color3 color)
 {
-  for (int x = origin_x; x < width; ++x) {
-    for (int y = origin_y; y < height; ++y) {
-      draw_pixel(image, x, y, color);
+  if (width == 0 || height == 0) return;
+
+  int max_x = image->width  - 1;
+  int max_y = image->height - 1;
+  origin_x  = CLAMP(origin_x, 0, max_x);
+  origin_y  = CLAMP(origin_y, 0, max_y);
+  width     = CLAMP(width,    1, image->width - origin_x);
+  height    = CLAMP(height,   1, image->height - origin_y);
+
+  for (int x = origin_x; x < origin_x + width; ++x) {
+    for (int y = origin_y; y < origin_y + height; ++y) {
+      draw_pixel_unsafe(image, x, y, color);
     }
   }
 }
@@ -153,15 +184,16 @@ void
 draw_triangle_fi(Image *image, int a_x, int a_y, int b_x,
                  int b_y, int c_x, int c_y, Color3 color)
 {
+  // TODO: convert to scanline-based approach
   if (!is_clockwise(a_x, a_y, b_x, b_y, c_x, c_y)) {
     SWAP(a_x, b_x);
     SWAP(a_y, b_y);
   }
 
-  const int min_x = MIN(MIN(a_x, b_x), c_x);
-  const int min_y = MIN(MIN(a_y, b_y), c_y);
-  const int max_x = MAX(MAX(a_x, b_x), c_x);
-  const int max_y = MAX(MAX(a_y, b_y), c_y);
+  const int min_x = CLAMP(MIN(MIN(a_x, b_x), c_x), 0, image->width  - 1);
+  const int min_y = CLAMP(MIN(MIN(a_y, b_y), c_y), 0, image->height - 1);
+  const int max_x = CLAMP(MAX(MAX(a_x, b_x), c_x), 0, image->width  - 1);
+  const int max_y = CLAMP(MAX(MAX(a_y, b_y), c_y), 0, image->height - 1);
 
   for (int x = min_x; x <= max_x; ++x) {
     for (int y = min_y; y <= max_y; ++y) {
@@ -170,7 +202,7 @@ draw_triangle_fi(Image *image, int a_x, int a_y, int b_x,
         is_clockwise(b_x, b_y, c_x, c_y, x, y) &&
         is_clockwise(c_x, c_y, a_x, a_y, x, y)
       ) {
-          draw_pixel(image, x, y, color);
+          draw_pixel_unsafe(image, x, y, color);
         }
     }
   }
@@ -231,6 +263,12 @@ index_from_xy(Image *image, int x, int y)
   assert(max_index >= 0);
 
 	return index >= 0 && index <= max_index ? index : -1;
+}
+
+size_t
+index_from_xy_unsafe(Image *image, int x, int y)
+{
+  return image->width * y + x;
 }
 
 Color3

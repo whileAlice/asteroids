@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stdint.h>
+#include <stddef.h>
 #include <raylib.h>
 
 typedef struct Color3{
@@ -12,8 +13,14 @@ typedef struct Color3{
 /* draws a non-alpha-blended pixel */
 void draw_pixel(Image *image, int x, int y, Color3 color);
 
+/* draws a non-alpha-blended pixel without bounds checking */
+void draw_pixel_unsafe(Image *image, int x, int y, Color3 color);
+
 /* draws an alpha-blended-pixel */
 void draw_pixel_a(Image *image, int x, int y, Color color);
+
+/* draws an alpha-blended-pixel without bounds checking */
+void draw_pixel_a_unsafe(Image *image, int x, int y, Color color);
 
 /* draws an anti-aliased line (int) */
 void draw_line_i(Image *image, int start_x, int start_y,
@@ -67,6 +74,9 @@ void clear_image(Image *image, Color3 color);
 
 /* calculates index from xy coordinates */
 int index_from_xy(Image *image, int x, int y);
+
+/* calculates index from xy coordinates without bounds checking */
+size_t index_from_xy_unsafe(Image *image, int x, int y);
 
 /* converts rgba to rgb */
 Color3 c3_from_c4(Color color);
