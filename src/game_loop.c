@@ -18,10 +18,10 @@ update(float dt)
 void
 draw(Image *im)
 {
-  // clear_image(im, GRAY);
-  // draw_triangle(im,
-                // (Vector2){ .x = 50.0f,    .y = 100.0f },
-                // (Vector2){ .x = (float)x, .y = (float)y },
-                // (Vector2){ .x = 200,      .y = 180 },
-                // RED, GREEN);
+  clear_image(im, c3_from_c4(GRAY));
+  draw_triangle(im,
+                (Vector2){ .x = 50.0f,    .y = 100.0f },
+                (Vector2){ .x = (float)x, .y = (float)y },
+                (Vector2){ .x = 200,      .y = 180 },
+                c3_from_c4(RED), c3_from_c4(GREEN));
 }
