@@ -25,21 +25,21 @@ draw_pixel_a(Image *image, int x, int y, Color color)
   if (index == -1) return;
 
   Color3 *pixels = (Color3 *)image->data;
+  uint8_t a = color.a;
 
-  if (color.a < 255) {
-    float alpha_mul = (float)color.a / 255.0f;
-
-    Color3 bg = pixels[index];
-    bg.r = (uint8_t)roundf((float)bg.r * (1 - alpha_mul));
-    bg.g = (uint8_t)roundf((float)bg.g * (1 - alpha_mul));
-    bg.b = (uint8_t)roundf((float)bg.b * (1 - alpha_mul));
-
-    color.r = (uint8_t)roundf((float)color.r * alpha_mul) + bg.r;
-    color.g = (uint8_t)roundf((float)color.g * alpha_mul) + bg.g;
-    color.b = (uint8_t)roundf((float)color.b * alpha_mul) + bg.b;
+  switch (a) {
+  case 0:
+    return;
+  case 255:
+    pixels[index].r = color.r;
+    pixels[index].g = color.g;
+    pixels[index].b = color.b;
+    return;
+  default:
+    pixels[index].r = (pixels[index].r * (255 - a) + color.r * a + 128) / 255;
+    pixels[index].g = (pixels[index].g * (255 - a) + color.g * a + 128) / 255;
+    pixels[index].b = (pixels[index].b * (255 - a) + color.b * a + 128) / 255;
   }
-
-  pixels[index] = c3_from_c4(color);
 }
 
 void
