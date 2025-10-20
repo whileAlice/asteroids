@@ -24,4 +24,5 @@ draw(Image *im)
                 (Vector2){ .x = (float)x, .y = (float)y },
                 (Vector2){ .x = 200,      .y = 180 },
                 c3_from_c4(RED), c3_from_c4(GREEN));
+  draw_rectangle_fi(im, 20, 20, 50, 50, c3_from_c4(BLUE));
 }
