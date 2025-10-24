@@ -4,6 +4,7 @@
 
 #include "config.h"
 #include "draw_utils.h"
+#include "game_loop.h"
 #include "init.h"
 
 #define PIXEL_COUNT BUFFER_WIDTH * BUFFER_HEIGHT
@@ -41,11 +42,15 @@ init()
   SetTargetFPS(60);
 
   texture = LoadTextureFromImage(image);
+
+  game_init();
 }
 
 void
 deinit()
 {
+  game_deinit();
+
   UnloadTexture(texture);
   UnloadImage(image);
 
