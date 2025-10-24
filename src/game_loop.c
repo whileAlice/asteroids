@@ -24,16 +24,16 @@ update(float dt)
 }
 
 void
-draw(Image *im)
+draw(Image *buf)
 {
-  clear_image(im, c3_from_c4(GRAY));
-  draw_triangle(im,
+  clear_image_rgb(buf, rgb_from_rgba(GRAY));
+  draw_triangle(buf,
                 (Vector2){ .x = 50.0f,  .y = 100.0f },
                 (Vector2){ .x = 100.0f, .y = 40.0f },
                 (Vector2){ .x = 200.0f, .y = 180.0f },
-                c3_from_c4(RED), c3_from_c4(GREEN));
-  draw_rectangle_fi(im, 20, 20, 50, 50, c3_from_c4(BLUE));
-  draw_image(im, &pika, x, y);
+                RED, GREEN);
+  draw_rectangle_fi(buf, 20, 20, 50, 50, BLUE);
+  draw_image(buf, &pika, x, y);
 }
 
 void

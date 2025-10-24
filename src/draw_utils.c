@@ -98,9 +98,8 @@ draw_image(Image *buf, Image *img, int origin_x, int origin_y)
 
 void
 draw_line_i(Image *buf, int start_x, int start_y,
-            int end_x, int end_y, Color3 color3)
+            int end_x, int end_y, Color color)
 {
-  Color color = c4_from_c3(color3);
   bool is_steep = abs(end_y - start_y) > abs(end_x - start_x);
 
   if (is_steep) {
@@ -118,6 +117,8 @@ draw_line_i(Image *buf, int start_x, int start_y,
 
   float gradient = dx != 0.0f ? dy / dx : 1.0f;
   float intersect_y = (float)start_y;
+
+
 
   if (is_steep) {
     for (int i = start_x; i <= end_x; ++i) {
@@ -143,7 +144,7 @@ draw_line_i(Image *buf, int start_x, int start_y,
 }
 
 void
-draw_line(Image *buf, Vector2 start, Vector2 end, Color3 color)
+draw_line(Image *buf, Vector2 start, Vector2 end, Color color)
 {
   draw_line_i(buf,
               (int)roundf(start.x), (int)roundf(start.y),
@@ -153,7 +154,7 @@ draw_line(Image *buf, Vector2 start, Vector2 end, Color3 color)
 
 void
 draw_rectangle_fi(Image *buf, int origin_x, int origin_y,
-                  int width, int height, Color3 color)
+                  int width, int height, Color color)
 {
   if (width == 0 || height == 0) return;
 
@@ -164,14 +165,14 @@ draw_rectangle_fi(Image *buf, int origin_x, int origin_y,
 
   for (int x = start_x; x <= end_x; ++x) {
     for (int y = start_y; y <= end_y; ++y) {
-      draw_pixel_unsafe(buf, x, y, color);
+      draw_pixel_a_unsafe(buf, x, y, color);
     }
   }
 }
 
 void
 draw_rectangle_f(Image *buf, Vector2 origin,
-                 Vector2 size, Color3 color)
+                 Vector2 size, Color color)
 {
   draw_rectangle_fi(buf,
                     (int)roundf(origin.x), (int)roundf(origin.y),
@@ -182,7 +183,7 @@ draw_rectangle_f(Image *buf, Vector2 origin,
 
 void
 draw_rectangle_wi(Image *buf, int origin_x, int origin_y,
-                  int width, int height, Color3 color)
+                  int width, int height, Color color)
 {
   draw_quad_wi(buf,
                origin_x,         origin_y,
@@ -194,7 +195,7 @@ draw_rectangle_wi(Image *buf, int origin_x, int origin_y,
 
 void
 draw_rectangle_i(Image *buf, int origin_x, int origin_y, int width,
-                 int height, Color3 border, Color3 fill)
+                 int height, Color border, Color fill)
 {
   draw_rectangle_fi(buf, origin_x, origin_y, width, height, fill);
   draw_rectangle_wi(buf, origin_x, origin_y, width, height, border);
@@ -202,7 +203,7 @@ draw_rectangle_i(Image *buf, int origin_x, int origin_y, int width,
 
 void
 draw_rectangle(Image *buf, Vector2 origin, Vector2 size,
-               Color3 border, Color3 fill)
+               Color border, Color fill)
 {
   draw_rectangle_i(buf,
                    (int)roundf(origin.x), (int)roundf(origin.y),
@@ -212,7 +213,7 @@ draw_rectangle(Image *buf, Vector2 origin, Vector2 size,
 
 void
 draw_triangle_fi(Image *buf, int a_x, int a_y, int b_x,
-                 int b_y, int c_x, int c_y, Color3 color)
+                 int b_y, int c_x, int c_y, Color color)
 {
   // TODO: convert to scanline-based approach
   if (!is_clockwise(a_x, a_y, b_x, b_y, c_x, c_y)) {
@@ -232,7 +233,7 @@ draw_triangle_fi(Image *buf, int a_x, int a_y, int b_x,
         is_clockwise(b_x, b_y, c_x, c_y, x, y) &&
         is_clockwise(c_x, c_y, a_x, a_y, x, y)
       ) {
-          draw_pixel_unsafe(buf, x, y, color);
+          draw_pixel_a_unsafe(buf, x, y, color);
         }
     }
   }
@@ -240,7 +241,7 @@ draw_triangle_fi(Image *buf, int a_x, int a_y, int b_x,
 
 void
 draw_triangle_wi(Image *buf, int a_x, int a_y, int b_x,
-                 int b_y, int c_x, int c_y, Color3 color)
+                 int b_y, int c_x, int c_y, Color color)
 {
   draw_line_i(buf, a_x, a_y, b_x, b_y, color);
   draw_line_i(buf, b_x, b_y, c_x, c_y, color);
@@ -249,7 +250,7 @@ draw_triangle_wi(Image *buf, int a_x, int a_y, int b_x,
 
 void
 draw_triangle_i(Image *buf, int a_x, int a_y, int b_x, int b_y,
-                int c_x, int c_y, Color3 border, Color3 fill)
+                int c_x, int c_y, Color border, Color fill)
 {
   draw_triangle_fi(buf, a_x, a_y, b_x, b_y, c_x, c_y, fill);
   draw_triangle_wi(buf, a_x, a_y, b_x, b_y, c_x, c_y, border);
@@ -257,7 +258,7 @@ draw_triangle_i(Image *buf, int a_x, int a_y, int b_x, int b_y,
 
 void
 draw_triangle(Image *buf, Vector2 a, Vector2 b,
-              Vector2 c, Color3 border, Color3 fill)
+              Vector2 c, Color border, Color fill)
 {
   draw_triangle_i(buf,
                   (int)roundf(a.x), (int)roundf(a.y),
@@ -268,7 +269,7 @@ draw_triangle(Image *buf, Vector2 a, Vector2 b,
 
 void
 draw_quad_wi(Image *buf, int a_x, int a_y, int b_x, int b_y,
-             int c_x, int c_y, int d_x, int d_y, Color3 color)
+             int c_x, int c_y, int d_x, int d_y, Color color)
 {
   draw_line_i(buf, a_x, a_y, b_x, b_y, color);
   draw_line_i(buf, b_x, b_y, c_x, c_y, color);
@@ -277,7 +278,7 @@ draw_quad_wi(Image *buf, int a_x, int a_y, int b_x, int b_y,
 }
 
 void
-clear_image(Image *img, Color3 color)
+clear_image_rgb(Image *img, Color3 color)
 {
   Color3 *addr = img->data;
   size_t count = img->width * img->height;
@@ -302,21 +303,21 @@ index_from_xy_unsafe(Image *img, int x, int y)
 }
 
 Color3
-c3_from_c4(Color color)
+rgb_from_rgba(Color color)
 {
   typedef union {
-    Color  c4;
-    Color3 c3;
+    Color  rgba;
+    Color3 rgb;
   } converter;
 
   converter c;
-  c.c4 = color;
+  c.rgba = color;
 
-  return c.c3;
+  return c.rgb;
 }
 
 Color
-c4_from_c3(Color3 color)
+rgba_from_rgb(Color3 color)
 {
   return (Color){
     .r = color.r,
