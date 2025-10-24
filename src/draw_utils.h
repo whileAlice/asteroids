@@ -30,53 +30,53 @@ void draw_image_a(Image *buf, Image *img, int origin_x, int origin_y);
 
 /* draws an anti-aliased line (int) */
 void draw_line_i(Image *buf, int start_x, int start_y,
-                 int end_x, int end_y, Color3 color3);
+                 int end_x, int end_y, Color color);
 
 /* draws an anti-aliased line */
-void draw_line(Image *buf, Vector2 start, Vector2 end, Color3 color);
+void draw_line(Image *buf, Vector2 start, Vector2 end, Color color);
 
 /* draws a filled rectangle (int) */
 void draw_rectangle_fi(Image *buf, int origin_x, int origin_y,
-                       int width, int height, Color3 color);
+                       int width, int height, Color color);
 
 /* draws a filled rectangle */
 void draw_rectangle_f(Image *buf, Vector2 origin,
-                      Vector2 size, Color3 color);
+                      Vector2 size, Color color);
 
 /* draws a wireframe rectangle (int) */
 void draw_rectangle_wi(Image *buf, int origin_x, int origin_y,
-                       int width, int height, Color3 color);
+                       int width, int height, Color color);
 
 /* draws a filled rectangle with border (int) */
 void draw_rectangle_i(Image *buf, int origin_x, int origin_y, int width,
-                      int height, Color3 border, Color3 fill);
+                      int height, Color border, Color fill);
 
 /* draws a filled rectangle with border */
 void draw_rectangle(Image *buf, Vector2 origin, Vector2 size,
-                    Color3 border, Color3 fill);
+                    Color border, Color fill);
 
 /* draws a filled non-anti-aliased triangle (int) */
 void draw_triangle_fi(Image *buf, int a_x, int a_y, int b_x,
-                      int b_y, int c_x, int c_y, Color3 color);
+                      int b_y, int c_x, int c_y, Color color);
 
 /* draws a wireframe triangle (int) */
 void draw_triangle_wi(Image *buf, int a_x, int a_y, int b_x,
-                      int b_y, int c_x, int c_y, Color3 color);
+                      int b_y, int c_x, int c_y, Color color);
 
 /* draws a filled triangle with anti-aliased border (int) */
 void draw_triangle_i(Image *buf, int a_x, int a_y, int b_x, int b_y,
-                     int c_x, int c_y, Color3 border, Color3 fill);
+                     int c_x, int c_y, Color border, Color fill);
 
 /* draws a filled triangle with anti-aliased border */
 void draw_triangle(Image *buf, Vector2 a, Vector2 b,
-                   Vector2 c, Color3 border, Color3 fill);
+                   Vector2 c, Color border, Color fill);
 
 /* draws a wireframe quad (int) */
 void draw_quad_wi(Image *buf, int a_x, int a_y, int b_x, int b_y,
-                  int c_x, int c_y, int d_x, int d_y, Color3 color);
+                  int c_x, int c_y, int d_x, int d_y, Color color);
 
-/* clears the image with supplied color */
-void clear_image(Image *img, Color3 color);
+/* clears the image with supplied RGB color */
+void clear_image_rgb(Image *img, Color3 color);
 
 /* calculates index from xy coordinates */
 int index_from_xy(Image *img, int x, int y);
@@ -85,7 +85,7 @@ int index_from_xy(Image *img, int x, int y);
 size_t index_from_xy_unsafe(Image *img, int x, int y);
 
 /* converts rgba to rgb */
-Color3 c3_from_c4(Color color);
+Color3 rgb_from_rgba(Color color);
 
 /* converts rgb to rgba */
-Color c4_from_c3(Color3 color);
+Color rgba_from_rgb(Color3 color);
