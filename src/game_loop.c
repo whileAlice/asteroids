@@ -5,26 +5,27 @@
 #include "pam.h"
 #include "window_utils.h"
 
-int x;
-int y;
-Image pika;
+static int mouse_x;
+static int mouse_y;
+static Image pika;
+static Image hornet;
 
-// TODO: this should be init while the other one should be window_init
 void
 game_init()
 {
   pika = image_from_pam("assets/pikachu_smol.pam");
+  hornet = image_from_pam("assets/semihornet.pam");
 }
 
 void
-update(float dt)
+game_update(float dt)
 {
-  x = get_mouse_x();
-  y = get_mouse_y();
+  mouse_x = get_mouse_x();
+  mouse_y = get_mouse_y();
 }
 
 void
-draw(Image *buf)
+game_draw(Image* buf)
 {
   clear_image_rgb(buf, rgb_from_rgba(GRAY));
   draw_triangle(buf,
@@ -33,11 +34,12 @@ draw(Image *buf)
                 (Vector2){ .x = 200.0f, .y = 180.0f },
                 RED, GREEN);
   draw_rectangle_fi(buf, 20, 20, 50, 50, BLUE);
-  draw_image(buf, &pika, x, y);
+  draw_image_a(buf, &hornet, mouse_x, mouse_y);
 }
 
 void
 game_deinit()
 {
+  UnloadImage(hornet);
   UnloadImage(pika);
 }

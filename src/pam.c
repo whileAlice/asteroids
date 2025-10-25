@@ -1,5 +1,4 @@
 #include <assert.h>
-#include <ctype.h>
 #include <raylib.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -7,166 +6,186 @@
 #include <string.h>
 
 #include "pam.h"
+#include "draw_utils.h"
 
-#define PAM_HEADER "P7"
-#define PAM_ENDHDR "ENDHDR"
-#define TUPLTYPE   "TUPLTYPE"
-#define RGB        "RGB"
-#define RGB_ALPHA  "RGB_ALPHA"
+#define PAM_HEADER  "P7"
+#define PAM_ENDHDR  "ENDHDR"
+#define WIDTH       "WIDTH"
+#define HEIGHT      "HEIGHT"
+#define DEPTH       "DEPTH"
+#define MAXVAL      "MAXVAL"
+#define TUPLTYPE    "TUPLTYPE"
+#define COMMENT     '#'
+#define T_RGB       "RGB"
+#define T_RGB_ALPHA "RGB_ALPHA"
 
-// TODO: handle tokens properly
+typedef enum tupltype {
+  RGB,
+  RGB_ALPHA,
+} Tupltype;
+
+// token values
+static int width;
+static int height;
+static int depth;
+static int max_val;
+static Tupltype tupltype;
+
+static int line_count = 0;
+
 Image
 image_from_pam(const char *filename)
 {
-  FILE *fp = fopen(filename, "rb");
+  FILE* fp = fopen(filename, "rb");
   if (fp == NULL) {
     printf("ERROR: couldn't open file: %s\n", filename);
     exit(1);
   }
 
-  char line[32];
-
-  const char *header = read_next_line(fp, line, filename, "header");
-  if (strcmp(PAM_HEADER, header) != 0) {
-    printf("ERROR: wrong file header for filename: %s; expected: \"%s\", got: \"%s\"\n",
+  char buf[32];
+  const char* header = read_next_line(fp, buf, filename);
+  if (strcmp(header, PAM_HEADER) != 0) {
+    printf("ERROR: wrong header in file %s; expected: \"%s\", got: \"%s\"\n",
            filename, PAM_HEADER, header);
     exit(1);
   }
 
-  const int width = get_next_value(fp, line, filename, "width");
-  const int height = get_next_value(fp, line, filename, "height");
-  const int depth = get_next_value(fp, line, filename, "depth");
-  if (depth != 3 && depth != 4) {
-    printf("ERROR: invalid depth %d in file: %s\n", depth, filename);
-    exit(1);
-  }
-  const int max_val = get_next_value(fp, line, filename, "maximum value");
-  if (max_val > 255) {
-    printf("ERROR: invalid maximum value %d in file: %s\n", max_val, filename);
+  read_all_tokens(fp, buf, filename);
+  assert((depth = 3 && tupltype == RGB) ||
+         (depth = 4 && tupltype == RGB_ALPHA));
+
+  size_t pixel_count = width * height;
+  size_t type_size = tupltype == RGB ? sizeof(Color3) : sizeof(Color);
+  int format = tupltype == RGB ?
+               PIXELFORMAT_UNCOMPRESSED_R8G8B8 :
+               PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
+  void* pixels = (void*)malloc(pixel_count * type_size);
+  size_t read_count = fread(pixels, type_size, pixel_count, fp);
+  if (read_count < pixel_count) {
+    printf(
+      "ERROR: mismatch while reading pixels from %s; expected count: %d, got: %d\n",
+      filename, (int)pixel_count, (int)read_count
+    );
     exit(1);
   }
 
-  // TODO
-  float scale_by = 1.0f;
+  // TODO: this could be perhaps a little more elegant?
   if (max_val != 255) {
-    scale_by = (float)max_val / 255.0f;
+    if (tupltype == RGB) {
+      Color3* pixels3 = (Color3*)pixels;
+      for (size_t i = 0; i < pixel_count; ++i) {
+        pixels3[i].r = (uint8_t)((pixels3[i].r * 255 + max_val / 2) / max_val);
+        pixels3[i].g = (uint8_t)((pixels3[i].g * 255 + max_val / 2) / max_val);
+        pixels3[i].b = (uint8_t)((pixels3[i].b * 255 + max_val / 2) / max_val);
+      }
+    } else {
+      Color* pixels4 = (Color*)pixels;
+      for (size_t i = 0; i < pixel_count; ++i) {
+        pixels4[i].r = (uint8_t)((pixels4[i].r * 255 + max_val / 2) / max_val);
+        pixels4[i].g = (uint8_t)((pixels4[i].g * 255 + max_val / 2) / max_val);
+        pixels4[i].b = (uint8_t)((pixels4[i].b * 255 + max_val / 2) / max_val);
+        pixels4[i].a = (uint8_t)((pixels4[i].a * 255 + max_val / 2) / max_val);
+      }
+    }
   }
 
-  char *tupltype = read_next_line(fp, line, filename, "TUPLTYPE tokens");
-  const char *tupltype_id = strtok(tupltype, " ");
-  if (tupltype_id == NULL) {
-    printf("ERROR: couldn't extract %s identifier from file: %s\n", TUPLTYPE, filename);
+  if (fclose(fp) == EOF) {
+    printf("ERROR: could not close file %s\n", filename);
     exit(1);
   }
-
-  if (strcmp(tupltype_id, TUPLTYPE) != 0) {
-    printf("ERROR: %s identifier not found in file: %s; got: %s\n",
-           TUPLTYPE, filename, tupltype_id);
-    exit(1);
-  }
-
-  const char *tupltype_val = strtok(NULL, " ");
-  if (tupltype_val == NULL) {
-    printf("ERROR: couldn't extract %s value from file: %s\n", TUPLTYPE, filename);
-    exit(1);
-  }
-
-  // TODO: connect depth check to TUPLTYPE value check
-  if (strcmp(tupltype_val, "RGB") != 0 &&
-      strcmp(tupltype_val, "RGB_ALPHA") != 0) {
-    printf("ERROR: expected %s value not found in file: %s; got: \"%s\"\n",
-           TUPLTYPE, filename, tupltype_val);
-    exit(1);
-  }
-
-  char *end_header = read_next_line(fp, line, filename, PAM_ENDHDR);
-  if (strcmp(end_header, PAM_ENDHDR) != 0) {
-    printf("ERROR: %s identifier not found in file: %s; got: %s\n",
-           PAM_ENDHDR, filename, end_header);
-    exit(1);
-  }
-
-  // TODO: handle other cases
-  assert(strcmp(tupltype_val, RGB) == 0 && depth == 3 && max_val == 255);
-
-  size_t size = width * height;
-
-  typedef struct Color24 {
-    uint8_t r;
-    uint8_t g;
-    uint8_t b;
-  } Color24;
-
-  Color24 *pixels_24 = (Color24 *)malloc(size * sizeof(Color24));
-  Color *pixels = (Color *)malloc(size * sizeof(Color));
-
-  size_t read = fread(pixels_24, sizeof(Color24), size, fp);
-  if (read < size) {
-    printf("ERROR: error while reading: %s; expected size: %d, got: %d\n",
-           filename, (int)size, (int)read);
-    exit(1);
-  }
-
-  for (size_t i = 0; i < size; ++i) {
-    Color pixel = {
-      .r = pixels_24[i].r,
-      .g = pixels_24[i].g,
-      .b = pixels_24[i].b,
-      .a = 255
-    };
-
-    pixels[i] = pixel;
-  }
-
-  free(pixels_24);
 
   return (Image){
     .data    = pixels,
     .width   = width,
     .height  = height,
     .mipmaps = 1,
-    .format  = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8,
+    .format  = format,
   };
 }
 
-char
-*read_next_line(FILE *fp, char *buffer, const char *filename, const char *name)
+char*
+read_next_line(FILE* fp, char* buf, const char* filename)
 {
-  char tmp[32];
-  char *line = fgets(tmp, sizeof(tmp), fp);
+  line_count++;
+  char* line = fgets(buf, sizeof(buf), fp);
   if (line == NULL) {
-    printf("ERROR: couldn't read %s from file: %s\n", name, filename);
+    printf("ERROR: couldn't read line %d from file %s\n",
+           line_count, filename);
     exit(1);
   }
 
-  char *newline = strchr(line, '\n');
+  char* newline = strchr(line, '\n');
   if (newline != NULL) {
-    *newline = '\0';
+   *newline = '\0';
   }
-  // TODO: this shouldn't be necessary...
-  strcpy(buffer, tmp);
-  return buffer;
+
+  return line;
 }
 
 void
-seek_to_space(FILE *fp)
+read_all_tokens(FILE* fp, char* buf, const char* filename)
 {
+  char id[10];
+  char tupl_str[10];
+  int  val;
+
   int ch;
   while ((ch = fgetc(fp)) != EOF) {
-    if (isspace(ch)) break;
-  }
-}
+    if (ch == COMMENT) {
+      read_next_line(fp, buf, filename);
+    } else {
+      ungetc(ch, fp);
+    }
 
-int
-get_next_value(FILE *fp, char *buffer, const char *filename, const char *name)
-{
-  seek_to_space(fp);
-  const char *value_s = read_next_line(fp, buffer, filename, name);
-  const int value = atoi(value_s);
-  if (value <= 0) {
-    printf("ERROR: invalid %s %d in file: %s\n", name, value, filename);
-    exit(1);
-  }
+    line_count++;
+    long prev_pos = ftell(fp);
+    int res = fscanf(fp, "%s %d", id, &val);
+    switch (res) {
+    case 2:
+      if (strcmp(id, WIDTH) == 0) {
+        width = val;
+      } else if (strcmp(id, HEIGHT) == 0) {
+        height = val;
+      } else if (strcmp(id, DEPTH) == 0) {
+        depth = val;
+      } else if (strcmp(id, MAXVAL) == 0) {
+        max_val = val;
+      } else {
+        printf("ERROR on line %d in %s: %s is not a valid token identifier\n",
+               line_count, filename, id);
+        exit(1);
+      }
 
-  return value;
+      continue;
+    case 1:
+      if (strcmp(id, TUPLTYPE) == 0) {
+        line_count--;
+        fseek(fp, prev_pos, SEEK_SET);
+        fscanf(fp, "%s %s", id, tupl_str);
+        if (strcmp(tupl_str, T_RGB) == 0) {
+          tupltype = RGB;
+        } else if (strcmp(tupl_str, T_RGB_ALPHA) == 0) {
+          tupltype = RGB_ALPHA;
+        } else {
+          printf("ERROR on line %d in %s: %s is not a valid TUPLTYPE\n",
+                 line_count, filename, tupl_str);
+          exit(1);
+        }
+      } else if (strcmp(id, PAM_ENDHDR) == 0) {
+        return;
+      } else {
+        printf("ERROR on line %d in %s: %s is not a valid token identifier\n",
+               line_count, filename, id);
+        exit(1);
+      }
+
+      continue;
+    default:
+        printf(
+          "ERROR on line %d in %s: unknown error occured while reading tokens\n",
+          line_count, filename
+        );
+        exit(1);
+    }
+  }
 }

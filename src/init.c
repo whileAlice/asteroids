@@ -15,7 +15,7 @@ Texture2D texture;
 void
 init()
 {
-  Color3 *pixels = (Color3 *)malloc(PIXEL_COUNT * sizeof(Color3));
+  Color3* pixels = (Color3*)malloc(PIXEL_COUNT * sizeof(Color3));
   if (pixels == NULL) {
     printf("ERROR: couldn't allocate buffer memory");
     exit(1);

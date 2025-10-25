@@ -3,6 +3,6 @@
 #include <raylib.h>
 
 void game_init();
-void update(float dt);
-void draw(Image *image);
+void game_update(float dt);
+void game_draw(Image* image);
 void game_deinit();
