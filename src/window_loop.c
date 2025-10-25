@@ -29,8 +29,8 @@ window_loop() {
     }
 
     float dt = GetFrameTime();
-    update(dt);
-    draw(&image);
+    game_update(dt);
+    game_draw(&image);
 
     UpdateTexture(texture, image.data);
 

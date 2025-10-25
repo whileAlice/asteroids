@@ -4,7 +4,6 @@
 
 #include "raylib.h"
 
-Image image_from_pam(const char *filename);
-char *read_next_line(FILE *fp, char *buffer, const char *filename, const char *name);
-void seek_to_space(FILE *fp);
-int get_next_value(FILE *fp, char *buffer, const char *filename, const char *name);
+Image image_from_pam(const char* filename);
+char* read_next_line(FILE* fp, char* buf, const char* filename);
+void read_all_tokens(FILE* fp, char* buf, const char* filename);
