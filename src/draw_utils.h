@@ -4,6 +4,8 @@
 #include <stddef.h>
 #include <raylib.h>
 
+#include "font.h"
+
 typedef struct Color3{
   uint8_t r;
   uint8_t g;
@@ -27,6 +29,14 @@ void draw_image(Image* buf, Image* img, int origin_x, int origin_y);
 
 /* draws an alpha-blended image */
 void draw_image_a(Image* buf, Image* img, int origin_x, int origin_y);
+
+/* draws a glyph using the given font */
+void draw_glyph(Image* buf, FixedFont* font, int origin_x,
+                int origin_y, size_t index);
+
+/* draws text using the given font */
+void draw_text(Image* buf, FixedFont* font, int origin_x,
+               int origin_y, const char* text, int padding);
 
 /* draws an anti-aliased line (int) */
 void draw_line_i(Image* buf, int start_x, int start_y,
