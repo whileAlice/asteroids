@@ -2,11 +2,12 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdint.h>
+#include <string.h>
 
 #include "raylib.h"
 #include "math_utils.h"
 #include "draw_utils.h"
+#include "font.h"
 
 void
 draw_pixel(Image* buf, int x, int y, Color3 color)
@@ -74,21 +75,21 @@ draw_image(Image* buf, Image* img, int origin_x, int origin_y)
 
   Color3* pixels_buf = (Color3*)buf->data;
   Color3* pixels_img = (Color3*)img->data;
-  int img_y, img_x = 0;
+  int img_x, img_y = 0;
 
   // TODO: this looks like it could be optimized?
-  for (int buf_x = start_x; buf_x <= end_x; ++buf_x) {
-    img_y = 0;
+  for (int buf_y = start_y; buf_y <= end_y; ++buf_y) {
+    img_x = 0;
 
-    for (int buf_y = start_y; buf_y <= end_y; ++buf_y) {
+    for (int buf_x = start_x; buf_x <= end_x; ++buf_x) {
       size_t index_buf = index_from_xy_unsafe(buf, buf_x, buf_y);
       size_t index_img = index_from_xy_unsafe(img, img_x, img_y);
 
       pixels_buf[index_buf] = pixels_img[index_img];
-      img_y++;
+      img_x++;
     }
 
-    img_x++;
+    img_y++;
   }
 }
 
@@ -104,21 +105,100 @@ draw_image_a(Image* buf, Image* img, int origin_x, int origin_y)
 
   Color3* pixels_buf = (Color3*)buf->data;
   Color*  pixels_img = (Color *)img->data;
-  int img_y, img_x = 0;
+  int img_x, img_y = 0;
 
   // TODO: this looks like it could be optimized?
-  for (int buf_x = start_x; buf_x <= end_x; ++buf_x) {
-    img_y = 0;
+  for (int buf_y = start_y; buf_y <= end_y; ++buf_y) {
+    img_x = 0;
 
-    for (int buf_y = start_y; buf_y <= end_y; ++buf_y) {
+    for (int buf_x = start_x; buf_x <= end_x; ++buf_x) {
       size_t index_buf = index_from_xy_unsafe(buf, buf_x, buf_y);
       size_t index_img = index_from_xy_unsafe(img, img_x, img_y);
 
       blend_bg_with_fg(&pixels_buf[index_buf], &pixels_img[index_img]);
-      img_y++;
+      img_x++;
     }
 
-    img_x++;
+    img_y++;
+  }
+}
+
+void
+draw_glyph(Image* buf, FixedFont* font, int origin_x, int origin_y, size_t glyph_index)
+{
+  const int total_glyph_width  = font->glyph_width +
+                                 font->glyph_padding.left +
+                                 font->glyph_padding.right;
+  const int total_glyph_height = font->glyph_height +
+                                 font->glyph_padding.top +
+                                 font->glyph_padding.bottom;
+  int row = 0;
+  int init_sheet_x = 0 + font->glyph_padding.left;
+  for (size_t i = 0; i < glyph_index; ++i) {
+    init_sheet_x += total_glyph_width;
+
+    if (init_sheet_x >= font->glyph_sheet->width) {
+      init_sheet_x -= font->glyph_sheet->width;
+      row++;
+    }
+  }
+
+  int sheet_y = row * total_glyph_height + font->glyph_padding.top;
+
+  // TODO: make a function out of this
+  const int start_x = CLAMP(origin_x, 0, buf->width  - 1);
+  const int start_y = CLAMP(origin_y, 0, buf->height - 1);
+  const int end_x = CLAMPR(start_x + font->glyph_width  - 1, buf->width  - 1);
+  const int end_y = CLAMPR(start_y + font->glyph_height - 1, buf->height - 1);
+
+  // TODO: this could be generalized
+  Color3* pixels_buf   = (Color3*)buf ->data;
+  Color*  pixels_sheet = (Color*) font->glyph_sheet->data;
+
+  // TODO: this looks like it could be optimized?
+  for (int buf_y = start_y; buf_y <= end_y; ++buf_y) {
+    int sheet_x = init_sheet_x;
+
+    for (int buf_x = start_x; buf_x <= end_x; ++buf_x) {
+      size_t index_buf   = index_from_xy_unsafe(buf,               buf_x,   buf_y);
+      size_t index_sheet = index_from_xy_unsafe(font->glyph_sheet, sheet_x, sheet_y);
+
+      blend_bg_with_fg(&pixels_buf[index_buf], &pixels_sheet[index_sheet]);
+
+      sheet_x++;
+    }
+
+    sheet_y++;
+  }
+}
+
+void
+draw_text(Image* buf, FixedFont* font, int origin_x, int origin_y, const char* text, int padding)
+{
+  const int text_len = (int)strlen(text);
+  const int stride = font->glyph_width + padding;
+
+  for (int i = 0; i < text_len; ++i) {
+    if (origin_x >= buf->width) return;
+
+    if (text[i] == ' ') {
+      origin_x += stride;
+      continue;
+    }
+
+    int glyph_index;
+
+    if (text[i] >= 'a' && text[i] <= 'z') {
+      glyph_index = text[i] - 'a' + 26;
+    } else if (text[i] >= 'A' && text[i] <= 'Z') {
+      glyph_index = text[i] - 'A';
+    } else {
+      origin_x += stride;
+      continue;
+    }
+
+    draw_glyph(buf, font, origin_x, origin_y, glyph_index);
+    origin_x += stride;
   }
 }
 
@@ -189,8 +269,8 @@ draw_rectangle_fi(Image* buf, int origin_x, int origin_y,
   const int end_x = CLAMPR(start_x + width  - 1, buf->width  - 1);
   const int end_y = CLAMPR(start_y + height - 1, buf->height - 1);
 
-  for (int x = start_x; x <= end_x; ++x) {
-    for (int y = start_y; y <= end_y; ++y) {
+  for (int y = start_y; y <= end_y; ++y) {
+    for (int x = start_x; x <= end_x; ++x) {
       draw_pixel_a_unsafe(buf, x, y, color);
     }
   }
@@ -252,8 +332,8 @@ draw_triangle_fi(Image* buf, int a_x, int a_y, int b_x,
   const int max_x = CLAMP(MAX(MAX(a_x, b_x), c_x), 0, buf->width  - 1);
   const int max_y = CLAMP(MAX(MAX(a_y, b_y), c_y), 0, buf->height - 1);
 
-  for (int x = min_x; x <= max_x; ++x) {
-    for (int y = min_y; y <= max_y; ++y) {
+  for (int y = min_y; y <= max_y; ++y) {
+    for (int x = min_x; x <= max_x; ++x) {
       if (
         is_clockwise(a_x, a_y, b_x, b_y, x, y) &&
         is_clockwise(b_x, b_y, c_x, c_y, x, y) &&

@@ -5,16 +5,23 @@
 #include "pam.h"
 #include "window_utils.h"
 
-static int mouse_x;
-static int mouse_y;
-static Image pika;
-static Image hornet;
+static int       mouse_x;
+static int       mouse_y;
+static Image     glyph_sheet;
+static FixedFont font;
 
 void
 game_init()
 {
-  pika = image_from_pam("assets/pikachu_smol.pam");
-  hornet = image_from_pam("assets/semihornet.pam");
+  glyph_sheet = image_from_pam("assets/4x8font.pam");
+  font = load_fixed_font(&glyph_sheet,
+                         (Padding){
+                           .top    = 1,
+                           .bottom = 0,
+                           .left =   1,
+                           .right =  1,
+                         },
+                         4, 8, 2, 52);
 }
 
 void
@@ -34,12 +41,12 @@ game_draw(Image* buf)
                 (Vector2){ .x = 200.0f, .y = 180.0f },
                 RED, GREEN);
   draw_rectangle_fi(buf, 20, 20, 50, 50, BLUE);
-  draw_image_a(buf, &hornet, mouse_x, mouse_y);
+  draw_text(buf, &font, mouse_x, mouse_y, "Y HALO THAR one two three", 1);
+  // draw_image_a(buf, &glyph_sheet, mouse_x, mouse_y);
 }
 
 void
 game_deinit()
 {
-  UnloadImage(hornet);
-  UnloadImage(pika);
+  UnloadImage(glyph_sheet);
 }
