@@ -54,6 +54,7 @@ init_log_buffers(FixedFont* font)
 
   for (size_t i = 1; i <= console_buffer_line_count; ++i) {
     console_buffer[i * col_count - 1] = '\0';
+    osd_buffer    [i * col_count - 1] = '\0';
   }
 
   g_font = font;
@@ -79,6 +80,26 @@ show_console_log(Image* buf)
   for (size_t i = 0; i < row_count; ++i) {
     const char* current_line =
       &console_buffer[(current_page - 1) * page_size + i * col_count];
+    const int origin_y =
+      PADDING_TOP + (int)i * (g_font->glyph_height + CHAR_SPACING);
+
+    draw_text(buf, g_font, PADDING_LEFT, origin_y, current_line, CHAR_SPACING);
+  }
+}
+
+void
+print_to_osd(const char* text, size_t row, size_t col)
+{
+  strcpy(&osd_buffer[row * col_count + col], text);
+}
+
+void
+show_osd(Image* buf)
+
+{
+  for (size_t i = 0; i < row_count; ++i) {
+    const char* current_line =
+      &osd_buffer[i * col_count];
     const int origin_y =
       PADDING_TOP + (int)i * (g_font->glyph_height + CHAR_SPACING);
 
