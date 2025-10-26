@@ -7,7 +7,7 @@
 #include "game_loop.h"
 #include "init.h"
 
-#define PIXEL_COUNT BUFFER_WIDTH * BUFFER_HEIGHT
+#define PIXEL_COUNT PIXEL_BUFFER_WIDTH * PIXEL_BUFFER_HEIGHT
 
 Image image;
 Texture2D texture;
@@ -31,8 +31,8 @@ init()
 
   image = (Image){
     .data = pixels,
-    .width = BUFFER_WIDTH,
-    .height = BUFFER_HEIGHT,
+    .width = PIXEL_BUFFER_WIDTH,
+    .height = PIXEL_BUFFER_HEIGHT,
     .mipmaps = 1,
     .format = PIXELFORMAT_UNCOMPRESSED_R8G8B8,
   };

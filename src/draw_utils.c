@@ -389,7 +389,7 @@ clear_image_rgb(Image* img, Color3 color)
   Color3* addr = img->data;
   size_t count = img->width * img->height;
 
-  while (count--)* addr++ = color;
+  while (count--) *addr++ = color;
 }
 
 int
