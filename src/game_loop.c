@@ -11,6 +11,8 @@ static int       mouse_y;
 static Image     glyph_sheet;
 static FixedFont font;
 
+static char mouse_x_str[32];
+
 void
 game_init()
 {
@@ -32,6 +34,9 @@ game_update(float dt)
 {
   mouse_x = get_mouse_x();
   mouse_y = get_mouse_y();
+
+  sprintf(mouse_x_str, "%d no digits in font tho", mouse_x);
+  print_to_osd(mouse_x_str, 0, 0);
 }
 
 void
@@ -47,6 +52,7 @@ game_draw(Image* buf)
   draw_text(buf, &font, mouse_x, mouse_y, "Y HALO THAR one two three", 1);
   // draw_image_a(buf, &glyph_sheet, mouse_x, mouse_y);
   show_console_log(buf);
+  show_osd(buf);
 }
 
 void
