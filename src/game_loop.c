@@ -24,7 +24,7 @@ game_init()
                          },
                          4, 8, 2, 52);
   init_log_buffers(&font);
-  add_line_to_console_log("HELLO");
+  add_line_to_console_log("HELLO, WORLD");
 }
 
 void
