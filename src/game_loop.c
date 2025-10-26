@@ -16,17 +16,17 @@ static char mouse_x_str[32];
 void
 game_init()
 {
-  glyph_sheet = image_from_pam("assets/4x8font.pam");
+  glyph_sheet = image_from_pam("assets/5x8font.pam");
   font = load_fixed_font(&glyph_sheet,
                          (Padding){
                            .top    = 1,
-                           .bottom = 0,
+                           .bottom = 1,
                            .left =   1,
                            .right =  1,
                          },
-                         4, 8, 2, 52);
+                         5, 8, 2, 94);
   init_log_buffers(&font);
-  add_line_to_console_log("HELLO, WORLD");
+  add_line_to_console_log("Hello, world!");
 }
 
 void
@@ -35,7 +35,7 @@ game_update(float dt)
   mouse_x = get_mouse_x();
   mouse_y = get_mouse_y();
 
-  sprintf(mouse_x_str, "%d no digits in font tho", mouse_x);
+  sprintf(mouse_x_str, "%d", mouse_x);
   print_to_osd(mouse_x_str, 0, 0);
 }
 

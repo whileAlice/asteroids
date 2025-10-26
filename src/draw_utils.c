@@ -186,13 +186,9 @@ draw_text(Image* buf, FixedFont* font, int origin_x, int origin_y, const char* t
       continue;
     }
 
-    int glyph_index;
+    const int glyph_index = text[i] - 33;
 
-    if (text[i] >= 'a' && text[i] <= 'z') {
-      glyph_index = text[i] - 'a' + 26;
-    } else if (text[i] >= 'A' && text[i] <= 'Z') {
-      glyph_index = text[i] - 'A';
-    } else {
+    if (glyph_index < 0) {
       origin_x += stride;
       continue;
     }
