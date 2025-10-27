@@ -34,6 +34,7 @@ static size_t    s_current_page = PAGE_COUNT;
 void
 init_log_buffers()
 {
+  assert(g_ctx.fixed_font.glyph_count > 0);
   assert(PIXEL_BUFFER_WIDTH  - PADDING_LR >=
          (size_t)g_ctx.fixed_font.glyph_width);
   assert(PIXEL_BUFFER_HEIGHT - PADDING_TB >=
