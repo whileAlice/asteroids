@@ -12,7 +12,6 @@ extern Context g_ctx;
 
 static int  s_mouse_x;
 static int  s_mouse_y;
-static char s_mouse_x_str[32];
 
 void
 game_init()
@@ -31,8 +30,7 @@ game_update(float dt)
   s_mouse_x = get_mouse_x();
   s_mouse_y = get_mouse_y();
 
-  sprintf(s_mouse_x_str, "%d", s_mouse_x);
-  print_to_osd(s_mouse_x_str, 0, 0);
+  osd_printf(0, 0, "%d", s_mouse_x);
 }
 
 void

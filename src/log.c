@@ -22,14 +22,14 @@
 
 extern Context g_ctx;
 
-static size_t    s_page_size;
-static size_t    s_paged_buffer_size;
-static size_t    s_paged_buffer_line_count;
-static size_t    s_page_col_count;
-static size_t    s_page_row_count;
-static char*     s_osd_buffer;
-static char*     s_console_buffer;
-static size_t    s_current_page = PAGE_COUNT;
+static size_t s_page_size;
+static size_t s_paged_buffer_size;
+static size_t s_paged_buffer_line_count;
+static size_t s_page_col_count;
+static size_t s_page_row_count;
+static char*  s_osd_buffer;
+static char*  s_console_buffer;
+static size_t s_current_page = PAGE_COUNT;
 
 void
 init_log_buffers()
@@ -64,6 +64,26 @@ init_log_buffers()
 }
 
 void
+osd_print(size_t row, size_t col, const char* text)
+{
+  strcpy(&s_osd_buffer[row * s_page_col_count + col], text);
+}
+
+void
+osd_printf(size_t row, size_t col, const char* fmt, ...)
+{
+  char buf[1024];
+
+  va_list args;
+  va_start(args, fmt);
+
+  vsnprintf(buf, 1024 * sizeof(char), fmt, args);
+  osd_print(row, col, buf);
+
+  va_end(args);
+}
+
+void
 add_line_to_console_log(const char* line)
 {
   for (size_t i = 0; i < s_paged_buffer_line_count - 1; ++i) {
@@ -93,12 +113,6 @@ draw_console_log(Image* buf)
     draw_text(buf, &g_ctx.fixed_font, PADDING_LEFT, origin_y,
               current_line, CHAR_SPACING);
   }
-}
-
-void
-print_to_osd(const char* text, size_t row, size_t col)
-{
-  strcpy(&s_osd_buffer[row * s_page_col_count + col], text);
 }
 
 void
