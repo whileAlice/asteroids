@@ -18,7 +18,7 @@ game_init()
 {
   load_fixed_font(FIXED_FONT_PATH);
   init_log_buffers();
-  add_line_to_console_log("Hello, world!");
+  log_printf("loaded fixed font with %d glyphs", g_ctx.fixed_font.glyph_count);
 }
 
 void
@@ -27,10 +27,20 @@ game_update(float dt)
   update_input();
   update_state();
 
+  if (g_ctx.input.log_page_up) {
+    previous_log_page();
+  }
+  if (g_ctx.input.log_page_down) {
+    next_log_page();
+  }
+  if (IsKeyPressed(KEY_L)) {
+    log_print("THE L KEY IS PRESSED");
+  }
+
   s_mouse_x = get_mouse_x();
   s_mouse_y = get_mouse_y();
 
-  osd_printf(0, 0, "%d", s_mouse_x);
+  osd_printf(0, 0, "s_mouse_x: %d, s_mouse_y: %d", s_mouse_x, s_mouse_y);
 }
 
 void
@@ -46,8 +56,8 @@ game_draw(Image* buf)
   draw_text(buf, &g_ctx.fixed_font, s_mouse_x, s_mouse_y,
             "Y HALO THAR one two three", 1);
   // draw_image_a(buf, &glyph_sheet, mouse_x, mouse_y);
-  if (g_ctx.state.show_console) {
-    draw_console_log(buf);
+  if (g_ctx.state.show_log) {
+    draw_log(buf);
   }
   if (g_ctx.state.show_osd) {
     draw_osd(buf);
