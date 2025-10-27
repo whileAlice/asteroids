@@ -19,97 +19,103 @@
 #define PADDING_TB (PADDING_TOP  + PADDING_BOTTOM)
 #define PADDING_LR (PADDING_LEFT + PADDING_RIGHT)
 
-static size_t     page_size;
-static size_t     console_buffer_size;
-static size_t     console_buffer_line_count;
-static size_t     col_count;
-static size_t     row_count;
-static char*      osd_buffer;
-static char*      console_buffer;
-static FixedFont* g_font;
-static size_t     current_page = PAGE_COUNT;
+static size_t    s_page_size;
+static size_t    s_paged_buffer_size;
+static size_t    s_paged_buffer_line_count;
+static size_t    s_page_col_count;
+static size_t    s_page_row_count;
+static char*     s_osd_buffer;
+static char*     s_console_buffer;
+static size_t    s_current_page = PAGE_COUNT;
+
+extern FixedFont g_fixed_font;
 
 void
-init_log_buffers(FixedFont* font)
+init_log_buffers()
 {
-  assert(PIXEL_BUFFER_WIDTH  - PADDING_LR >= (size_t)font->glyph_width);
-  assert(PIXEL_BUFFER_HEIGHT - PADDING_TB >= (size_t)font->glyph_height);
+  assert(PIXEL_BUFFER_WIDTH  - PADDING_LR >=
+         (size_t)g_fixed_font.glyph_width);
+  assert(PIXEL_BUFFER_HEIGHT - PADDING_TB >=
+         (size_t)g_fixed_font.glyph_height);
 
-  col_count =
-    (PIXEL_BUFFER_WIDTH  - PADDING_LR - font->glyph_width) /
-    (font->glyph_width  + CHAR_SPACING) + 2;
-  row_count =
-    (PIXEL_BUFFER_HEIGHT - PADDING_TB - font->glyph_height) /
-    (font->glyph_height + CHAR_SPACING) + 1;
+  s_page_col_count =
+    (PIXEL_BUFFER_WIDTH  - PADDING_LR - g_fixed_font.glyph_width) /
+    (g_fixed_font.glyph_width  + CHAR_SPACING) + 2;
+  s_page_row_count =
+    (PIXEL_BUFFER_HEIGHT - PADDING_TB - g_fixed_font.glyph_height) /
+    (g_fixed_font.glyph_height + CHAR_SPACING) + 1;
 
-  page_size                 = col_count * row_count;
-  console_buffer_size       = page_size * PAGE_COUNT;
-  console_buffer_line_count = row_count * PAGE_COUNT;
+  s_page_size               = s_page_col_count * s_page_row_count;
+  s_paged_buffer_size       = s_page_size * PAGE_COUNT;
+  s_paged_buffer_line_count = s_page_row_count * PAGE_COUNT;
 
-  console_buffer = malloc(console_buffer_size * sizeof(char));
-  osd_buffer     = malloc(page_size           * sizeof(char));
+  s_console_buffer = malloc(s_paged_buffer_size * sizeof(char));
+  s_osd_buffer     = malloc(s_page_size         * sizeof(char));
 
-  memset(console_buffer, ' ', console_buffer_size * sizeof(char));
-  memset(osd_buffer,     ' ', page_size           * sizeof(char));
+  memset(s_console_buffer, ' ', s_paged_buffer_size * sizeof(char));
+  memset(s_osd_buffer,     ' ', s_page_size         * sizeof(char));
 
-  for (size_t i = 1; i <= console_buffer_line_count; ++i) {
-    console_buffer[i * col_count - 1] = '\0';
-    osd_buffer    [i * col_count - 1] = '\0';
+  for (size_t i = 1; i <= s_paged_buffer_line_count; ++i) {
+    s_console_buffer[i * s_page_col_count - 1] = '\0';
+    s_osd_buffer    [i * s_page_col_count - 1] = '\0';
   }
-
-  g_font = font;
 }
 
 void
 add_line_to_console_log(const char* line)
 {
-  for (size_t i = 0; i < console_buffer_line_count - 1; ++i) {
-    size_t char_count = col_count;
-    char* dst = &console_buffer[i * col_count];
-    char* src = &console_buffer[(i + 1) * col_count];
+  for (size_t i = 0; i < s_paged_buffer_line_count - 1; ++i) {
+    size_t char_count = s_page_col_count;
+    char* dst = &s_console_buffer[i * s_page_col_count];
+    char* src = &s_console_buffer[(i + 1) * s_page_col_count];
 
     while (char_count--) *dst++ = *src++;
   }
 
-  strcpy(&console_buffer[(console_buffer_line_count - 1) * col_count], line);
+  const size_t last_line_index =
+    (s_paged_buffer_line_count - 1) * s_page_col_count;
+
+  strcpy(&s_console_buffer[last_line_index], line);
 }
 
 void
-show_console_log(Image* buf)
+draw_console_log(Image* buf)
 {
-  for (size_t i = 0; i < row_count; ++i) {
+  for (size_t i = 0; i < s_page_row_count; ++i) {
     const char* current_line =
-      &console_buffer[(current_page - 1) * page_size + i * col_count];
+      &s_console_buffer[(s_current_page - 1) *
+      s_page_size + i * s_page_col_count];
     const int origin_y =
-      PADDING_TOP + (int)i * (g_font->glyph_height + CHAR_SPACING);
+      PADDING_TOP + (int)i * (g_fixed_font.glyph_height + CHAR_SPACING);
 
-    draw_text(buf, g_font, PADDING_LEFT, origin_y, current_line, CHAR_SPACING);
+    draw_text(buf, &g_fixed_font, PADDING_LEFT, origin_y,
+              current_line, CHAR_SPACING);
   }
 }
 
 void
 print_to_osd(const char* text, size_t row, size_t col)
 {
-  strcpy(&osd_buffer[row * col_count + col], text);
+  strcpy(&s_osd_buffer[row * s_page_col_count + col], text);
 }
 
 void
-show_osd(Image* buf)
-
+draw_osd(Image* buf)
 {
-  for (size_t i = 0; i < row_count; ++i) {
+  for (size_t i = 0; i < s_page_row_count; ++i) {
     const char* current_line =
-      &osd_buffer[i * col_count];
+      &s_osd_buffer[i * s_page_col_count];
     const int origin_y =
-      PADDING_TOP + (int)i * (g_font->glyph_height + CHAR_SPACING);
+      PADDING_TOP + (int)i * (g_fixed_font.glyph_height + CHAR_SPACING);
 
-    draw_text(buf, g_font, PADDING_LEFT, origin_y, current_line, CHAR_SPACING);
+    draw_text(buf, &g_fixed_font, PADDING_LEFT, origin_y,
+              current_line, CHAR_SPACING);
   }
 }
 
 void
 deinit_log_buffers()
 {
-  free(console_buffer);
-  free(osd_buffer);
+  free(s_console_buffer);
+  free(s_osd_buffer);
 }

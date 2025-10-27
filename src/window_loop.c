@@ -4,17 +4,18 @@
 #include "window_loop.h"
 #include "window_utils.h"
 
-extern Image image;
-extern Texture2D texture;
-int integer_scale;
-int texture_origin_x;
-int texture_origin_y;
+extern Image     g_image;
+extern Texture2D g_texture;
+
+int g_integer_scale;
+int g_texture_origin_x;
+int g_texture_origin_y;
 
 void
 window_loop() {
-  integer_scale = get_integer_scale();
-  texture_origin_x = get_texture_origin_x();
-  texture_origin_y = get_texture_origin_y();
+  g_integer_scale    = get_integer_scale();
+  g_texture_origin_x = get_texture_origin_x();
+  g_texture_origin_y = get_texture_origin_y();
 
   while (!WindowShouldClose()) {
     if (IsKeyPressed(KEY_F)) {
@@ -23,27 +24,27 @@ window_loop() {
 
 
     if (IsWindowResized()) {
-      integer_scale = get_integer_scale();
-      texture_origin_x = get_texture_origin_x();
-      texture_origin_y = get_texture_origin_y();
+      g_integer_scale    = get_integer_scale();
+      g_texture_origin_x = get_texture_origin_x();
+      g_texture_origin_y = get_texture_origin_y();
     }
 
     float dt = GetFrameTime();
     game_update(dt);
-    game_draw(&image);
+    game_draw(&g_image);
 
-    UpdateTexture(texture, image.data);
+    UpdateTexture(g_texture, g_image.data);
 
     BeginDrawing();
 
       ClearBackground(BLACK);
-      DrawTextureEx(texture,
+      DrawTextureEx(g_texture,
                     (Vector2){
-                      .x = (float)texture_origin_x,
-                      .y = (float)texture_origin_y
+                      .x = (float)g_texture_origin_x,
+                      .y = (float)g_texture_origin_y
                     },
                     .0,
-                    (float)integer_scale,
+                    (float)g_integer_scale,
                     WHITE);
 
     EndDrawing();
