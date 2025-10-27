@@ -1,7 +1,9 @@
 #include <raylib.h>
 
+#include "config.h"
 #include "context.h"
 #include "game_loop.h"
+#include "input.h"
 #include "window_utils.h"
 #include "draw_utils.h"
 #include "log.h"
@@ -15,7 +17,7 @@ static char s_mouse_x_str[32];
 void
 game_init()
 {
-  load_fixed_font("assets/5x8font.def");
+  load_fixed_font(FIXED_FONT_PATH);
   init_log_buffers();
   add_line_to_console_log("Hello, world!");
 }
@@ -23,6 +25,9 @@ game_init()
 void
 game_update(float dt)
 {
+  update_input();
+  update_state();
+
   s_mouse_x = get_mouse_x();
   s_mouse_y = get_mouse_y();
 
@@ -43,8 +48,12 @@ game_draw(Image* buf)
   draw_text(buf, &g_ctx.fixed_font, s_mouse_x, s_mouse_y,
             "Y HALO THAR one two three", 1);
   // draw_image_a(buf, &glyph_sheet, mouse_x, mouse_y);
-  draw_console_log(buf);
-  draw_osd(buf);
+  if (g_ctx.state.show_console) {
+    draw_console_log(buf);
+  }
+  if (g_ctx.state.show_osd) {
+    draw_osd(buf);
+  }
 }
 
 void
