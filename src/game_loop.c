@@ -1,11 +1,12 @@
 #include <raylib.h>
 
+#include "context.h"
 #include "game_loop.h"
 #include "window_utils.h"
 #include "draw_utils.h"
 #include "log.h"
 
-extern FixedFont g_fixed_font;
+extern Context g_ctx;
 
 static int  s_mouse_x;
 static int  s_mouse_y;
@@ -39,7 +40,7 @@ game_draw(Image* buf)
                 (Vector2){ .x = 200.0f, .y = 180.0f },
                 RED, GREEN);
   draw_rectangle_fi(buf, 20, 20, 50, 50, BLUE);
-  draw_text(buf, &g_fixed_font, s_mouse_x, s_mouse_y,
+  draw_text(buf, &g_ctx.fixed_font, s_mouse_x, s_mouse_y,
             "Y HALO THAR one two three", 1);
   // draw_image_a(buf, &glyph_sheet, mouse_x, mouse_y);
   draw_console_log(buf);
