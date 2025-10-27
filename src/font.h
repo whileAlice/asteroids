@@ -1,25 +1,25 @@
 #pragma once
 
 #include <stddef.h>
+#include <stdio.h>
 
 #include "raylib.h"
 
-typedef struct Padding{
+typedef struct Margin{
   int top;
   int bottom;
   int left;
   int right;
-} Padding;
+} Margin;
 
 typedef struct FixedFont{
-  Image*  glyph_sheet;
-  Padding glyph_padding;
-  int     glyph_width;
-  int     glyph_height;
-  int     tail_height;
-  size_t  glyph_count;
+  Image* glyph_sheet;
+  Margin glyph_padding;
+  int    glyph_width;
+  int    glyph_height;
+  size_t glyph_count;
 } FixedFont;
 
-FixedFont load_fixed_font(Image* glyph_sheet, Padding glyph_padding,
-                          int glyph_width, int glyph_height,
-                          int tail_height, size_t glyph_count);
+void load_fixed_font(const char* font_def);
+void unload_fixed_font();
+void read_all_font_tokens(FILE* fp, char* buf, const char* filename);

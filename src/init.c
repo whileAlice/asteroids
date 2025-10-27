@@ -9,8 +9,8 @@
 
 #define PIXEL_COUNT PIXEL_BUFFER_WIDTH * PIXEL_BUFFER_HEIGHT
 
-Image image;
-Texture2D texture;
+Image     g_image;
+Texture2D g_texture;
 
 void
 init()
@@ -29,19 +29,19 @@ init()
     };
   };
 
-  image = (Image){
-    .data = pixels,
-    .width = PIXEL_BUFFER_WIDTH,
-    .height = PIXEL_BUFFER_HEIGHT,
+  g_image = (Image){
+    .data    = pixels,
+    .width   = PIXEL_BUFFER_WIDTH,
+    .height  = PIXEL_BUFFER_HEIGHT,
     .mipmaps = 1,
-    .format = PIXELFORMAT_UNCOMPRESSED_R8G8B8,
+    .format  = PIXELFORMAT_UNCOMPRESSED_R8G8B8,
   };
 
   InitWindow(INITIAL_WINDOW_WIDTH, INITIAL_WINDOW_HEIGHT, APP_TITLE);
   SetExitKey(EXIT_KEY);
   SetTargetFPS(60);
 
-  texture = LoadTextureFromImage(image);
+  g_texture = LoadTextureFromImage(g_image);
 
   game_init();
 }
@@ -51,8 +51,8 @@ deinit()
 {
   game_deinit();
 
-  UnloadTexture(texture);
-  UnloadImage(image);
+  UnloadTexture(g_texture);
+  UnloadImage(g_image);
 
   CloseWindow();
 }

@@ -3,40 +3,30 @@
 #include "game_loop.h"
 #include "window_utils.h"
 #include "draw_utils.h"
-#include "pam.h"
 #include "log.h"
 
-static int       mouse_x;
-static int       mouse_y;
-static Image     glyph_sheet;
-static FixedFont font;
+extern FixedFont g_fixed_font;
 
-static char mouse_x_str[32];
+static int  s_mouse_x;
+static int  s_mouse_y;
+static char s_mouse_x_str[32];
 
 void
 game_init()
 {
-  glyph_sheet = image_from_pam("assets/5x8font.pam");
-  font = load_fixed_font(&glyph_sheet,
-                         (Padding){
-                           .top    = 1,
-                           .bottom = 1,
-                           .left =   1,
-                           .right =  1,
-                         },
-                         5, 8, 2, 94);
-  init_log_buffers(&font);
+  load_fixed_font("assets/5x8font.def");
+  init_log_buffers();
   add_line_to_console_log("Hello, world!");
 }
 
 void
 game_update(float dt)
 {
-  mouse_x = get_mouse_x();
-  mouse_y = get_mouse_y();
+  s_mouse_x = get_mouse_x();
+  s_mouse_y = get_mouse_y();
 
-  sprintf(mouse_x_str, "%d", mouse_x);
-  print_to_osd(mouse_x_str, 0, 0);
+  sprintf(s_mouse_x_str, "%d", s_mouse_x);
+  print_to_osd(s_mouse_x_str, 0, 0);
 }
 
 void
@@ -49,15 +39,16 @@ game_draw(Image* buf)
                 (Vector2){ .x = 200.0f, .y = 180.0f },
                 RED, GREEN);
   draw_rectangle_fi(buf, 20, 20, 50, 50, BLUE);
-  draw_text(buf, &font, mouse_x, mouse_y, "Y HALO THAR one two three", 1);
+  draw_text(buf, &g_fixed_font, s_mouse_x, s_mouse_y,
+            "Y HALO THAR one two three", 1);
   // draw_image_a(buf, &glyph_sheet, mouse_x, mouse_y);
-  show_console_log(buf);
-  show_osd(buf);
+  draw_console_log(buf);
+  draw_osd(buf);
 }
 
 void
 game_deinit()
 {
   deinit_log_buffers();
-  UnloadImage(glyph_sheet);
+  unload_fixed_font();
 }
