@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <raylib.h>
 
+#include "context.h"
 #include "config.h"
 #include "draw_utils.h"
 #include "game_loop.h"
@@ -9,8 +10,7 @@
 
 #define PIXEL_COUNT PIXEL_BUFFER_WIDTH * PIXEL_BUFFER_HEIGHT
 
-Image     g_image;
-Texture2D g_texture;
+extern Context g_ctx;
 
 void
 init()
@@ -29,7 +29,7 @@ init()
     };
   };
 
-  g_image = (Image){
+  g_ctx.buffer_image = (Image){
     .data    = pixels,
     .width   = PIXEL_BUFFER_WIDTH,
     .height  = PIXEL_BUFFER_HEIGHT,
@@ -41,7 +41,7 @@ init()
   SetExitKey(EXIT_KEY);
   SetTargetFPS(60);
 
-  g_texture = LoadTextureFromImage(g_image);
+  g_ctx.buffer_texture = LoadTextureFromImage(g_ctx.buffer_image);
 
   game_init();
 }
@@ -51,8 +51,8 @@ deinit()
 {
   game_deinit();
 
-  UnloadTexture(g_texture);
-  UnloadImage(g_image);
+  UnloadTexture(g_ctx.buffer_texture);
+  UnloadImage(g_ctx.buffer_image);
 
   CloseWindow();
 }

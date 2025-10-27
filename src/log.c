@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "context.h"
 #include "log.h"
 #include "config.h"
 #include "draw_utils.h"
@@ -19,6 +20,8 @@
 #define PADDING_TB (PADDING_TOP  + PADDING_BOTTOM)
 #define PADDING_LR (PADDING_LEFT + PADDING_RIGHT)
 
+extern Context g_ctx;
+
 static size_t    s_page_size;
 static size_t    s_paged_buffer_size;
 static size_t    s_paged_buffer_line_count;
@@ -28,22 +31,20 @@ static char*     s_osd_buffer;
 static char*     s_console_buffer;
 static size_t    s_current_page = PAGE_COUNT;
 
-extern FixedFont g_fixed_font;
-
 void
 init_log_buffers()
 {
   assert(PIXEL_BUFFER_WIDTH  - PADDING_LR >=
-         (size_t)g_fixed_font.glyph_width);
+         (size_t)g_ctx.fixed_font.glyph_width);
   assert(PIXEL_BUFFER_HEIGHT - PADDING_TB >=
-         (size_t)g_fixed_font.glyph_height);
+         (size_t)g_ctx.fixed_font.glyph_height);
 
   s_page_col_count =
-    (PIXEL_BUFFER_WIDTH  - PADDING_LR - g_fixed_font.glyph_width) /
-    (g_fixed_font.glyph_width  + CHAR_SPACING) + 2;
+    (PIXEL_BUFFER_WIDTH  - PADDING_LR - g_ctx.fixed_font.glyph_width) /
+    (g_ctx.fixed_font.glyph_width  + CHAR_SPACING) + 2;
   s_page_row_count =
-    (PIXEL_BUFFER_HEIGHT - PADDING_TB - g_fixed_font.glyph_height) /
-    (g_fixed_font.glyph_height + CHAR_SPACING) + 1;
+    (PIXEL_BUFFER_HEIGHT - PADDING_TB - g_ctx.fixed_font.glyph_height) /
+    (g_ctx.fixed_font.glyph_height + CHAR_SPACING) + 1;
 
   s_page_size               = s_page_col_count * s_page_row_count;
   s_paged_buffer_size       = s_page_size * PAGE_COUNT;
@@ -86,9 +87,9 @@ draw_console_log(Image* buf)
       &s_console_buffer[(s_current_page - 1) *
       s_page_size + i * s_page_col_count];
     const int origin_y =
-      PADDING_TOP + (int)i * (g_fixed_font.glyph_height + CHAR_SPACING);
+      PADDING_TOP + (int)i * (g_ctx.fixed_font.glyph_height + CHAR_SPACING);
 
-    draw_text(buf, &g_fixed_font, PADDING_LEFT, origin_y,
+    draw_text(buf, &g_ctx.fixed_font, PADDING_LEFT, origin_y,
               current_line, CHAR_SPACING);
   }
 }
@@ -106,9 +107,9 @@ draw_osd(Image* buf)
     const char* current_line =
       &s_osd_buffer[i * s_page_col_count];
     const int origin_y =
-      PADDING_TOP + (int)i * (g_fixed_font.glyph_height + CHAR_SPACING);
+      PADDING_TOP + (int)i * (g_ctx.fixed_font.glyph_height + CHAR_SPACING);
 
-    draw_text(buf, &g_fixed_font, PADDING_LEFT, origin_y,
+    draw_text(buf, &g_ctx.fixed_font, PADDING_LEFT, origin_y,
               current_line, CHAR_SPACING);
   }
 }

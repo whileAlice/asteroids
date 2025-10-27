@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "context.h"
 #include "font.h"
 #include "pam.h"
 #include "token.h"
@@ -16,7 +17,7 @@
 #define GLYPH_COUNT  "GLYPH_COUNT"
 #define COMMENT      '#'
 
-FixedFont    g_fixed_font;
+extern Context g_ctx;
 
 // token values
 static char  s_font_filename[32];
@@ -64,7 +65,7 @@ load_fixed_font(const char* font_def)
                            .left   = s_glyph_margin,
                            .right  = s_glyph_margin };
 
-  g_fixed_font = (FixedFont){
+  g_ctx.fixed_font = (FixedFont){
     .glyph_sheet   = &s_glyph_sheet,
     .glyph_padding = glyph_margins,
     .glyph_width   = s_glyph_width,
