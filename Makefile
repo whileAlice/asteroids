@@ -29,6 +29,9 @@ ${ASTBINDIR}: ${AST}
 run: ${BIN}
 	${BIN}
 
+runopt: CFLAGS += -O3
+runopt: run
+
 ${LNK}: ${INC}
 	cd ${INC} && make
 
@@ -42,4 +45,4 @@ cleanall: clean cleandeps
 
 fresh: cleanall ${BIN}
 
-.PHONY: clean cleandeps cleanall fresh run
+.PHONY: clean cleandeps cleanall fresh run runopt

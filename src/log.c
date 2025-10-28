@@ -52,14 +52,14 @@ init_log_buffers()
   s_paged_buffer_line_count = s_page_row_count * PAGE_COUNT;
 
   s_log_buffer = malloc(s_paged_buffer_size * sizeof(char));
-  s_osd_buffer     = malloc(s_page_size         * sizeof(char));
+  s_osd_buffer = malloc(s_page_size         * sizeof(char));
 
   memset(s_log_buffer, ' ', s_paged_buffer_size * sizeof(char));
-  memset(s_osd_buffer,     ' ', s_page_size         * sizeof(char));
+  memset(s_osd_buffer, ' ', s_page_size         * sizeof(char));
 
   for (size_t i = 1; i <= s_paged_buffer_line_count; ++i) {
     s_log_buffer[i * s_page_col_count - 1] = '\0';
-    s_osd_buffer    [i * s_page_col_count - 1] = '\0';
+    s_osd_buffer[i * s_page_col_count - 1] = '\0';
   }
 
   g_ctx.state.current_log_page = PAGE_COUNT;
