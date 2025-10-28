@@ -10,61 +10,61 @@
 #include "font.h"
 
 void
-draw_pixel(Image* buf, int x, int y, Color3 color)
+draw_rgb_pixel(Image* buf, int x, int y, Color3 pixel)
 {
   int index = index_from_xy(buf, x, y);
   if (index == -1) return;
 
-	Color3* pixels = (Color3*)buf->data;
-	pixels[index] = color;
+	Color3* pixels_buf = (Color3*)buf->data;
+	pixels_buf[index] = pixel;
 }
 
 void
-draw_pixel_unsafe(Image* buf, int x, int y, Color3 color)
+draw_rgb_pixel_unsafe(Image* buf, int x, int y, Color3 pixel)
 {
   size_t index = index_from_xy_unsafe(buf, x, y);
 
-	Color3* pixels = (Color3*)buf->data;
-	pixels[index] = color;
+	Color3* pixels_buf = (Color3*)buf->data;
+	pixels_buf[index] = pixel;
+}
+
+void
+draw_rgba_pixel(Image* buf, int x, int y, Color pixel)
+{
+  int index = index_from_xy(buf, x, y);
+  if (index == -1) return;
+
+  blend_rgba_pixel_on_rgb_buffer(buf, x, y, pixel, index);
+}
+
+void
+draw_rgba_pixel_unsafe(Image* buf, int x, int y, Color pixel)
+{
+  size_t index = index_from_xy_unsafe(buf, x, y);
+
+  blend_rgba_pixel_on_rgb_buffer(buf, x, y, pixel, index);
 }
 
 static void
-alpha_blend_with_buffer(Image* buf, int x, int y, Color color, size_t index)
+blend_rgba_pixel_on_rgb_buffer(Image* buf, int x, int y, Color pixel, size_t index)
 {
-  Color3* pixels = (Color3*)buf->data;
+  Color3* pixels_buf = (Color3*)buf->data;
 
-  switch (color.a) {
+  switch (pixel.a) {
   case 0:
     return;
   case 255:
-    pixels[index].r = color.r;
-    pixels[index].g = color.g;
-    pixels[index].b = color.b;
+    pixels_buf[index].r = pixel.r;
+    pixels_buf[index].g = pixel.g;
+    pixels_buf[index].b = pixel.b;
     return;
   default:
-    blend_bg_with_fg(&pixels[index], &color);
+    blend_rgba_pixel_on_rgb_pixel(&pixels_buf[index], &pixel);
   }
 }
 
 void
-draw_pixel_a(Image* buf, int x, int y, Color color)
-{
-  int index = index_from_xy(buf, x, y);
-  if (index == -1) return;
-
-  alpha_blend_with_buffer(buf, x, y, color, index);
-}
-
-void
-draw_pixel_a_unsafe(Image* buf, int x, int y, Color color)
-{
-  size_t index = index_from_xy_unsafe(buf, x, y);
-
-  alpha_blend_with_buffer(buf, x, y, color, index);
-}
-
-void
-draw_image(Image* buf, Image* img, int origin_x, int origin_y)
+draw_rgb_image(Image* buf, Image* img, int origin_x, int origin_y)
 {
   assert(img->format == PIXELFORMAT_UNCOMPRESSED_R8G8B8);
 
@@ -94,7 +94,7 @@ draw_image(Image* buf, Image* img, int origin_x, int origin_y)
 }
 
 void
-draw_image_a(Image* buf, Image* img, int origin_x, int origin_y)
+draw_rgba_image(Image* buf, Image* img, int origin_x, int origin_y)
 {
   assert(img->format == PIXELFORMAT_UNCOMPRESSED_R8G8B8A8);
 
@@ -115,7 +115,7 @@ draw_image_a(Image* buf, Image* img, int origin_x, int origin_y)
       size_t index_buf = index_from_xy_unsafe(buf, buf_x, buf_y);
       size_t index_img = index_from_xy_unsafe(img, img_x, img_y);
 
-      blend_bg_with_fg(&pixels_buf[index_buf], &pixels_img[index_img]);
+      blend_rgba_pixel_on_rgb_pixel(&pixels_buf[index_buf], &pixels_img[index_img]);
       img_x++;
     }
 
@@ -124,7 +124,8 @@ draw_image_a(Image* buf, Image* img, int origin_x, int origin_y)
 }
 
 void
-draw_glyph(Image* buf, FixedFont* font, int origin_x, int origin_y, size_t glyph_index)
+draw_glyph(Image* buf, FixedFont* font, int origin_x,
+           int origin_y, size_t glyph_index)
 {
   const int total_glyph_width  = font->glyph_width +
                                  font->glyph_padding.left +
@@ -163,7 +164,8 @@ draw_glyph(Image* buf, FixedFont* font, int origin_x, int origin_y, size_t glyph
       size_t index_buf   = index_from_xy_unsafe(buf,               buf_x,   buf_y);
       size_t index_sheet = index_from_xy_unsafe(font->glyph_sheet, sheet_x, sheet_y);
 
-      blend_bg_with_fg(&pixels_buf[index_buf], &pixels_sheet[index_sheet]);
+      blend_rgba_pixel_on_rgb_pixel(&pixels_buf[index_buf],
+                                    &pixels_sheet[index_sheet]);
 
       sheet_x++;
     }
@@ -173,7 +175,8 @@ draw_glyph(Image* buf, FixedFont* font, int origin_x, int origin_y, size_t glyph
 }
 
 void
-draw_text(Image* buf, FixedFont* font, int origin_x, int origin_y, const char* text, int padding)
+draw_text(Image* buf, FixedFont* font, int origin_x,
+          int origin_y, const char* text, int padding)
 {
   const int text_len = (int)strlen(text);
   const int stride = font->glyph_width + padding;
@@ -200,7 +203,7 @@ draw_text(Image* buf, FixedFont* font, int origin_x, int origin_y, const char* t
 
 void
 draw_line_i(Image* buf, int start_x, int start_y,
-            int end_x, int end_y, Color color)
+            int end_x, int end_y, Color pixel)
 {
   bool is_steep = abs(end_y - start_y) > abs(end_x - start_x);
 
@@ -224,21 +227,21 @@ draw_line_i(Image* buf, int start_x, int start_y,
 
   if (is_steep) {
     for (int i = start_x; i <= end_x; ++i) {
-      color.a = (uint8_t)(255.f * fractional_part(intersect_y));
-      draw_pixel_a(buf, (int)(intersect_y) + 1, i, color);
+      pixel.a = (uint8_t)(255.f * fractional_part(intersect_y));
+      draw_rgba_pixel(buf, (int)(intersect_y) + 1, i, pixel);
 
-      color.a = (uint8_t)(255.f * (1.0f - fractional_part(intersect_y)));
-      draw_pixel_a(buf, (int)(intersect_y), i, color);
+      pixel.a = (uint8_t)(255.f * (1.0f - fractional_part(intersect_y)));
+      draw_rgba_pixel(buf, (int)(intersect_y), i, pixel);
 
       intersect_y += gradient;
     }
   } else {
     for (int i = start_x; i <= end_x; ++i) {
-      color.a = (uint8_t)(255.f * fractional_part(intersect_y));
-      draw_pixel_a(buf, i, (int)(intersect_y) + 1, color);
+      pixel.a = (uint8_t)(255.f * fractional_part(intersect_y));
+      draw_rgba_pixel(buf, i, (int)(intersect_y) + 1, pixel);
 
-      color.a = (uint8_t)(255.f * (1.0f - fractional_part(intersect_y)));
-      draw_pixel_a(buf, i, (int)(intersect_y), color);
+      pixel.a = (uint8_t)(255.f * (1.0f - fractional_part(intersect_y)));
+      draw_rgba_pixel(buf, i, (int)(intersect_y), pixel);
 
       intersect_y += gradient;
     }
@@ -246,17 +249,17 @@ draw_line_i(Image* buf, int start_x, int start_y,
 }
 
 void
-draw_line(Image* buf, Vector2 start, Vector2 end, Color color)
+draw_line(Image* buf, Vector2 start, Vector2 end, Color pixel)
 {
   draw_line_i(buf,
               (int)roundf(start.x), (int)roundf(start.y),
               (int)roundf(end.x),   (int)roundf(end.y),
-              color);
+              pixel);
 }
 
 void
 draw_rectangle_fi(Image* buf, int origin_x, int origin_y,
-                  int width, int height, Color color)
+                  int width, int height, Color pixel)
 {
   if (width == 0 || height == 0) return;
 
@@ -267,32 +270,32 @@ draw_rectangle_fi(Image* buf, int origin_x, int origin_y,
 
   for (int y = start_y; y <= end_y; ++y) {
     for (int x = start_x; x <= end_x; ++x) {
-      draw_pixel_a_unsafe(buf, x, y, color);
+      draw_rgba_pixel_unsafe(buf, x, y, pixel);
     }
   }
 }
 
 void
 draw_rectangle_f(Image* buf, Vector2 origin,
-                 Vector2 size, Color color)
+                 Vector2 size, Color pixel)
 {
   draw_rectangle_fi(buf,
                     (int)roundf(origin.x), (int)roundf(origin.y),
                     (int)roundf(size.x),   (int)roundf(size.y),
-                    color);
+                    pixel);
 }
 
 
 void
 draw_rectangle_wi(Image* buf, int origin_x, int origin_y,
-                  int width, int height, Color color)
+                  int width, int height, Color pixel)
 {
   draw_quad_wi(buf,
                origin_x,         origin_y,
                origin_x + width, origin_y,
                origin_x + width, origin_y + height,
                origin_x,         origin_y + height,
-               color);
+               pixel);
 }
 
 void
@@ -315,7 +318,7 @@ draw_rectangle(Image* buf, Vector2 origin, Vector2 size,
 
 void
 draw_triangle_fi(Image* buf, int a_x, int a_y, int b_x,
-                 int b_y, int c_x, int c_y, Color color)
+                 int b_y, int c_x, int c_y, Color pixel)
 {
   // TODO: convert to scanline-based approach
   if (!is_clockwise(a_x, a_y, b_x, b_y, c_x, c_y)) {
@@ -335,7 +338,7 @@ draw_triangle_fi(Image* buf, int a_x, int a_y, int b_x,
         is_clockwise(b_x, b_y, c_x, c_y, x, y) &&
         is_clockwise(c_x, c_y, a_x, a_y, x, y)
       ) {
-          draw_pixel_a_unsafe(buf, x, y, color);
+          draw_rgba_pixel_unsafe(buf, x, y, pixel);
         }
     }
   }
@@ -343,11 +346,11 @@ draw_triangle_fi(Image* buf, int a_x, int a_y, int b_x,
 
 void
 draw_triangle_wi(Image* buf, int a_x, int a_y, int b_x,
-                 int b_y, int c_x, int c_y, Color color)
+                 int b_y, int c_x, int c_y, Color pixel)
 {
-  draw_line_i(buf, a_x, a_y, b_x, b_y, color);
-  draw_line_i(buf, b_x, b_y, c_x, c_y, color);
-  draw_line_i(buf, c_x, c_y, a_x, a_y, color);
+  draw_line_i(buf, a_x, a_y, b_x, b_y, pixel);
+  draw_line_i(buf, b_x, b_y, c_x, c_y, pixel);
+  draw_line_i(buf, c_x, c_y, a_x, a_y, pixel);
 }
 
 void
@@ -371,12 +374,12 @@ draw_triangle(Image* buf, Vector2 a, Vector2 b,
 
 void
 draw_quad_wi(Image* buf, int a_x, int a_y, int b_x, int b_y,
-             int c_x, int c_y, int d_x, int d_y, Color color)
+             int c_x, int c_y, int d_x, int d_y, Color pixel)
 {
-  draw_line_i(buf, a_x, a_y, b_x, b_y, color);
-  draw_line_i(buf, b_x, b_y, c_x, c_y, color);
-  draw_line_i(buf, c_x, c_y, d_x, d_y, color);
-  draw_line_i(buf, d_x, d_y, a_x, a_y, color);
+  draw_line_i(buf, a_x, a_y, b_x, b_y, pixel);
+  draw_line_i(buf, b_x, b_y, c_x, c_y, pixel);
+  draw_line_i(buf, c_x, c_y, d_x, d_y, pixel);
+  draw_line_i(buf, d_x, d_y, a_x, a_y, pixel);
 }
 
 void
@@ -500,30 +503,30 @@ brighten_image_by_percentage(Image* dst, Image* src, int percentage)
 }
 
 void
-clear_image_rgb(Image* img, Color3 color)
+clear_rgb_image(Image* img, Color3 pixel)
 {
   Color3* addr = img->data;
   size_t count = img->width * img->height;
 
-  while (count--) *addr++ = color;
+  while (count--) *addr++ = pixel;
 }
 
 Image
-clone_image(Image src)
+clone_image(Image* src)
 {
-  size_t type_size = src.format == PIXELFORMAT_UNCOMPRESSED_R8G8B8 ?
+  size_t type_size = src->format == PIXELFORMAT_UNCOMPRESSED_R8G8B8 ?
                      sizeof(Color3) : sizeof(Color);
-  size_t size = src.width * src.height * type_size;
+  size_t size = src->width * src->height * type_size;
   void* pixels = (void*)malloc(size);
 
-  memcpy(pixels, src.data, size);
+  memcpy(pixels, src->data, size);
 
   return (Image){
     .data    = pixels,
-    .width   = src.width,
-    .height  = src.height,
-    .mipmaps = src.mipmaps,
-    .format  = src.format,
+    .width   = src->width,
+    .height  = src->height,
+    .mipmaps = src->mipmaps,
+    .format  = src->format,
   };
 }
 
@@ -544,7 +547,7 @@ index_from_xy_unsafe(Image* img, int x, int y)
 }
 
 Color3
-rgb_from_rgba(Color color)
+rgb_from_rgba(Color pixel)
 {
   typedef union {
     Color  rgba;
@@ -552,26 +555,26 @@ rgb_from_rgba(Color color)
   } converter;
 
   converter c;
-  c.rgba = color;
+  c.rgba = pixel;
 
   return c.rgb;
 }
 
 Color
-rgba_from_rgb(Color3 color)
+rgba_from_rgb(Color3 pixel)
 {
   return (Color){
-    .r = color.r,
-    .g = color.g,
-    .b = color.b,
+    .r = pixel.r,
+    .g = pixel.g,
+    .b = pixel.b,
     .a = 255,
   };
 }
 
 void
-blend_bg_with_fg(Color3* bg, Color* fg)
+blend_rgba_pixel_on_rgb_pixel(Color3* dst, Color* src)
 {
-  bg->r = (bg->r * (255 - fg->a) + fg->r * fg->a + 128) / 255;
-  bg->g = (bg->g * (255 - fg->a) + fg->g * fg->a + 128) / 255;
-  bg->b = (bg->b * (255 - fg->a) + fg->b * fg->a + 128) / 255;
+  dst->r = (dst->r * (255 - src->a) + src->r * src->a + 128) / 255;
+  dst->g = (dst->g * (255 - src->a) + src->g * src->a + 128) / 255;
+  dst->b = (dst->b * (255 - src->a) + src->b * src->a + 128) / 255;
 }
