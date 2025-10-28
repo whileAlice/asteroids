@@ -52,14 +52,14 @@ game_draw(Image* buf)
                 RED, GREEN);
   draw_rectangle_fi(buf, 20, 20, 50, 50, BLUE);
   // draw_image_a(buf, &glyph_sheet, mouse_x, mouse_y);
-  if (g_ctx.state.show_osd) {
-    draw_osd(buf);
-  }
   if (g_ctx.state.show_log) {
     box_blur(&overlay, buf, 1);
     brighten_image_by_percentage(&overlay, &overlay, 20);
     draw_rgb_image(buf, &overlay, 0, 0);
-    draw_log(buf);
+    draw_log(buf, true);
+  }
+  if (g_ctx.state.show_osd) {
+    draw_osd(buf, g_ctx.state.show_log);
   }
 }
 
