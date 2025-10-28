@@ -380,12 +380,72 @@ draw_quad_wi(Image* buf, int a_x, int a_y, int b_x, int b_y,
 }
 
 void
+box_blur(Image* dst, Image* src)
+{
+  Color3* pixels = src->data;
+  Color3* blurred = dst->data;
+
+  for (int y = 0; y < src->height; ++y) {
+    for (int x = 0; x < src->width; ++x) {
+      if (x < 1 ||
+          y < 1 ||
+          x + 1 == src->width ||
+          y + 1 == src->height) {
+        // 9x9 kernel does not fit, leave pixel as is
+        const size_t index = index_from_xy_unsafe(src, x, y);
+        blurred[index] = pixels[index];
+
+        continue;
+      }
+
+      int sum_r = 0;
+      int sum_g = 0;
+      int sum_b = 0;
+      // take average from 8 neighboring pixels and the current pixel
+      // NOTE: a bit slow, but I think it should be left to the compiler
+      for (int n_y = -1; n_y <= 1; ++n_y) {
+        for (int n_x = -1; n_x <= 1; ++n_x) {
+          const size_t neighbor_index = index_from_xy_unsafe(src, x + n_x, y + n_y);
+          sum_r += pixels[neighbor_index].r;
+          sum_g += pixels[neighbor_index].g;
+          sum_b += pixels[neighbor_index].b;
+        }
+      }
+
+      const size_t index = index_from_xy_unsafe(src, x, y);
+      blurred[index].r = (uint8_t)(sum_r / 9);
+      blurred[index].g = (uint8_t)(sum_g / 9);
+      blurred[index].b = (uint8_t)(sum_b / 9);
+    }
+  }
+}
+
+void
 clear_image_rgb(Image* img, Color3 color)
 {
   Color3* addr = img->data;
   size_t count = img->width * img->height;
 
   while (count--) *addr++ = color;
+}
+
+Image
+clone_image(Image src)
+{
+  size_t type_size = src.format == PIXELFORMAT_UNCOMPRESSED_R8G8B8 ?
+                     sizeof(Color3) : sizeof(Color);
+  size_t size = src.width * src.height * type_size;
+  void* pixels = (void*)malloc(size);
+
+  memcpy(pixels, src.data, size);
+
+  return (Image){
+    .data    = pixels,
+    .width   = src.width,
+    .height  = src.height,
+    .mipmaps = src.mipmaps,
+    .format  = src.format,
+  };
 }
 
 int
