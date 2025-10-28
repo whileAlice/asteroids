@@ -85,8 +85,14 @@ void draw_triangle(Image* buf, Vector2 a, Vector2 b,
 void draw_quad_wi(Image* buf, int a_x, int a_y, int b_x, int b_y,
                   int c_x, int c_y, int d_x, int d_y, Color color);
 
+/* blurs an image using box blur */
+void box_blur(Image* dst, Image* src);
+
 /* clears the image with supplied RGB color */
 void clear_image_rgb(Image* img, Color3 color);
+
+/* makes a clone of the given image */
+Image clone_image(Image src);
 
 /* calculates index from xy coordinates */
 int index_from_xy(Image* img, int x, int y);
