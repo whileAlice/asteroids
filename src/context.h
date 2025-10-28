@@ -8,6 +8,7 @@
 
 typedef struct Context{
   FixedFont fixed_font;
+  FixedFont fixed_font_inverted;
   Image     buffer_image;
   Texture2D buffer_texture;
   int       buffer_texture_origin_x;

@@ -19,7 +19,7 @@ game_init()
   init_log_buffers();
   log_printf("loaded fixed font with %d glyphs", g_ctx.fixed_font.glyph_count);
 
-  overlay = clone_image(g_ctx.buffer_image);
+  overlay = clone_image(&g_ctx.buffer_image);
 }
 
 void
@@ -38,13 +38,13 @@ game_update(float dt)
     log_print("THE L KEY IS PRESSED");
   }
 
-  osd_printf(0, 0, "fps: %.1f", 1. / dt);
+  osd_printf(0, 0, "fps: %.1f", 1. / (double)dt);
 }
 
 void
 game_draw(Image* buf)
 {
-  clear_image_rgb(buf, rgb_from_rgba(PINK));
+  clear_rgb_image(buf, rgb_from_rgba(PINK));
   draw_triangle(buf,
                 (Vector2){ .x = 50.0f,  .y = 100.0f },
                 (Vector2){ .x = 100.0f, .y = 40.0f },
@@ -57,8 +57,8 @@ game_draw(Image* buf)
   }
   if (g_ctx.state.show_log) {
     box_blur(&overlay, buf, 1);
-    brighten_image_by_percentage(&overlay, &overlay, 150);
-    draw_image(buf, &overlay, 0, 0);
+    brighten_image_by_percentage(&overlay, &overlay, 20);
+    draw_rgb_image(buf, &overlay, 0, 0);
     draw_log(buf);
   }
 }

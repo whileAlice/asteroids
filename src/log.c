@@ -124,9 +124,10 @@ draw_log(Image* buf)
       &s_log_buffer[(g_ctx.state.current_log_page - 1) *
       s_page_size + i * s_page_col_count];
     const int origin_y =
-      PADDING_TOP + (int)i * (g_ctx.fixed_font.glyph_height + CHAR_SPACING);
+      PADDING_TOP + (int)i * (g_ctx.fixed_font_inverted.glyph_height +
+      CHAR_SPACING);
 
-    draw_text(buf, &g_ctx.fixed_font, PADDING_LEFT, origin_y,
+    draw_text(buf, &g_ctx.fixed_font_inverted, PADDING_LEFT, origin_y,
               current_line, CHAR_SPACING);
   }
 }

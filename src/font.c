@@ -6,6 +6,7 @@
 
 #include "context.h"
 #include "font.h"
+#include "draw_utils.h"
 #include "pam.h"
 #include "token.h"
 
@@ -27,6 +28,7 @@ static int   s_glyph_margin;
 static int   s_glyph_count;
 
 static Image s_glyph_sheet;
+static Image s_glyph_sheet_inverted;
 
 static int   s_line_count = 0;
 
@@ -72,11 +74,29 @@ load_fixed_font(const char* font_def)
     .glyph_height  = s_glyph_height,
     .glyph_count   = s_glyph_count,
   };
+
+  s_glyph_sheet_inverted = clone_image(&s_glyph_sheet);
+  Color* inverted_pixels = s_glyph_sheet_inverted.data;
+
+  for (int i = 0; i < s_glyph_sheet.width * s_glyph_sheet.height; ++i) {
+    inverted_pixels[i].r = 255 - inverted_pixels[i].r;
+    inverted_pixels[i].g = 255 - inverted_pixels[i].g;
+    inverted_pixels[i].b = 255 - inverted_pixels[i].b;
+  }
+
+  g_ctx.fixed_font_inverted = (FixedFont){
+    .glyph_sheet   = &s_glyph_sheet_inverted,
+    .glyph_padding = glyph_margins,
+    .glyph_width   = s_glyph_width,
+    .glyph_height  = s_glyph_height,
+    .glyph_count   = s_glyph_count,
+  };
 }
 
 void
 unload_fixed_font()
 {
+  UnloadImage(s_glyph_sheet_inverted);
   UnloadImage(s_glyph_sheet);
 }
 
