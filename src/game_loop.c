@@ -44,7 +44,7 @@ game_update(float dt)
 void
 game_draw(Image* buf)
 {
-  clear_image_rgb(buf, rgb_from_rgba(GRAY));
+  clear_image_rgb(buf, rgb_from_rgba(PINK));
   draw_triangle(buf,
                 (Vector2){ .x = 50.0f,  .y = 100.0f },
                 (Vector2){ .x = 100.0f, .y = 40.0f },
@@ -56,7 +56,8 @@ game_draw(Image* buf)
     draw_osd(buf);
   }
   if (g_ctx.state.show_log) {
-    box_blur(&overlay, buf);
+    box_blur(&overlay, buf, 1);
+    brighten_image_by_percentage(&overlay, &overlay, 150);
     draw_image(buf, &overlay, 0, 0);
     draw_log(buf);
   }

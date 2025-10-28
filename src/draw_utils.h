@@ -86,7 +86,13 @@ void draw_quad_wi(Image* buf, int a_x, int a_y, int b_x, int b_y,
                   int c_x, int c_y, int d_x, int d_y, Color color);
 
 /* blurs an image using box blur */
-void box_blur(Image* dst, Image* src);
+void box_blur(Image* dst, Image* src, size_t iterations);
+
+/* brightens or darkens an image by specified amount (0-255) */
+void brighten_image_by_amount(Image* dst, Image* src, int amount);
+
+/* brightens or darkens an image by relative percentage */
+void brighten_image_by_percentage(Image* dst, Image* src, int percentage);
 
 /* clears the image with supplied RGB color */
 void clear_image_rgb(Image* img, Color3 color);

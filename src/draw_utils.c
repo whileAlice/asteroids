@@ -380,42 +380,121 @@ draw_quad_wi(Image* buf, int a_x, int a_y, int b_x, int b_y,
 }
 
 void
-box_blur(Image* dst, Image* src)
+box_blur(Image* dst, Image* src, size_t iterations)
 {
+  assert(iterations >= 1);
+
   Color3* pixels = src->data;
   Color3* blurred = dst->data;
+  Color3* tmp = NULL;
 
-  for (int y = 0; y < src->height; ++y) {
-    for (int x = 0; x < src->width; ++x) {
-      if (x < 1 ||
-          y < 1 ||
-          x + 1 == src->width ||
-          y + 1 == src->height) {
-        // 9x9 kernel does not fit, leave pixel as is
-        const size_t index = index_from_xy_unsafe(src, x, y);
-        blurred[index] = pixels[index];
+  size_t size = src->width * src->height * sizeof(Color3);
+  size_t i = iterations;
+  while(i--) {
+    for (int y = 0; y < src->height; ++y) {
+      for (int x = 0; x < src->width; ++x) {
+        if (x < 1 ||
+            y < 1 ||
+            x + 1 == src->width ||
+            y + 1 == src->height) {
+          // 9x9 kernel does not fit, leave pixel as is
+          const size_t index = index_from_xy_unsafe(src, x, y);
+          blurred[index] = pixels[index];
 
-        continue;
-      }
-
-      int sum_r = 0;
-      int sum_g = 0;
-      int sum_b = 0;
-      // take average from 8 neighboring pixels and the current pixel
-      // NOTE: a bit slow, but I think it should be left to the compiler
-      for (int n_y = -1; n_y <= 1; ++n_y) {
-        for (int n_x = -1; n_x <= 1; ++n_x) {
-          const size_t neighbor_index = index_from_xy_unsafe(src, x + n_x, y + n_y);
-          sum_r += pixels[neighbor_index].r;
-          sum_g += pixels[neighbor_index].g;
-          sum_b += pixels[neighbor_index].b;
+          continue;
         }
+
+        int sum_r = 0;
+        int sum_g = 0;
+        int sum_b = 0;
+        // take average from 8 neighboring pixels and the current pixel
+        // NOTE: a bit slow, but I think it should be left to the compiler
+        // or maybe think about how the window moves and how many pixels
+        // are the same vs previous target pixel
+        for (int n_y = -1; n_y <= 1; ++n_y) {
+          for (int n_x = -1; n_x <= 1; ++n_x) {
+            const size_t neighbor_index = index_from_xy_unsafe(src, x + n_x, y + n_y);
+            sum_r += pixels[neighbor_index].r;
+            sum_g += pixels[neighbor_index].g;
+            sum_b += pixels[neighbor_index].b;
+          }
+        }
+
+        const size_t index = index_from_xy_unsafe(src, x, y);
+        blurred[index].r = (uint8_t)(sum_r / 9);
+        blurred[index].g = (uint8_t)(sum_g / 9);
+        blurred[index].b = (uint8_t)(sum_b / 9);
+      }
+    }
+
+    if (i > 0) {
+      if (iterations - i == 1) {
+        tmp = malloc(size);
       }
 
-      const size_t index = index_from_xy_unsafe(src, x, y);
-      blurred[index].r = (uint8_t)(sum_r / 9);
-      blurred[index].g = (uint8_t)(sum_g / 9);
-      blurred[index].b = (uint8_t)(sum_b / 9);
+      memcpy(tmp, blurred, size);
+      pixels = tmp;
+    }
+  }
+
+  if (tmp != NULL) {
+    free(tmp);
+  }
+}
+
+void
+brighten_image_by_amount(Image* dst, Image* src, int amount)
+{
+  assert(dst->width == src->width && dst->height == src->height);
+  assert(dst->format == src->format);
+
+  size_t size = src->width * src->height;
+  if (src->format == PIXELFORMAT_UNCOMPRESSED_R8G8B8) {
+    const Color3* pixels = src->data;
+    Color3* result = dst->data;
+
+    for (size_t i = 0; i < size; ++i) {
+      result[i].r = (uint8_t)CLAMP((int)pixels[i].r + amount, 0, 255);
+      result[i].g = (uint8_t)CLAMP((int)pixels[i].g + amount, 0, 255);
+      result[i].b = (uint8_t)CLAMP((int)pixels[i].b + amount, 0, 255);
+    }
+  } else {
+    const Color* pixels = src->data;
+    Color* result = dst->data;
+
+    for (size_t i = 0; i < size; ++i) {
+      result[i].r = (uint8_t)CLAMP((int)pixels[i].r + amount, 0, 255);
+      result[i].g = (uint8_t)CLAMP((int)pixels[i].g + amount, 0, 255);
+      result[i].b = (uint8_t)CLAMP((int)pixels[i].b + amount, 0, 255);
+    }
+  }
+}
+
+// TODO: both brightens share almost everything, it can be reused
+void
+brighten_image_by_percentage(Image* dst, Image* src, int percentage)
+{
+  assert(dst->width == src->width && dst->height == src->height);
+  assert(dst->format == src->format);
+
+  size_t size = src->width * src->height;
+  if (src->format == PIXELFORMAT_UNCOMPRESSED_R8G8B8) {
+    const Color3* pixels = src->data;
+    Color3* result = dst->data;
+
+    for (size_t i = 0; i < size; ++i) {
+      result[i].r = (uint8_t)CLAMP((int)pixels[i].r * percentage / 100, 0, 255);
+      result[i].g = (uint8_t)CLAMP((int)pixels[i].g * percentage / 100, 0, 255);
+      result[i].b = (uint8_t)CLAMP((int)pixels[i].b * percentage / 100, 0, 255);
+    }
+  } else {
+    const Color* pixels = src->data;
+    Color* result = dst->data;
+
+    for (size_t i = 0; i < size; ++i) {
+      result[i].r = (uint8_t)CLAMP((int)pixels[i].r * percentage / 100, 0, 255);
+      result[i].g = (uint8_t)CLAMP((int)pixels[i].g * percentage / 100, 0, 255);
+      result[i].b = (uint8_t)CLAMP((int)pixels[i].b * percentage / 100, 0, 255);
     }
   }
 }
