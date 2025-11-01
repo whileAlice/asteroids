@@ -8,6 +8,13 @@ typedef void (*update_func)(Context* c, float dt);
 typedef void (*draw_func)(Context* c, Image* buf);
 typedef void (*deinit_func)();
 
+typedef struct scene_functions{
+  init_func   init;
+  update_func update;
+  draw_func   draw;
+  deinit_func deinit;
+} SceneFunctions;
+
 void add_scene(Context* c, Scene scene);
 void remove_scene(Context* c, Scene scene);
 void init_active_scenes();
