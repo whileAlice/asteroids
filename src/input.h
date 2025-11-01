@@ -9,6 +9,5 @@ typedef struct Input{
   bool show_log;
   bool log_page_up;
   bool log_page_down;
+  bool switch_fullscreen;
 } Input;
-
-void update_input();

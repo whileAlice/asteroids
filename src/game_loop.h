@@ -2,7 +2,9 @@
 
 #include <raylib.h>
 
-void game_init();
-void game_update(float dt);
-void game_draw(Image* image);
+#include "context.h"
+
+void game_init(Context* c);
+void game_update(Context* c, float dt);
+void game_draw(Context* c, Image* buf);
 void game_deinit();

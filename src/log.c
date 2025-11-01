@@ -21,8 +21,6 @@
 #define PADDING_TB (PADDING_TOP  + PADDING_BOTTOM)
 #define PADDING_LR (PADDING_LEFT + PADDING_RIGHT)
 
-extern Context g_ctx;
-
 static size_t s_page_size;
 static size_t s_paged_buffer_size;
 static size_t s_paged_buffer_line_count;
@@ -32,20 +30,20 @@ static char*  s_osd_buffer;
 static char*  s_log_buffer;
 
 void
-init_log_buffers()
+init_log_buffers(Context* c)
 {
-  assert(g_ctx.fixed_font.glyph_count > 0);
+  assert(c->fixed_font.glyph_count > 0);
   assert(PIXEL_BUFFER_WIDTH  - PADDING_LR >=
-         (size_t)g_ctx.fixed_font.glyph_width);
+         (size_t)c->fixed_font.glyph_width);
   assert(PIXEL_BUFFER_HEIGHT - PADDING_TB >=
-         (size_t)g_ctx.fixed_font.glyph_height);
+         (size_t)c->fixed_font.glyph_height);
 
   s_page_col_count =
-    (PIXEL_BUFFER_WIDTH  - PADDING_LR - g_ctx.fixed_font.glyph_width) /
-    (g_ctx.fixed_font.glyph_width  + CHAR_SPACING) + 2;
+    (PIXEL_BUFFER_WIDTH  - PADDING_LR - c->fixed_font.glyph_width) /
+    (c->fixed_font.glyph_width  + CHAR_SPACING) + 2;
   s_page_row_count =
-    (PIXEL_BUFFER_HEIGHT - PADDING_TB - g_ctx.fixed_font.glyph_height) /
-    (g_ctx.fixed_font.glyph_height + CHAR_SPACING) + 1;
+    (PIXEL_BUFFER_HEIGHT - PADDING_TB - c->fixed_font.glyph_height) /
+    (c->fixed_font.glyph_height + CHAR_SPACING) + 1;
 
   s_page_size               = s_page_col_count * s_page_row_count;
   s_paged_buffer_size       = s_page_size * PAGE_COUNT;
@@ -62,7 +60,7 @@ init_log_buffers()
     s_osd_buffer[i * s_page_col_count - 1] = '\0';
   }
 
-  g_ctx.state.current_log_page = PAGE_COUNT;
+  c->state.current_log_page = PAGE_COUNT;
 }
 
 void
@@ -117,15 +115,15 @@ log_printf(const char* fmt, ...)
 }
 
 void
-draw_log(Image* buf, bool is_inverted)
+draw_log(Context* c, Image* buf, bool is_inverted)
 {
   FixedFont* font = is_inverted ?
-                    &g_ctx.fixed_font_inverted :
-                    &g_ctx.fixed_font;
+                    &c->fixed_font_inverted :
+                    &c->fixed_font;
 
   for (size_t i = 0; i < s_page_row_count; ++i) {
     const char* current_line =
-      &s_log_buffer[(g_ctx.state.current_log_page - 1) *
+      &s_log_buffer[(c->state.current_log_page - 1) *
       s_page_size + i * s_page_col_count];
     const int origin_y =
       PADDING_TOP + (int)i * (font->glyph_height + CHAR_SPACING);
@@ -136,11 +134,11 @@ draw_log(Image* buf, bool is_inverted)
 }
 
 void
-draw_osd(Image* buf, bool is_inverted)
+draw_osd(Context* c, Image* buf, bool is_inverted)
 {
   FixedFont* font = is_inverted ?
-                    &g_ctx.fixed_font_inverted :
-                    &g_ctx.fixed_font;
+                    &c->fixed_font_inverted :
+                    &c->fixed_font;
 
   for (size_t i = 0; i < s_page_row_count; ++i) {
     const char* current_line =
@@ -154,17 +152,17 @@ draw_osd(Image* buf, bool is_inverted)
 }
 
 void
-previous_log_page()
+previous_log_page(Context* c)
 {
-  const size_t new_page = g_ctx.state.current_log_page - 1;
-  g_ctx.state.current_log_page = CLAMP(new_page, 1, PAGE_COUNT);
+  const size_t new_page = c->state.current_log_page - 1;
+  c->state.current_log_page = CLAMP(new_page, 1, PAGE_COUNT);
 }
 
 void
-next_log_page()
+next_log_page(Context* c)
 {
-  const size_t new_page = g_ctx.state.current_log_page + 1;
-  g_ctx.state.current_log_page = CLAMP(new_page, 1, PAGE_COUNT);
+  const size_t new_page = c->state.current_log_page + 1;
+  c->state.current_log_page = CLAMP(new_page, 1, PAGE_COUNT);
 }
 
 void

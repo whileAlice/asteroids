@@ -2,4 +2,4 @@
 
 #include "context.h"
 
-void window_loop(Context* c);
+void update_input(Context* c);
