@@ -11,9 +11,4 @@ update_input(Context* c)
   c->input.log_page_up       = IsKeyPressed(KEY_PAGE_UP);
   c->input.log_page_down     = IsKeyPressed(KEY_PAGE_DOWN);
   c->input.switch_fullscreen = IsKeyPressed(KEY_F);
-
-  c->input.accelerate = IsKeyDown(KEY_W);
-  c->input.decelerate = IsKeyDown(KEY_S);
-  c->input.turn_left  = IsKeyDown(KEY_A);
-  c->input.turn_right = IsKeyDown(KEY_D);
 }

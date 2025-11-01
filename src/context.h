@@ -1,19 +1,40 @@
 #pragma once
 
+#include <stddef.h>
 #include <raylib.h>
 
 #include "font.h"
-#include "input.h"
-#include "state.h"
 
-typedef struct Context{
+typedef struct input_context{
+  bool show_osd;
+  bool show_log;
+  bool log_page_up;
+  bool log_page_down;
+  bool switch_fullscreen;
+} InputContext;
+
+typedef struct state_context{
+  bool   show_osd;
+  bool   show_log;
+  size_t current_log_page;
+} StateContext;
+
+typedef struct font_context{
   FixedFont fixed_font;
-  FixedFont fixed_font_inverted;
-  Image     buffer_image;
-  Texture2D buffer_texture;
-  int       buffer_texture_origin_x;
-  int       buffer_texture_origin_y;
+  FixedFont inverted_fixed_font;
+} FontContext;
+
+typedef struct buffer_context{
+  Image     image;
+  Texture2D texture;
+  int       texture_origin_x;
+  int       texture_origin_y;
   int       integer_scale;
-  Input     input;
-  State     state;
+} BufferContext;
+
+typedef struct context{
+  FontContext   font;
+  BufferContext buffer;
+  InputContext  input;
+  StateContext  state;
 } Context;
