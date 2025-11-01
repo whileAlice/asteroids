@@ -5,8 +5,6 @@
 #include "config.h"
 #include "math_utils.h"
 
-extern Context g_ctx;
-
 int
 get_integer_scale()
 {
@@ -29,17 +27,17 @@ get_texture_origin_y()
 }
 
 int
-get_mouse_x()
+get_mouse_x(Context* c)
 {
-  const int mouse_x = GetMouseX() - g_ctx.buffer_texture_origin_x;
+  const int mouse_x = GetMouseX() - c->buffer_texture_origin_x;
 
-  return CLAMP(mouse_x / g_ctx.integer_scale, 0, PIXEL_BUFFER_WIDTH - 1);
+  return CLAMP(mouse_x / c->integer_scale, 0, PIXEL_BUFFER_WIDTH - 1);
 }
 
 int
-get_mouse_y()
+get_mouse_y(Context* c)
 {
-  const int mouse_y = GetMouseY() - g_ctx.buffer_texture_origin_y;
+  const int mouse_y = GetMouseY() - c->buffer_texture_origin_y;
 
-  return CLAMP(mouse_y / g_ctx.integer_scale, 0, PIXEL_BUFFER_HEIGHT - 1);
+  return CLAMP(mouse_y / c->integer_scale, 0, PIXEL_BUFFER_HEIGHT - 1);
 }

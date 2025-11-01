@@ -4,7 +4,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "context.h"
 #include "font.h"
 #include "draw_utils.h"
 #include "pam.h"
@@ -17,8 +16,6 @@
 #define GLYPH_MARGIN "GLYPH_MARGIN"
 #define GLYPH_COUNT  "GLYPH_COUNT"
 #define COMMENT      '#'
-
-extern Context g_ctx;
 
 // token values
 static char  s_font_filename[32];
@@ -33,7 +30,7 @@ static Image s_glyph_sheet_inverted;
 static int   s_line_count = 0;
 
 void
-load_fixed_font(const char* font_def)
+load_fixed_fonts(FixedFont* fixed_font, FixedFont* fixed_font_inverted, const char* font_def)
 {
   FILE* fp = fopen(font_def, "r");
   if (fp == NULL) {
@@ -67,7 +64,7 @@ load_fixed_font(const char* font_def)
                            .left   = s_glyph_margin,
                            .right  = s_glyph_margin };
 
-  g_ctx.fixed_font = (FixedFont){
+  *fixed_font = (FixedFont){
     .glyph_sheet   = &s_glyph_sheet,
     .glyph_padding = glyph_margins,
     .glyph_width   = s_glyph_width,
@@ -84,7 +81,7 @@ load_fixed_font(const char* font_def)
     inverted_pixels[i].b = 255 - inverted_pixels[i].b;
   }
 
-  g_ctx.fixed_font_inverted = (FixedFont){
+  *fixed_font_inverted = (FixedFont){
     .glyph_sheet   = &s_glyph_sheet_inverted,
     .glyph_padding = glyph_margins,
     .glyph_width   = s_glyph_width,
@@ -94,7 +91,7 @@ load_fixed_font(const char* font_def)
 }
 
 void
-unload_fixed_font()
+unload_fixed_font_images()
 {
   UnloadImage(s_glyph_sheet_inverted);
   UnloadImage(s_glyph_sheet);
