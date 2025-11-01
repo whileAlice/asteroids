@@ -32,18 +32,18 @@ static char*  s_log_buffer;
 void
 init_log_buffers(Context* c)
 {
-  assert(c->fixed_font.glyph_count > 0);
+  assert(c->font.fixed_font.glyph_count > 0);
   assert(PIXEL_BUFFER_WIDTH  - PADDING_LR >=
-         (size_t)c->fixed_font.glyph_width);
+         (size_t)c->font.fixed_font.glyph_width);
   assert(PIXEL_BUFFER_HEIGHT - PADDING_TB >=
-         (size_t)c->fixed_font.glyph_height);
+         (size_t)c->font.fixed_font.glyph_height);
 
   s_page_col_count =
-    (PIXEL_BUFFER_WIDTH  - PADDING_LR - c->fixed_font.glyph_width) /
-    (c->fixed_font.glyph_width  + CHAR_SPACING) + 2;
+    (PIXEL_BUFFER_WIDTH  - PADDING_LR - c->font.fixed_font.glyph_width) /
+    (c->font.fixed_font.glyph_width  + CHAR_SPACING) + 2;
   s_page_row_count =
-    (PIXEL_BUFFER_HEIGHT - PADDING_TB - c->fixed_font.glyph_height) /
-    (c->fixed_font.glyph_height + CHAR_SPACING) + 1;
+    (PIXEL_BUFFER_HEIGHT - PADDING_TB - c->font.fixed_font.glyph_height) /
+    (c->font.fixed_font.glyph_height + CHAR_SPACING) + 1;
 
   s_page_size               = s_page_col_count * s_page_row_count;
   s_paged_buffer_size       = s_page_size * PAGE_COUNT;
@@ -118,8 +118,8 @@ void
 draw_log(Context* c, Image* buf, bool is_inverted)
 {
   FixedFont* font = is_inverted ?
-                    &c->fixed_font_inverted :
-                    &c->fixed_font;
+                    &c->font.inverted_fixed_font :
+                    &c->font.fixed_font;
 
   for (size_t i = 0; i < s_page_row_count; ++i) {
     const char* current_line =
@@ -137,8 +137,8 @@ void
 draw_osd(Context* c, Image* buf, bool is_inverted)
 {
   FixedFont* font = is_inverted ?
-                    &c->fixed_font_inverted :
-                    &c->fixed_font;
+                    &c->font.inverted_fixed_font :
+                    &c->font.fixed_font;
 
   for (size_t i = 0; i < s_page_row_count; ++i) {
     const char* current_line =

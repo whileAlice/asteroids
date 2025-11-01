@@ -7,7 +7,6 @@
 #include "../log.h"
 #include "../draw_utils.h"
 
-
 static Image s_overlay;
 
 void
@@ -15,14 +14,14 @@ log_display_init(Context* c)
 {
   c->state.show_osd = true;
 
-  load_fixed_fonts(&c->fixed_font, &c->fixed_font_inverted, FIXED_FONT_PATH);
+  load_fixed_fonts(&c->font.fixed_font, &c->font.inverted_fixed_font, FIXED_FONT_PATH);
   init_log_buffers(c);
 
-  log_printf("loaded fixed font with %d glyphs", c->fixed_font.glyph_count);
+  log_printf("loaded fixed font with %d glyphs", c->font.fixed_font.glyph_count);
   log_printf("loaded inverted fixed font with %d glyphs",
-             c->fixed_font_inverted.glyph_count);
+             c->font.inverted_fixed_font.glyph_count);
 
-  s_overlay = clone_image(&c->buffer_image);
+  s_overlay = clone_image(&c->buffer.image);
 }
 
 void

@@ -11,11 +11,11 @@ main(void)
 {
   Context c = {0};
 
-  c.buffer_image = generate_buffer_image();
+  c.buffer.image = generate_buffer_image();
 
   InitWindow(INITIAL_WINDOW_WIDTH, INITIAL_WINDOW_HEIGHT, APP_TITLE);
 
-  c.buffer_texture = LoadTextureFromImage(c.buffer_image);
+  c.buffer.texture = LoadTextureFromImage(c.buffer.image);
 
   SetExitKey(EXIT_KEY);
   SetTargetFPS(TARGET_FPS);
@@ -26,8 +26,8 @@ main(void)
 
   game_deinit(&c);
 
-  UnloadTexture(c.buffer_texture);
-  UnloadImage(c.buffer_image);
+  UnloadTexture(c.buffer.texture);
+  UnloadImage(c.buffer.image);
 
   CloseWindow();
 }

@@ -5,14 +5,14 @@
 
 #include "raylib.h"
 
-typedef struct Margin{
+typedef struct margin{
   int top;
   int bottom;
   int left;
   int right;
 } Margin;
 
-typedef struct FixedFont{
+typedef struct fixed_font{
   Image* glyph_sheet;
   Margin glyph_padding;
   int    glyph_width;

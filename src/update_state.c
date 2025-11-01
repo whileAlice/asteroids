@@ -1,7 +1,7 @@
 #include <raylib.h>
 
 #include "context.h"
-#include "state.h"
+#include "update_state.h"
 
 void
 update_state(Context* c)

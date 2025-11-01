@@ -7,33 +7,33 @@
 
 void
 window_loop(Context* c) {
-  c->integer_scale           = get_integer_scale();
-  c->buffer_texture_origin_x = get_texture_origin_x();
-  c->buffer_texture_origin_y = get_texture_origin_y();
+  c->buffer.integer_scale           = get_integer_scale();
+  c->buffer.texture_origin_x = get_texture_origin_x();
+  c->buffer.texture_origin_y = get_texture_origin_y();
 
   while (!WindowShouldClose()) {
     if (IsWindowResized()) {
-      c->integer_scale           = get_integer_scale();
-      c->buffer_texture_origin_x = get_texture_origin_x();
-      c->buffer_texture_origin_y = get_texture_origin_y();
+      c->buffer.integer_scale           = get_integer_scale();
+      c->buffer.texture_origin_x = get_texture_origin_x();
+      c->buffer.texture_origin_y = get_texture_origin_y();
     }
 
     float dt = GetFrameTime();
     game_update(c, dt);
-    game_draw(c, &c->buffer_image);
+    game_draw(c, &c->buffer.image);
 
-    UpdateTexture(c->buffer_texture, c->buffer_image.data);
+    UpdateTexture(c->buffer.texture, c->buffer.image.data);
 
     BeginDrawing();
 
       ClearBackground(BLACK);
-      DrawTextureEx(c->buffer_texture,
+      DrawTextureEx(c->buffer.texture,
                     (Vector2){
-                      .x = (float)c->buffer_texture_origin_x,
-                      .y = (float)c->buffer_texture_origin_y
+                      .x = (float)c->buffer.texture_origin_x,
+                      .y = (float)c->buffer.texture_origin_y
                     },
                     .0,
-                    (float)c->integer_scale,
+                    (float)c->buffer.integer_scale,
                     WHITE);
 
     EndDrawing();
