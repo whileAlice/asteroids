@@ -5,7 +5,21 @@
 #include "scenes/demo.h"
 #include "scenes/log_display.h"
 
-static Scenes s_active_scenes;
+static Scenes         s_active_scenes;
+static SceneFunctions s_scene_functions[] = {
+  [DEMO_SCENE] = {
+    .init   = demo_init,
+    .update = demo_update,
+    .draw   = demo_draw,
+    .deinit = demo_deinit,
+  },
+  [LOG_DISPLAY_SCENE] = {
+    .init   = log_display_init,
+    .update = log_display_update,
+    .draw   = log_display_draw,
+    .deinit = log_display_deinit,
+  },
+};
 
 void
 add_scene(Context* c, Scene scene)
@@ -90,52 +104,44 @@ draw_active_scenes(Context* c, Image* buf)
 init_func
 get_scene_init_func(Scene scene)
 {
-  switch(scene) {
-  case DEMO_SCENE:
-    return &demo_init;
-  case LOG_DISPLAY_SCENE:
-    return &log_display_init;
-  default:
-    return NULL;
+  if (scene >= 0 && scene < s_active_scenes.size) {
+    return s_scene_functions[scene].init;
+  } else {
+    printf("ERROR: scene %d not found in active scenes\n", scene);
+    exit(1);
   }
 }
 
 update_func
 get_scene_update_func(Scene scene)
 {
-  switch(scene) {
-  case DEMO_SCENE:
-    return &demo_update;
-  case LOG_DISPLAY_SCENE:
-    return &log_display_update;
-  default:
-    return NULL;
+  if (scene >= 0 && scene < s_active_scenes.size) {
+    return s_scene_functions[scene].update;
+  } else {
+    printf("ERROR: scene %d not found in active scenes\n", scene);
+    exit(1);
   }
 }
 
 draw_func
 get_scene_draw_func(Scene scene)
 {
-  switch(scene) {
-  case DEMO_SCENE:
-    return &demo_draw;
-  case LOG_DISPLAY_SCENE:
-    return &log_display_draw;
-  default:
-    return NULL;
+  if (scene >= 0 && scene < s_active_scenes.size) {
+    return s_scene_functions[scene].draw;
+  } else {
+    printf("ERROR: scene %d not found in active scenes\n", scene);
+    exit(1);
   }
 }
 
 deinit_func
 get_scene_deinit_func(Scene scene)
 {
-  switch(scene) {
-  case DEMO_SCENE:
-    return &demo_deinit;
-  case LOG_DISPLAY_SCENE:
-    return &log_display_deinit;
-  default:
-    return NULL;
+  if (scene >= 0 && scene < s_active_scenes.size) {
+    return s_scene_functions[scene].deinit;
+  } else {
+    printf("ERROR: scene %d not found in active scenes\n", scene);
+    exit(1);
   }
 }
 
