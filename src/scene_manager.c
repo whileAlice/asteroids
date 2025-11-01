@@ -104,10 +104,10 @@ draw_active_scenes(Context* c, Image* buf)
 init_func
 get_scene_init_func(Scene scene)
 {
-  if (scene >= 0 && scene < s_active_scenes.size) {
+  if (scene >= 0 && scene < SCENE_COUNT) {
     return s_scene_functions[scene].init;
   } else {
-    printf("ERROR: scene %d not found in active scenes\n", scene);
+    printf("ERROR: scene %d does not exist\n", scene);
     exit(1);
   }
 }
@@ -115,10 +115,10 @@ get_scene_init_func(Scene scene)
 update_func
 get_scene_update_func(Scene scene)
 {
-  if (scene >= 0 && scene < s_active_scenes.size) {
+  if (scene >= 0 && scene < SCENE_COUNT) {
     return s_scene_functions[scene].update;
   } else {
-    printf("ERROR: scene %d not found in active scenes\n", scene);
+    printf("ERROR: scene %d does not exist\n", scene);
     exit(1);
   }
 }
@@ -126,10 +126,10 @@ get_scene_update_func(Scene scene)
 draw_func
 get_scene_draw_func(Scene scene)
 {
-  if (scene >= 0 && scene < s_active_scenes.size) {
+  if (scene >= 0 && scene < SCENE_COUNT) {
     return s_scene_functions[scene].draw;
   } else {
-    printf("ERROR: scene %d not found in active scenes\n", scene);
+    printf("ERROR: scene %d does not exist\n", scene);
     exit(1);
   }
 }
@@ -137,10 +137,10 @@ get_scene_draw_func(Scene scene)
 deinit_func
 get_scene_deinit_func(Scene scene)
 {
-  if (scene >= 0 && scene < s_active_scenes.size) {
+  if (scene >= 0 && scene < SCENE_COUNT) {
     return s_scene_functions[scene].deinit;
   } else {
-    printf("ERROR: scene %d not found in active scenes\n", scene);
+    printf("ERROR: scene %d does not exist\n", scene);
     exit(1);
   }
 }

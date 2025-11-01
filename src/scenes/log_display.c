@@ -1,5 +1,6 @@
 
 #include <raylib.h>
+#include <raymath.h>
 
 #include "log_display.h"
 #include "../config.h"
@@ -43,7 +44,7 @@ log_display_draw(Context* c, Image* buf)
   if (c->state.show_log) {
     box_blur(&s_overlay, buf, 1);
     brighten_image_by_percentage(&s_overlay, &s_overlay, 20);
-    draw_rgb_image(buf, &s_overlay, 0, 0);
+    draw_rgb_image(buf, &s_overlay, Vector2Zero());
     draw_log(c, buf, true);
   }
   if (c->state.show_osd) {

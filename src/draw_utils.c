@@ -64,7 +64,7 @@ blend_rgba_pixel_on_rgb_buffer(Image* buf, int x, int y, Color pixel, size_t ind
 }
 
 void
-draw_rgb_image(Image* buf, Image* img, int origin_x, int origin_y)
+draw_rgb_image_i(Image* buf, Image* img, int origin_x, int origin_y)
 {
   assert(img->format == PIXELFORMAT_UNCOMPRESSED_R8G8B8);
 
@@ -94,7 +94,7 @@ draw_rgb_image(Image* buf, Image* img, int origin_x, int origin_y)
 }
 
 void
-draw_rgba_image(Image* buf, Image* img, int origin_x, int origin_y)
+draw_rgba_image_i(Image* buf, Image* img, int origin_x, int origin_y)
 {
   assert(img->format == PIXELFORMAT_UNCOMPRESSED_R8G8B8A8);
 
@@ -121,6 +121,18 @@ draw_rgba_image(Image* buf, Image* img, int origin_x, int origin_y)
 
     img_y++;
   }
+}
+
+void
+draw_rgb_image(Image* buf, Image* img, Vector2 origin)
+{
+  draw_rgb_image_i(buf, img, (int)roundf(origin.x), (int)roundf(origin.y));
+}
+
+void
+draw_rgba_image(Image* buf, Image* img, Vector2 origin)
+{
+  draw_rgba_image_i(buf, img, (int)roundf(origin.x), (int)roundf(origin.y));
 }
 
 void

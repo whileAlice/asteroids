@@ -28,11 +28,17 @@ void draw_rgba_pixel_unsafe(Image* buf, int x, int y, Color pixel);
 static void blend_rgba_pixel_on_rgb_buffer(Image* buf, int x, int y,
                                            Color pixel, size_t index);
 
+/* draws a non-alpha-blended image (int) */
+void draw_rgb_image_i(Image* buf, Image* img, int origin_x, int origin_y);
+
+/* draws an alpha-blended image (int) */
+void draw_rgba_image_i(Image* buf, Image* img, int origin_x, int origin_y);
+
 /* draws a non-alpha-blended image */
-void draw_rgb_image(Image* buf, Image* img, int origin_x, int origin_y);
+void draw_rgb_image(Image* buf, Image* img, Vector2 origin);
 
 /* draws an alpha-blended image */
-void draw_rgba_image(Image* buf, Image* img, int origin_x, int origin_y);
+void draw_rgba_image(Image* buf, Image* img, Vector2 origin);
 
 /* draws a glyph using the given font */
 void draw_glyph(Image* buf, FixedFont* font, int origin_x,
