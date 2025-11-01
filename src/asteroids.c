@@ -24,7 +24,7 @@ main(void)
 
   window_loop(&c);
 
-  game_deinit();
+  game_deinit(&c);
 
   UnloadTexture(c.buffer_texture);
   UnloadImage(c.buffer_image);

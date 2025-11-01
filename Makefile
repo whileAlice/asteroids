@@ -6,7 +6,7 @@ BINDIR    = bin
 ASTDIR    = assets
 ASTBINDIR = ${BINDIR}/${ASTDIR}
 BIN = ${BINDIR}/${APPNAME}
-SRC = ${wildcard ${SRCDIR}/*.c}
+SRC = ${wildcard ${SRCDIR}/*.c ${SRCDIR}/**/*.c}
 AST = ${wildcard ${ASTDIR}/*.*}
 OBJ = ${SRC:.c=.o}
 INC = raylib5.5
