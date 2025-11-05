@@ -35,7 +35,7 @@ log_display_update(Context* c, float dt)
     next_log_page(c);
   }
 
-  osd_printf(0, 0, "fps: %.1f", 1. / (double)dt);
+  osd_printf(0, 0, "fps: %*.1f", 4, 1. / (double)dt);
 }
 
 void

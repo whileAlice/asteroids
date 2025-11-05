@@ -66,7 +66,10 @@ init_log_buffers(Context* c)
 void
 osd_print(size_t row, size_t col, const char* text)
 {
-  strcpy(&s_osd_buffer[row * s_page_col_count + col], text);
+  // discarding \0 so that only buffer lines end with \0
+  size_t count = strlen(text);
+
+  memcpy(&s_osd_buffer[row * s_page_col_count + col], text, count);
 }
 
 void
@@ -128,8 +131,7 @@ draw_log(Context* c, Image* buf, bool is_inverted)
     const int origin_y =
       PADDING_TOP + (int)i * (font->glyph_height + CHAR_SPACING);
 
-    draw_text(buf, font, PADDING_LEFT, origin_y,
-              current_line, CHAR_SPACING);
+    draw_text(buf, font, PADDING_LEFT, origin_y, current_line);
   }
 }
 
@@ -146,8 +148,7 @@ draw_osd(Context* c, Image* buf, bool is_inverted)
     const int origin_y =
       PADDING_TOP + (int)i * (font->glyph_height + CHAR_SPACING);
 
-    draw_text(buf, font, PADDING_LEFT, origin_y,
-              current_line, CHAR_SPACING);
+    draw_text(buf, font, PADDING_LEFT, origin_y, current_line);
   }
 }
 
