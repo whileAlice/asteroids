@@ -46,7 +46,19 @@ void draw_glyph(Image* buf, FixedFont* font, int origin_x,
 
 /* draws text using the given font */
 void draw_text(Image* buf, FixedFont* font, int origin_x,
-               int origin_y, const char* text, int padding);
+               int origin_y, const char* text);
+
+/* draws formatted text using the given font */
+void draw_textf(Image* buf, FixedFont* font, int origin_x,
+                int origin_y, const char* fmt, ...);
+
+/* draws a filled circle (int) */
+void draw_circle_fi(Image* buf, int center_x, int center_y,
+                    int radius, Color color);
+
+/* draws a filled circle */
+void draw_circle_f(Image* buf, Vector2 center,
+                   float radius, Color color);
 
 /* draws an anti-aliased line (int) */
 void draw_line_i(Image* buf, int start_x, int start_y,

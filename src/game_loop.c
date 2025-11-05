@@ -10,7 +10,7 @@ void
 game_init(Context* c)
 {
   init_active_scenes();
-  add_scene(c, DEMO_SCENE);
+  add_scene(c, MATH_SHOWCASE_SCENE);
   add_scene(c, LOG_DISPLAY_SCENE);
 }
 

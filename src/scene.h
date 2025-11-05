@@ -5,6 +5,7 @@
 typedef enum scene{
   DEMO_SCENE = 0,
   LOG_DISPLAY_SCENE,
+  VECTOR_PRODUCTS_SCENE,
   SCENE_COUNT,
 } Scene;
 

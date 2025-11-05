@@ -188,10 +188,12 @@ draw_glyph(Image* buf, FixedFont* font, int origin_x,
 
 void
 draw_text(Image* buf, FixedFont* font, int origin_x,
-          int origin_y, const char* text, int padding)
+          int origin_y, const char* text)
 {
+  // TODO: move this inside the font definition
+  const int glyph_spacing = 1;
   const int text_len = (int)strlen(text);
-  const int stride = font->glyph_width + padding;
+  const int stride = font->glyph_width + glyph_spacing;
 
   for (int i = 0; i < text_len; ++i) {
     if (origin_x >= buf->width) return;
@@ -211,6 +213,53 @@ draw_text(Image* buf, FixedFont* font, int origin_x,
     draw_glyph(buf, font, origin_x, origin_y, glyph_index);
     origin_x += stride;
   }
+}
+
+// TODO: this could be prolly integrated somehow with osd_printf
+void
+draw_textf(Image* buf, FixedFont* font, int origin_x,
+           int origin_y, const char* fmt, ...)
+{
+  char text_buf[1024];
+
+  va_list args;
+  va_start(args, fmt);
+
+  vsnprintf(text_buf, 1024 * sizeof(char), fmt, args);
+  draw_text(buf, font, origin_x, origin_y, text_buf);
+
+  va_end(args);
+}
+
+void
+draw_circle_fi(Image* buf, int center_x, int center_y, int radius, Color color)
+{
+  if (radius < 1) return;
+
+  const int start_x = CLAMP(center_x - radius, 0, buf->width  - 1);
+  const int start_y = CLAMP(center_y - radius, 0, buf->height - 1);
+  const int end_x = CLAMPR(start_x + radius * 2 - 1, buf->width  - 1);
+  const int end_y = CLAMPR(start_y + radius * 2 - 1, buf->height - 1);
+
+  for (int y = start_y; y <= end_y; ++y) {
+    for (int x = start_x; x <= end_x; ++x) {
+      // restoring normal calculation for radius 1 to get 1px circle
+      const int radius_mod = radius == 1 ? 0 : radius;
+      // TODO: turns out that subtracting radius makes the circle round - why?
+      // there could be a nicer method of doing this as well
+      if ((center_x - x) * (center_x - x) +
+          (center_y - y) * (center_y - y) <
+          radius * radius - radius_mod) {
+        draw_rgba_pixel_unsafe(buf, x, y, color);
+      }
+    }
+  }
+}
+
+void
+draw_circle_f(Image* buf, Vector2 center, float radius, Color color)
+{
+  draw_circle_fi(buf, (int)roundf(center.x), (int)roundf(center.y), (int)roundf(radius), color);
 }
 
 void
@@ -234,8 +283,6 @@ draw_line_i(Image* buf, int start_x, int start_y,
 
   float gradient = dx != 0.0f ? dy / dx : 1.0f;
   float intersect_y = (float)start_y;
-
-
 
   if (is_steep) {
     for (int i = start_x; i <= end_x; ++i) {

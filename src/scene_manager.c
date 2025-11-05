@@ -4,6 +4,7 @@
 #include "scene_manager.h"
 #include "scenes/demo.h"
 #include "scenes/log_display.h"
+#include "scenes/vector_products.h"
 
 static Scenes         s_active_scenes;
 static SceneFunctions s_scene_functions[] = {
@@ -18,6 +19,12 @@ static SceneFunctions s_scene_functions[] = {
     .update = log_display_update,
     .draw   = log_display_draw,
     .deinit = log_display_deinit,
+  },
+  [VECTOR_PRODUCTS_SCENE] = {
+    .init   = vector_products_init,
+    .update = vector_products_update,
+    .draw   = vector_products_draw,
+    .deinit = vector_products_deinit,
   },
 };
 
