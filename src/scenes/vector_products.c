@@ -16,22 +16,27 @@ typedef enum selected_point{
   A, B, C
 } SelectedPoint;
 
-static Vector2 s_point_a = { .x = 23.f, .y = 40.f };
-static Vector2 s_point_b = { .x = 61.f, .y = 171.f  };
-static Vector2 s_point_c = { .x = 112.f,.y = 65.f };
-
-static Color s_color_a = RED;
-static Color s_color_b = BLACK;
-static Color s_color_c = BLACK;
-
-static SelectedPoint s_current_point = A;
-static SelectedPoint s_previous_point = A;
-
-static size_t s_mouse_update_count = 2;
+static Vector2 s_point_a, s_point_b, s_point_c;
+static Color   s_color_a, s_color_b, s_color_c;
+static SelectedPoint s_current_point, s_previous_point;
+static size_t s_mouse_update_count;
 
 void
 vector_products_init(Context* c)
 {
+  s_point_a = (Vector2){ .x = 23.f,  .y = 40.f  };
+  s_point_b = (Vector2){ .x = 61.f,  .y = 171.f };
+  s_point_c = (Vector2){ .x = 112.f, .y = 65.f  };
+
+  s_color_a = RED;
+  s_color_b = BLACK;
+  s_color_c = BLACK;
+
+  s_current_point = A;
+  s_previous_point = A;
+
+  s_mouse_update_count = 2;
+
   HideCursor();
 }
 

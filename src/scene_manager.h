@@ -17,6 +17,7 @@ typedef struct scene_functions{
 
 void add_scene(Context* c, Scene scene);
 void remove_scene(Context* c, Scene scene);
+void replace_scene(Context* c, Scene new_scene, Scene old_scene);
 void init_active_scenes();
 void deinit_active_scenes();
 void update_active_scenes(Context* c, float dt);

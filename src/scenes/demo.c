@@ -7,12 +7,14 @@
 #include "../pam.h"
 
 static Image s_hornet_image;
-static Vector2 s_pos = { .x = 0.f,  .y = 0.f };
-static Vector2 s_vel = { .x = 20.f, .y = 20.f };
+static Vector2 s_pos, s_vel;
 
 void
 demo_init(Context* c)
 {
+  s_pos = (Vector2){ .x = 0.f,  .y = 0.f  };
+  s_vel = (Vector2){ .x = 20.f, .y = 20.f };
+
   s_hornet_image = image_from_pam("assets/semihornet.pam");
 }
 
