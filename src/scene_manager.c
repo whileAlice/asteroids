@@ -5,6 +5,7 @@
 #include "scenes/demo.h"
 #include "scenes/log_display.h"
 #include "scenes/vector_products.h"
+#include "scenes/menu.h"
 
 static Scenes         s_active_scenes;
 static SceneFunctions s_scene_functions[] = {
@@ -25,6 +26,12 @@ static SceneFunctions s_scene_functions[] = {
     .update = vector_products_update,
     .draw   = vector_products_draw,
     .deinit = vector_products_deinit,
+  },
+  [MENU_SCENE] = {
+    .init   = menu_init,
+    .update = menu_update,
+    .draw   = menu_draw,
+    .deinit = menu_deinit,
   },
 };
 
@@ -68,6 +75,31 @@ remove_scene(Context* c, Scene scene)
     s->size -= 1;
   } else {
     printf("WARNING: scene %d not found in active scenes!\n", scene);
+  }
+}
+
+void
+replace_scene(Context* c, Scene new_scene, Scene old_scene)
+{
+  Scenes* s = &s_active_scenes;
+  assert(s->array != NULL);
+
+  bool found = false;
+
+  for (size_t i = 0; i < s->size; ++i) {
+    if (s->array[i] == old_scene) {
+      found = true;
+
+      deinit_scene(old_scene);
+      init_scene(c, new_scene);
+      s->array[i] = new_scene;
+
+      break;
+    }
+  }
+
+  if (!found) {
+    printf("WARNING: scene %d not found in active scenes!\n", old_scene);
   }
 }
 
