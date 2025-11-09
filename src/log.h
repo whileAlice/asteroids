@@ -6,6 +6,7 @@
 #include "context.h"
 
 void init_log_buffers(Context* c);
+void clear_osd_buffer(Context* c);
 void osd_print(size_t row, size_t col, const char* text);
 void osd_printf(size_t row, size_t col, const char* fmt, ...);
 void log_print(const char* line);

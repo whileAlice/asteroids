@@ -11,7 +11,6 @@
 #include "draw_utils.h"
 #include "font.h"
 
-#define CHAR_SPACING   1
 #define PADDING_TOP    3
 #define PADDING_BOTTOM 1
 #define PADDING_LEFT   3
@@ -40,10 +39,10 @@ init_log_buffers(Context* c)
 
   s_page_col_count =
     (PIXEL_BUFFER_WIDTH  - PADDING_LR - c->font.fixed_font.glyph_width) /
-    (c->font.fixed_font.glyph_width  + CHAR_SPACING) + 2;
+    (c->font.fixed_font.glyph_width  + c->font.fixed_font.glyph_spacing) + 2;
   s_page_row_count =
     (PIXEL_BUFFER_HEIGHT - PADDING_TB - c->font.fixed_font.glyph_height) /
-    (c->font.fixed_font.glyph_height + CHAR_SPACING) + 1;
+    (c->font.fixed_font.glyph_height + c->font.fixed_font.glyph_spacing) + 1;
 
   s_page_size               = s_page_col_count * s_page_row_count;
   s_paged_buffer_size       = s_page_size * PAGE_COUNT;
@@ -61,6 +60,16 @@ init_log_buffers(Context* c)
   }
 
   c->state.current_log_page = PAGE_COUNT;
+}
+
+void
+clear_osd_buffer(Context* c)
+{
+  memset(s_osd_buffer, ' ', s_page_size         * sizeof(char));
+
+  for (size_t i = 1; i <= s_paged_buffer_line_count; ++i) {
+    s_osd_buffer[i * s_page_col_count - 1] = '\0';
+  }
 }
 
 void
@@ -129,9 +138,10 @@ draw_log(Context* c, Image* buf, bool is_inverted)
       &s_log_buffer[(c->state.current_log_page - 1) *
       s_page_size + i * s_page_col_count];
     const int origin_y =
-      PADDING_TOP + (int)i * (font->glyph_height + CHAR_SPACING);
+      PADDING_TOP + (int)i * (font->glyph_height +
+                              c->font.fixed_font.glyph_spacing);
 
-    draw_text(buf, font, PADDING_LEFT, origin_y, current_line);
+    draw_text_i(buf, font, PADDING_LEFT, origin_y, current_line);
   }
 }
 
@@ -146,9 +156,10 @@ draw_osd(Context* c, Image* buf, bool is_inverted)
     const char* current_line =
       &s_osd_buffer[i * s_page_col_count];
     const int origin_y =
-      PADDING_TOP + (int)i * (font->glyph_height + CHAR_SPACING);
+      PADDING_TOP + (int)i * (font->glyph_height +
+                              c->font.fixed_font.glyph_spacing);
 
-    draw_text(buf, font, PADDING_LEFT, origin_y, current_line);
+    draw_text_i(buf, font, PADDING_LEFT, origin_y, current_line);
   }
 }
 

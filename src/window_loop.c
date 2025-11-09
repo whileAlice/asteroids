@@ -7,13 +7,13 @@
 
 void
 window_loop(Context* c) {
-  c->buffer.integer_scale           = get_integer_scale();
+  c->buffer.integer_scale    = get_integer_scale();
   c->buffer.texture_origin_x = get_texture_origin_x();
   c->buffer.texture_origin_y = get_texture_origin_y();
 
-  while (!WindowShouldClose()) {
+  while (!c->state.should_exit_app && !WindowShouldClose()) {
     if (IsWindowResized()) {
-      c->buffer.integer_scale           = get_integer_scale();
+      c->buffer.integer_scale    = get_integer_scale();
       c->buffer.texture_origin_x = get_texture_origin_x();
       c->buffer.texture_origin_y = get_texture_origin_y();
     }

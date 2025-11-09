@@ -140,13 +140,13 @@ draw_glyph(Image* buf, FixedFont* font, int origin_x,
            int origin_y, size_t glyph_index)
 {
   const int total_glyph_width  = font->glyph_width +
-                                 font->glyph_padding.left +
-                                 font->glyph_padding.right;
+                                 font->glyph_margins.left +
+                                 font->glyph_margins.right;
   const int total_glyph_height = font->glyph_height +
-                                 font->glyph_padding.top +
-                                 font->glyph_padding.bottom;
+                                 font->glyph_margins.top +
+                                 font->glyph_margins.bottom;
   int row = 0;
-  int init_sheet_x = 0 + font->glyph_padding.left;
+  int init_sheet_x = 0 + font->glyph_margins.left;
   for (size_t i = 0; i < glyph_index; ++i) {
     init_sheet_x += total_glyph_width;
 
@@ -156,7 +156,7 @@ draw_glyph(Image* buf, FixedFont* font, int origin_x,
     }
   }
 
-  int sheet_y = row * total_glyph_height + font->glyph_padding.top;
+  int sheet_y = row * total_glyph_height + font->glyph_margins.top;
 
   // TODO: make a function out of this
   const int start_x = CLAMP(origin_x, 0, buf->width  - 1);
@@ -187,13 +187,13 @@ draw_glyph(Image* buf, FixedFont* font, int origin_x,
 }
 
 void
-draw_text(Image* buf, FixedFont* font, int origin_x,
-          int origin_y, const char* text)
+draw_text_i(Image* buf, FixedFont* font, int origin_x,
+            int origin_y, const char* text)
 {
-  // TODO: move this inside the font definition
-  const int glyph_spacing = 1;
+  assert(font->glyph_count > 0);
+
   const int text_len = (int)strlen(text);
-  const int stride = font->glyph_width + glyph_spacing;
+  const int stride = font->glyph_width + font->glyph_spacing;
 
   for (int i = 0; i < text_len; ++i) {
     if (origin_x >= buf->width) return;
@@ -215,10 +215,17 @@ draw_text(Image* buf, FixedFont* font, int origin_x,
   }
 }
 
+void
+draw_text(Image* buf, FixedFont* font,
+          Vector2 origin, const char* text)
+{
+  draw_text_i(buf, font, (int)roundf(origin.x), (int)roundf(origin.y), text);
+}
+
 // TODO: this could be prolly integrated somehow with osd_printf
 void
-draw_textf(Image* buf, FixedFont* font, int origin_x,
-           int origin_y, const char* fmt, ...)
+draw_textf(Image* buf, FixedFont* font,
+           Vector2 origin, const char* fmt, ...)
 {
   char text_buf[1024];
 
@@ -226,9 +233,37 @@ draw_textf(Image* buf, FixedFont* font, int origin_x,
   va_start(args, fmt);
 
   vsnprintf(text_buf, 1024 * sizeof(char), fmt, args);
-  draw_text(buf, font, origin_x, origin_y, text_buf);
+  draw_text(buf, font, origin, text_buf);
 
   va_end(args);
+}
+
+Vector2
+draw_text_center(Image* buf, FixedFont* font,
+                 Vector2 origin, const char* text)
+{
+  int text_width = get_text_width(font, text);
+  Vector2 origin_centered =
+    center_horizontally(origin, text_width, buf->width);
+
+  draw_text(buf, font, origin_centered, text);
+
+  return origin_centered;
+}
+
+int
+get_text_width(FixedFont* font, const char* text)
+{
+  size_t text_len = strlen(text);
+  if (text_len == 0) return 0;
+
+  int width = font->glyph_width;
+
+  for (size_t i = 1; i < strlen(text); ++i) {
+    width += font->glyph_width + font->glyph_spacing;
+  }
+
+  return width;
 }
 
 void

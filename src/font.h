@@ -5,19 +5,20 @@
 
 #include "raylib.h"
 
-typedef struct margin{
+typedef struct margins{
   int top;
   int bottom;
   int left;
   int right;
-} Margin;
+} Margins;
 
 typedef struct fixed_font{
-  Image* glyph_sheet;
-  Margin glyph_padding;
-  int    glyph_width;
-  int    glyph_height;
-  size_t glyph_count;
+  Image*  glyph_sheet;
+  Margins glyph_margins;
+  int     glyph_spacing;
+  int     glyph_width;
+  int     glyph_height;
+  size_t  glyph_count;
 } FixedFont;
 
 void load_fixed_fonts(FixedFont* fixed_font, FixedFont* fixed_font_inverted, const char* font_def);
