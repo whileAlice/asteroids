@@ -54,6 +54,36 @@ add_scene(Context* c, Scene scene)
 }
 
 void
+add_scene_before(Context* c, Scene new_scene, Scene existing_scene)
+{
+  Scenes* s = &s_active_scenes;
+  assert(s->array != NULL);
+  assert(s->size < s->capacity);
+
+  bool found = false;
+
+  for (size_t i = 0; i < s->size; ++i) {
+    if (s->array[i] == existing_scene) {
+      found = true;
+      s->size += 1;
+
+      for (size_t j = s->size - 1; j > i; --j) {
+        s->array[j] = s->array[j - 1];
+      }
+
+      s->array[i] = new_scene;
+      init_scene(c, new_scene);
+
+      break;
+    }
+  }
+
+  if (!found) {
+    printf("WARNING: scene %d not found in active scenes!\n", existing_scene);
+  }
+}
+
+void
 remove_scene(Context* c, Scene scene)
 {
   Scenes* s = &s_active_scenes;
@@ -117,7 +147,7 @@ init_active_scenes()
 
 void
 deinit_active_scenes() {
-  for (size_t i = 0; i < s_active_scenes.size; ++i) {
+  for (int i = (int)s_active_scenes.size - 1; i >= 0; --i) {
     deinit_scene(s_active_scenes.array[i]);
   }
 

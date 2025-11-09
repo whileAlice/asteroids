@@ -16,6 +16,7 @@ typedef struct input_context{
 typedef struct state_context{
   bool   show_osd;
   bool   show_log;
+  bool   should_exit_app;
   size_t current_log_page;
 } StateContext;
 

@@ -217,17 +217,26 @@ vector_products_draw(Context* c, Image* buf)
   draw_circle_f(buf, s_point_c, 3.f, s_color_c);
 
   draw_textf(buf, &c->font.fixed_font,
-             CLAMP((int)s_point_a.x - 40, 0, c->buffer.image.width - 1),
-             (int)s_point_a.y - 10, "A1: %.f, A2: %.f",
-             (double)s_point_a.x, (double)INVERT_Y(s_point_a.y));
+             (Vector2){ .x = CLAMP(s_point_a.x - 40, 0,
+                                   (float)c->buffer.image.width - 1),
+                        .y = s_point_a.y - 10 },
+              "A1: %.f, A2: %.f",
+             (double)s_point_a.x,
+             (double)INVERT_Y(s_point_a.y));
   draw_textf(buf, &c->font.fixed_font,
-             CLAMP((int)s_point_b.x - 40, 0, c->buffer.image.width - 1),
-             (int)s_point_b.y - 10, "B1: %.f, B2: %.f",
-             (double)s_point_b.x, (double)INVERT_Y(s_point_b.y));
+             (Vector2){ .x = CLAMP(s_point_b.x - 40, 0,
+                                   (float)c->buffer.image.width - 1),
+                        .y = s_point_b.y - 10 },
+             "B1: %.f, B2: %.f",
+             (double)s_point_b.x,
+             (double)INVERT_Y(s_point_b.y));
   draw_textf(buf, &c->font.fixed_font,
-             CLAMP((int)s_point_c.x - 40, 0, c->buffer.image.width - 1),
-             (int)s_point_c.y - 10, "C1: %.f, C2: %.f",
-             (double)s_point_c.x, (double)INVERT_Y(s_point_c.y));
+             (Vector2){ .x = CLAMP(s_point_c.x - 40, 0,
+                                   (float)c->buffer.image.width - 1),
+                        .y = s_point_c.y - 10 },
+             "C1: %.f, C2: %.f",
+             (double)s_point_c.x,
+             (double)INVERT_Y(s_point_c.y));
 }
 
 void vector_products_deinit(){}

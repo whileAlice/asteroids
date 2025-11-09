@@ -3,7 +3,6 @@
 #include <raymath.h>
 
 #include "log_display.h"
-#include "../config.h"
 #include "../context.h"
 #include "../log.h"
 #include "../draw_utils.h"
@@ -15,7 +14,6 @@ log_display_init(Context* c)
 {
   c->state.show_osd = true;
 
-  load_fixed_fonts(&c->font.fixed_font, &c->font.inverted_fixed_font, FIXED_FONT_PATH);
   init_log_buffers(c);
 
   log_printf("loaded fixed font with %d glyphs", c->font.fixed_font.glyph_count);
@@ -57,5 +55,4 @@ log_display_deinit()
 {
   UnloadImage(s_overlay);
   deinit_log_buffers();
-  unload_fixed_font_images();
 }

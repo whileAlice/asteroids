@@ -1,6 +1,7 @@
 #include <raylib.h>
 
 #include "context.h"
+#include "config.h"
 #include "game_loop.h"
 #include "scene_manager.h"
 #include "update_state.h"
@@ -9,10 +10,13 @@
 void
 game_init(Context* c)
 {
+  load_fixed_fonts(&c->font.fixed_font,
+                   &c->font.inverted_fixed_font,
+                   FIXED_FONT_PATH);
+
   init_active_scenes();
-  add_scene(c, VECTOR_PRODUCTS_SCENE);
-  add_scene(c, LOG_DISPLAY_SCENE);
   add_scene(c, MENU_SCENE);
+  add_scene(c, LOG_DISPLAY_SCENE);
 }
 
 void
@@ -34,4 +38,5 @@ void
 game_deinit(Context* c)
 {
   deinit_active_scenes();
+  unload_fixed_font_images();
 }

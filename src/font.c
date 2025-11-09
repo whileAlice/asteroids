@@ -9,19 +9,21 @@
 #include "pam.h"
 #include "token.h"
 
-#define FONTDEF      "FONTDEF"
-#define FILENAME     "FILENAME"
-#define GLYPH_WIDTH  "GLYPH_WIDTH"
-#define GLYPH_HEIGHT "GLYPH_HEIGHT"
-#define GLYPH_MARGIN "GLYPH_MARGIN"
-#define GLYPH_COUNT  "GLYPH_COUNT"
-#define COMMENT      '#'
+#define FONTDEF       "FONTDEF"
+#define FILENAME      "FILENAME"
+#define GLYPH_WIDTH   "GLYPH_WIDTH"
+#define GLYPH_HEIGHT  "GLYPH_HEIGHT"
+#define GLYPH_MARGIN  "GLYPH_MARGIN"
+#define GLYPH_SPACING "GLYPH_SPACING"
+#define GLYPH_COUNT   "GLYPH_COUNT"
+#define COMMENT       '#'
 
 // token values
 static char  s_font_filename[32];
 static int   s_glyph_width;
 static int   s_glyph_height;
 static int   s_glyph_margin;
+static int   s_glyph_spacing;
 static int   s_glyph_count;
 
 static Image s_glyph_sheet;
@@ -59,14 +61,15 @@ load_fixed_fonts(FixedFont* fixed_font, FixedFont* fixed_font_inverted, const ch
 
   s_glyph_sheet = image_from_pam(font_path);
   // TODO: handle different margin cases
-  Margin glyph_margins = { .top    = s_glyph_margin,
+  Margins glyph_margins = { .top    = s_glyph_margin,
                            .bottom = s_glyph_margin,
                            .left   = s_glyph_margin,
                            .right  = s_glyph_margin };
 
   *fixed_font = (FixedFont){
     .glyph_sheet   = &s_glyph_sheet,
-    .glyph_padding = glyph_margins,
+    .glyph_margins = glyph_margins,
+    .glyph_spacing = s_glyph_spacing,
     .glyph_width   = s_glyph_width,
     .glyph_height  = s_glyph_height,
     .glyph_count   = s_glyph_count,
@@ -83,7 +86,8 @@ load_fixed_fonts(FixedFont* fixed_font, FixedFont* fixed_font_inverted, const ch
 
   *fixed_font_inverted = (FixedFont){
     .glyph_sheet   = &s_glyph_sheet_inverted,
-    .glyph_padding = glyph_margins,
+    .glyph_margins = glyph_margins,
+    .glyph_spacing = s_glyph_spacing,
     .glyph_width   = s_glyph_width,
     .glyph_height  = s_glyph_height,
     .glyph_count   = s_glyph_count,
@@ -122,6 +126,8 @@ read_all_font_tokens(FILE* fp, char* buf, const char* filename)
         s_glyph_height = val;
       } else if (strcmp(id, GLYPH_MARGIN) == 0) {
         s_glyph_margin = val;
+      } else if (strcmp(id, GLYPH_SPACING) == 0) {
+        s_glyph_spacing = val;
       } else if (strcmp(id, GLYPH_COUNT) == 0) {
         s_glyph_count = val;
       } else if (strcmp(id, FILENAME) == 0) {

@@ -44,13 +44,24 @@ void draw_rgba_image(Image* buf, Image* img, Vector2 origin);
 void draw_glyph(Image* buf, FixedFont* font, int origin_x,
                 int origin_y, size_t index);
 
-/* draws text using the given font */
-void draw_text(Image* buf, FixedFont* font, int origin_x,
+/* draws text using the given font (int) */
+void draw_text_i(Image* buf, FixedFont* font, int origin_x,
                int origin_y, const char* text);
 
+/* draws text using the given font */
+void draw_text(Image* buf, FixedFont* font,
+               Vector2 origin, const char* text);
+
 /* draws formatted text using the given font */
-void draw_textf(Image* buf, FixedFont* font, int origin_x,
-                int origin_y, const char* fmt, ...);
+void draw_textf(Image* buf, FixedFont* font,
+                Vector2 origin, const char* fmt, ...);
+
+/* draws centered text using the given font; returns new origin */
+Vector2 draw_text_center(Image* buf, FixedFont* font,
+                         Vector2 origin, const char* text);
+
+/* gets text width */
+int get_text_width(FixedFont* font, const char* text);
 
 /* draws a filled circle (int) */
 void draw_circle_fi(Image* buf, int center_x, int center_y,
