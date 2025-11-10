@@ -19,6 +19,7 @@ main(void)
 
   SetExitKey(EXIT_KEY);
   SetTargetFPS(TARGET_FPS);
+  HideCursor();
 
   game_init(&c);
 

@@ -6,11 +6,11 @@
 #include "../draw_utils.h"
 #include "../pam.h"
 
-static Image s_hornet_image;
+static Image   s_hornet_image;
 static Vector2 s_pos, s_vel;
 
 void
-demo_init(Context* c)
+demo_scene_init(Context* c)
 {
   s_pos = (Vector2){ .x = 0.f,  .y = 0.f  };
   s_vel = (Vector2){ .x = 20.f, .y = 20.f };
@@ -19,7 +19,13 @@ demo_init(Context* c)
 }
 
 void
-demo_update(Context* c, float dt)
+demo_scene_deinit()
+{
+  UnloadImage(s_hornet_image);
+}
+
+void
+demo_scene_update(Context* c, float dt)
 {
   s_pos = Vector2Add(s_pos, Vector2Scale(s_vel, dt));
 
@@ -44,9 +50,10 @@ demo_update(Context* c, float dt)
 }
 
 void
-demo_draw(Context* c, Image* buf)
+demo_scene_draw(Context* c, Image* buf)
 {
   clear_rgb_image(buf, rgb_from_rgba(PINK));
+
   draw_rectangle(buf,
                  (Vector2){ .x = 20.f,  .y = 20.f },
                  (Vector2){ .x = 100.f, .y = 100.f },
@@ -61,10 +68,4 @@ demo_draw(Context* c, Image* buf)
             (Vector2){ .x = 200.f, .y = 180.f },
             RED);
   draw_rgba_image(buf, &s_hornet_image, s_pos);
-}
-
-void
-demo_deinit()
-{
-  UnloadImage(s_hornet_image);
 }

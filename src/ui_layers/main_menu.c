@@ -3,59 +3,45 @@
 #include <raylib.h>
 #include <raymath.h>
 
+#include "main_menu.h"
 #include "../context.h"
-#include "../draw_utils.h"
 #include "../scene.h"
 #include "../scene_manager.h"
 #include "../log.h"
+#include "../draw_utils.h"
 
 #define TITLE_TEXT           "Asteroids (WIP)"
 #define DEMO_TEXT            "Graphics demonstration"
 #define VECTOR_PRODUCTS_TEXT "Vector products showcase"
 #define EXIT_TEXT            "Exit"
 
-typedef enum menu_option{
+typedef enum menu_option {
   DEMO_OPTION = 0,
   VECTOR_PRODUCTS_OPTION,
   EXIT_OPTION,
   OPTION_COUNT,
-}MenuOption;
+} MenuOption;
 
 static bool       s_should_show_menu;
-static bool       s_is_running;
 static MenuOption s_menu_option;
-static Scene      s_current_scene;
-
-static Vector2 s_selector_offset = { .x = -10.f, .y = 0.f };
+static Vector2    s_selector_offset = { .x = -10.f, .y = 0.f };
 
 void
 select_option(Context* c)
 {
   switch (s_menu_option) {
   case DEMO_OPTION:
-    if (s_is_running) {
-      assert(s_current_scene != MENU_SCENE);
-      replace_scene(c, DEMO_SCENE, s_current_scene);
-    } else {
-      add_scene_before(c, DEMO_SCENE, MENU_SCENE);
+    if (!is_current_scene(DEMO_SCENE)) {
+      set_current_scene(c, DEMO_SCENE);
+      s_should_show_menu = false;
     }
-
-    s_current_scene = DEMO_SCENE;
-    s_should_show_menu = false;
-    s_is_running = true;
 
     break;
   case VECTOR_PRODUCTS_OPTION:
-    if (s_is_running) {
-      assert(s_current_scene != MENU_SCENE);
-      replace_scene(c, VECTOR_PRODUCTS_SCENE, s_current_scene);
-    } else {
-      add_scene_before(c, VECTOR_PRODUCTS_SCENE, MENU_SCENE);
+    if (!is_current_scene(VECTOR_PRODUCTS_SCENE)) {
+      set_current_scene(c, VECTOR_PRODUCTS_SCENE);
+      s_should_show_menu = false;
     }
-
-    s_current_scene = VECTOR_PRODUCTS_SCENE;
-    s_should_show_menu = false;
-    s_is_running = true;
 
     break;
   case EXIT_OPTION:
@@ -89,38 +75,43 @@ prev_option()
 }
 
 void
-menu_init(Context* c)
+main_menu_layer_init(Context* c)
 {
   s_should_show_menu = true;
-  s_current_scene = MENU_SCENE;
   s_menu_option = DEMO_OPTION;
 }
 
 void
-menu_update(Context* c, float dt)
+main_menu_layer_deinit()
 {
-  if (IsKeyPressed(KEY_DOWN)) {
-    next_option();
+}
+
+void
+main_menu_layer_update(Context* c, float dt)
+{
+  if (s_should_show_menu) {
+    if (IsKeyPressed(KEY_DOWN)) {
+      next_option();
+    }
+    if (IsKeyPressed(KEY_UP)) {
+      prev_option();
+    }
+    if (IsKeyPressed(KEY_ENTER)) {
+      select_option(c);
+    }
   }
-  if (IsKeyPressed(KEY_UP)) {
-    prev_option();
-  }
-  if (IsKeyPressed(KEY_ENTER)) {
-    select_option(c);
-  }
+
   if (IsKeyPressed(KEY_ESCAPE)) {
-    if (s_is_running) {
+    if (!is_current_scene(MAIN_MENU_SCENE)) {
       s_should_show_menu = !s_should_show_menu;
     }
   }
 }
 
 void
-menu_draw(Context* c, Image* buf)
+main_menu_layer_draw(Context* c, Image* buf)
 {
   if (s_should_show_menu) {
-    clear_rgb_image(buf, rgb_from_rgba(PINK));
-
     draw_text_center(buf, &c->font.fixed_font,
                      (Vector2){ .x = 0, .y = 40 },
                      TITLE_TEXT);
@@ -159,5 +150,3 @@ menu_draw(Context* c, Image* buf)
     }
   }
 }
-
-void menu_deinit(){}
