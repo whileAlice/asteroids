@@ -75,19 +75,19 @@ prev_option()
 }
 
 void
-main_menu_layer_init(Context* c)
+main_menu_modal_init(UILayer* self, Context* c)
 {
   s_should_show_menu = true;
   s_menu_option = DEMO_OPTION;
 }
 
 void
-main_menu_layer_deinit()
+main_menu_modal_deinit(UILayer* self)
 {
 }
 
 void
-main_menu_layer_update(Context* c, float dt)
+main_menu_modal_update(UILayer* self, Context* c, float dt)
 {
   if (s_should_show_menu) {
     if (IsKeyPressed(KEY_DOWN)) {
@@ -102,14 +102,14 @@ main_menu_layer_update(Context* c, float dt)
   }
 
   if (IsKeyPressed(KEY_ESCAPE)) {
-    if (!is_current_scene(MAIN_MENU_SCENE)) {
+    if (!is_current_scene(MAIN_MENU_BG_SCENE)) {
       s_should_show_menu = !s_should_show_menu;
     }
   }
 }
 
 void
-main_menu_layer_draw(Context* c, Image* buf)
+main_menu_modal_draw(UILayer* self, Context* c, Image* buf)
 {
   if (s_should_show_menu) {
     draw_text_center(buf, &c->font.fixed_font,

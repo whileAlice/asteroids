@@ -3,7 +3,7 @@
 #include "context.h"
 
 typedef enum scene_id {
-  MAIN_MENU_SCENE = 0,
+  MAIN_MENU_BG_SCENE = 0,
   DEMO_SCENE,
   VECTOR_PRODUCTS_SCENE,
   SCENE_COUNT,
