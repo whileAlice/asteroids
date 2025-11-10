@@ -1,17 +1,17 @@
 #pragma once
 
-#include <stddef.h>
+#include "context.h"
 
-typedef enum scene{
-  DEMO_SCENE = 0,
-  LOG_DISPLAY_SCENE,
+typedef enum scene_id {
+  MAIN_MENU_SCENE = 0,
+  DEMO_SCENE,
   VECTOR_PRODUCTS_SCENE,
-  MENU_SCENE,
   SCENE_COUNT,
-} Scene;
+} SceneID;
 
-typedef struct scenes{
-  Scene* array;
-  size_t size;
-  size_t capacity;
-} Scenes;
+typedef struct scene {
+  void (*init)  (Context* c);
+  void (*deinit)();
+  void (*update)(Context* c, float dt);
+  void (*draw)  (Context* c, Image* buf);
+} Scene;

@@ -2,7 +2,7 @@
 #include <raylib.h>
 #include <raymath.h>
 
-#include "log_display.h"
+#include "osd.h"
 #include "../context.h"
 #include "../log.h"
 #include "../draw_utils.h"
@@ -10,7 +10,7 @@
 static Image s_overlay;
 
 void
-log_display_init(Context* c)
+osd_layer_init(Context* c)
 {
   c->state.show_osd = true;
 
@@ -24,7 +24,7 @@ log_display_init(Context* c)
 }
 
 void
-log_display_update(Context* c, float dt)
+osd_layer_update(Context* c, float dt)
 {
   if (c->input.log_page_up) {
     previous_log_page(c);
@@ -37,7 +37,7 @@ log_display_update(Context* c, float dt)
 }
 
 void
-log_display_draw(Context* c, Image* buf)
+osd_layer_draw(Context* c, Image* buf)
 {
   if (c->state.show_log) {
     box_blur(&s_overlay, buf, 1);
@@ -51,7 +51,7 @@ log_display_draw(Context* c, Image* buf)
 }
 
 void
-log_display_deinit()
+osd_layer_deinit()
 {
   UnloadImage(s_overlay);
   deinit_log_buffers();

@@ -1,263 +1,75 @@
 #include <assert.h>
-#include <stdlib.h>
+#include <raylib.h>
 
 #include "scene_manager.h"
+#include "scene.h"
+#include "scenes/main_menu.h"
 #include "scenes/demo.h"
-#include "scenes/log_display.h"
 #include "scenes/vector_products.h"
-#include "scenes/menu.h"
 
-static Scenes         s_active_scenes;
-static SceneFunctions s_scene_functions[] = {
-  [DEMO_SCENE] = {
-    .init   = demo_init,
-    .update = demo_update,
-    .draw   = demo_draw,
-    .deinit = demo_deinit,
+static Scene s_scenes[] = {
+  [MAIN_MENU_SCENE] = {
+    .init   = main_menu_scene_init,
+    .update = main_menu_scene_update,
+    .draw   = main_menu_scene_draw,
+    .deinit = main_menu_scene_deinit,
   },
-  [LOG_DISPLAY_SCENE] = {
-    .init   = log_display_init,
-    .update = log_display_update,
-    .draw   = log_display_draw,
-    .deinit = log_display_deinit,
+  [DEMO_SCENE] = {
+    .init   = demo_scene_init,
+    .update = demo_scene_update,
+    .draw   = demo_scene_draw,
+    .deinit = demo_scene_deinit,
   },
   [VECTOR_PRODUCTS_SCENE] = {
-    .init   = vector_products_init,
-    .update = vector_products_update,
-    .draw   = vector_products_draw,
-    .deinit = vector_products_deinit,
-  },
-  [MENU_SCENE] = {
-    .init   = menu_init,
-    .update = menu_update,
-    .draw   = menu_draw,
-    .deinit = menu_deinit,
+    .init   = vector_products_scene_init,
+    .update = vector_products_scene_update,
+    .draw   = vector_products_scene_draw,
+    .deinit = vector_products_scene_deinit,
   },
 };
+static Scene* s_current_scene;
 
 void
-add_scene(Context* c, Scene scene)
+set_current_scene(Context* c, SceneID scene_id)
 {
-  Scenes* s = &s_active_scenes;
-  assert(s->array != NULL);
-  assert(s->size < s->capacity);
+  assert(sizeof(s_scenes) / sizeof(s_scenes[0]) == SCENE_COUNT);
+  assert(scene_id >= 0);
+  assert(scene_id < SCENE_COUNT);
 
-  for (size_t i = 0; i < s->size; ++i) {
-    if (s->array[i] == scene) {
-      printf("WARNING: scene %d already added!\n", scene);
-      return;
-    }
+  if (s_current_scene != NULL) {
+    s_current_scene->deinit();
   }
 
-  s->array[s->size++] = scene;
-  init_scene(c, scene);
+  s_current_scene = &s_scenes[scene_id];
+  s_current_scene->init(c);
 }
 
 void
-add_scene_before(Context* c, Scene new_scene, Scene existing_scene)
+deinit_current_scene()
 {
-  Scenes* s = &s_active_scenes;
-  assert(s->array != NULL);
-  assert(s->size < s->capacity);
-
-  bool found = false;
-
-  for (size_t i = 0; i < s->size; ++i) {
-    if (s->array[i] == existing_scene) {
-      found = true;
-      s->size += 1;
-
-      for (size_t j = s->size - 1; j > i; --j) {
-        s->array[j] = s->array[j - 1];
-      }
-
-      s->array[i] = new_scene;
-      init_scene(c, new_scene);
-
-      break;
-    }
-  }
-
-  if (!found) {
-    printf("WARNING: scene %d not found in active scenes!\n", existing_scene);
-  }
+  s_current_scene->deinit();
 }
 
 void
-remove_scene(Context* c, Scene scene)
+update_current_scene(Context* c, float dt)
 {
-  Scenes* s = &s_active_scenes;
-  assert(s->array != NULL);
+  assert(s_current_scene != NULL);
 
-  bool found = false;
-
-  for (size_t i = 0; i < s->size; ++i) {
-    if (found) {
-      s->array[i - 1] = s->array[i];
-    }
-    if (s->array[i] == scene) {
-      found = true;
-      deinit_scene(scene);
-    }
-  }
-
-  if (found) {
-    s->size -= 1;
-  } else {
-    printf("WARNING: scene %d not found in active scenes!\n", scene);
-  }
+  s_current_scene->update(c, dt);
 }
 
 void
-replace_scene(Context* c, Scene new_scene, Scene old_scene)
+draw_current_scene(Context* c, Image* buf)
 {
-  Scenes* s = &s_active_scenes;
-  assert(s->array != NULL);
+  assert(s_current_scene != NULL);
 
-  bool found = false;
-
-  for (size_t i = 0; i < s->size; ++i) {
-    if (s->array[i] == old_scene) {
-      found = true;
-
-      deinit_scene(old_scene);
-      init_scene(c, new_scene);
-      s->array[i] = new_scene;
-
-      break;
-    }
-  }
-
-  if (!found) {
-    printf("WARNING: scene %d not found in active scenes!\n", old_scene);
-  }
+  s_current_scene->draw(c, buf);
 }
 
-void
-init_active_scenes()
+bool
+is_current_scene(SceneID scene_id)
 {
-  const size_t capacity = SCENE_COUNT * sizeof(Scene);
+  assert(s_current_scene != NULL);
 
-  s_active_scenes = (Scenes){
-    .array    = malloc(capacity),
-    .size     = 0,
-    .capacity = capacity,
-  };
-}
-
-void
-deinit_active_scenes() {
-  for (int i = (int)s_active_scenes.size - 1; i >= 0; --i) {
-    deinit_scene(s_active_scenes.array[i]);
-  }
-
-  free(s_active_scenes.array);
-}
-
-void
-update_active_scenes(Context* c, float dt)
-{
-  for (size_t i = 0; i < s_active_scenes.size; ++i) {
-    update_scene(c, s_active_scenes.array[i], dt);
-  }
-}
-
-void
-draw_active_scenes(Context* c, Image* buf)
-{
-  for (size_t i = 0; i < s_active_scenes.size; ++i) {
-    draw_scene(c, s_active_scenes.array[i], buf);
-  }
-}
-
-init_func
-get_scene_init_func(Scene scene)
-{
-  if (scene >= 0 && scene < SCENE_COUNT) {
-    return s_scene_functions[scene].init;
-  } else {
-    printf("ERROR: scene %d does not exist\n", scene);
-    exit(1);
-  }
-}
-
-update_func
-get_scene_update_func(Scene scene)
-{
-  if (scene >= 0 && scene < SCENE_COUNT) {
-    return s_scene_functions[scene].update;
-  } else {
-    printf("ERROR: scene %d does not exist\n", scene);
-    exit(1);
-  }
-}
-
-draw_func
-get_scene_draw_func(Scene scene)
-{
-  if (scene >= 0 && scene < SCENE_COUNT) {
-    return s_scene_functions[scene].draw;
-  } else {
-    printf("ERROR: scene %d does not exist\n", scene);
-    exit(1);
-  }
-}
-
-deinit_func
-get_scene_deinit_func(Scene scene)
-{
-  if (scene >= 0 && scene < SCENE_COUNT) {
-    return s_scene_functions[scene].deinit;
-  } else {
-    printf("ERROR: scene %d does not exist\n", scene);
-    exit(1);
-  }
-}
-
-void
-init_scene(Context* c, Scene scene)
-{
-  auto init_func = get_scene_init_func(scene);
-  if (init_func != NULL) {
-    init_func(c);
-  } else {
-    printf("ERROR: scene %d init not found\n", scene);
-    exit(1);
-  }
-}
-
-void
-update_scene(Context* c, Scene scene, float dt)
-{
-  auto update_func = get_scene_update_func(scene);
-  if (update_func != NULL) {
-    update_func(c, dt);
-  } else {
-    printf("ERROR: scene %d update not found\n", scene);
-    exit(1);
-  }
-}
-
-void
-draw_scene(Context* c, Scene scene, Image* buf)
-{
-  auto draw_func = get_scene_draw_func(scene);
-  if (draw_func != NULL) {
-    draw_func(c, buf);
-  } else {
-    printf("ERROR: scene %d draw not found\n", scene);
-    exit(1);
-  }
-}
-
-void
-deinit_scene(Scene scene)
-{
-  auto deinit_func = get_scene_deinit_func(scene);
-  if (deinit_func != NULL) {
-    deinit_func();
-  } else {
-    printf("ERROR: scene %d deinit not found\n", scene);
-    exit(1);
-  }
+  return s_current_scene == &s_scenes[scene_id];
 }

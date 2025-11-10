@@ -16,13 +16,13 @@ typedef enum selected_point{
   A, B, C
 } SelectedPoint;
 
-static Vector2 s_point_a, s_point_b, s_point_c;
-static Color   s_color_a, s_color_b, s_color_c;
+static Vector2       s_point_a, s_point_b, s_point_c;
+static Color         s_color_a, s_color_b, s_color_c;
 static SelectedPoint s_current_point, s_previous_point;
-static size_t s_mouse_update_count;
+static size_t        s_mouse_update_count;
 
 void
-vector_products_init(Context* c)
+vector_products_scene_init(Context* c)
 {
   s_point_a = (Vector2){ .x = 23.f,  .y = 40.f  };
   s_point_b = (Vector2){ .x = 61.f,  .y = 171.f };
@@ -36,12 +36,12 @@ vector_products_init(Context* c)
   s_previous_point = A;
 
   s_mouse_update_count = 2;
-
-  HideCursor();
 }
 
+void vector_products_scene_deinit(){}
+
 void
-vector_products_update(Context* c, float dt)
+vector_products_scene_update(Context* c, float dt)
 {
   // TODO: not cool. could raylib be told where to put
   // the mouse at init in a more robust manner?
@@ -206,7 +206,7 @@ vector_products_update(Context* c, float dt)
 }
 
 void
-vector_products_draw(Context* c, Image* buf)
+vector_products_scene_draw(Context* c, Image* buf)
 {
   clear_rgb_image(buf, rgb_from_rgba(LIGHTGRAY));
 
@@ -238,5 +238,3 @@ vector_products_draw(Context* c, Image* buf)
              (double)s_point_c.x,
              (double)INVERT_Y(s_point_c.y));
 }
-
-void vector_products_deinit(){}
