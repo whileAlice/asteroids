@@ -4,137 +4,241 @@
 
 #include "ui_layer_manager.h"
 #include "ui_layer.h"
-#include "ui_layers/osd.h"
-#include "ui_layers/main_menu.h"
+#include "modals/main_menu.h"
+#include "overlays/osd.h"
+#include "overlays/log.h"
 
-static UILayer s_ui_layers[] = {
-  [MAIN_MENU_LAYER] = {
-    .is_interactive = true,
+static UILayer s_modals[] = {
+  [MAIN_MENU_MODAL] = {
+    .name = "main menu modal",
 
-    .init   = main_menu_layer_init,
-    .deinit = main_menu_layer_deinit,
-    .update = main_menu_layer_update,
-    .draw   = main_menu_layer_draw,
+    .init   = main_menu_modal_init,
+    .deinit = main_menu_modal_deinit,
+    .update = main_menu_modal_update,
+    .draw   = main_menu_modal_draw,
   },
-  [OSD_LAYER] = {
-    .is_interactive = false,
+};
+static UILayer s_overlays[] = {
+  [LOG_OVERLAY] = {
+    .name = "log overlay",
 
-    .init   = osd_layer_init,
-    .deinit = osd_layer_deinit,
-    .update = osd_layer_update,
-    .draw   = osd_layer_draw,
+    .init   = log_overlay_init,
+    .deinit = log_overlay_deinit,
+    .update = log_overlay_update,
+    .draw   = log_overlay_draw,
+  },
+  [OSD_OVERLAY] = {
+    .name = "osd overlay",
+
+    .init   = osd_overlay_init,
+    .deinit = osd_overlay_deinit,
+    .update = osd_overlay_update,
+    .draw   = osd_overlay_draw,
   }
 };
 
-static ActiveUILayers s_active_ui_layers;
+static ActiveUILayers s_active_modals;
+static ActiveUILayers s_active_overlays;
 
 void
-init_active_ui_layers()
+init_active_ui_layers(ActiveUILayers* active_ui_layers, size_t layer_count)
 {
-  assert(sizeof(s_ui_layers) / sizeof(s_ui_layers[0]) == UI_LAYER_COUNT);
-
-  s_active_ui_layers = (ActiveUILayers){
-    .array    = malloc(UI_LAYER_COUNT * sizeof(UILayer*)),
+  *active_ui_layers = (ActiveUILayers){
+    .array    = malloc(layer_count * sizeof(UILayer*)),
     .size     = 0,
-    .capacity = UI_LAYER_COUNT,
+    .capacity = layer_count,
   };
 }
 
 void
-deinit_active_ui_layers()
+init_active_modals()
 {
-  for (size_t i = 0; i < s_active_ui_layers.size; ++i) {
-    s_active_ui_layers.array[i]->deinit();
-  }
+  assert(sizeof(s_modals) / sizeof(s_modals[0]) == MODAL_COUNT);
 
-  free(s_active_ui_layers.array);
-  s_active_ui_layers.size = 0;
+  init_active_ui_layers(&s_active_modals, MODAL_COUNT);
 }
 
 void
-add_ui_layer(Context* c, UILayerID layer_id)
+init_active_overlays()
 {
-  auto* layer = &s_ui_layers[layer_id];
-  auto* active_layers = &s_active_ui_layers;
+  assert(sizeof(s_overlays) / sizeof(s_overlays[0]) == OVERLAY_COUNT);
 
-  assert(active_layers->capacity > 0);
-  assert(active_layers->size < active_layers->capacity);
-  assert(layer_id >= 0);
-  assert(layer_id < UI_LAYER_COUNT);
+  init_active_ui_layers(&s_active_overlays, OVERLAY_COUNT);
+}
+
+void
+deinit_active_ui_layers(ActiveUILayers* active_ui_layers)
+{
+  for (size_t i = 0; i < active_ui_layers->size; ++i) {
+    auto* layer = active_ui_layers->array[i];
+    layer->deinit(layer);
+  }
+
+  free(active_ui_layers->array);
+  active_ui_layers->size = 0;
+}
+
+void
+deinit_active_modals()
+{
+  deinit_active_ui_layers(&s_active_modals);
+}
+
+void
+deinit_active_overlays()
+{
+  deinit_active_ui_layers(&s_active_overlays);
+}
+
+void
+add_active_ui_layer(Context* c, ActiveUILayers* active_ui_layers, UILayer* ui_layer)
+{
+  assert(active_ui_layers->capacity > 0);
+  assert(active_ui_layers->size < active_ui_layers->capacity);
 
   // TODO: for larger arrays a map would be better
-  for (size_t i = 0; i < active_layers->size; ++i) {
-    if (layer == active_layers->array[i]) {
+  for (size_t i = 0; i < active_ui_layers->size; ++i) {
+    if (ui_layer == active_ui_layers->array[i]) {
       // TODO: implement enum -> string conversion
-      printf("WARNING: UI layer %d is already added at position %d\n",
-             layer_id, (int)i);
+      printf("WARNING: UI layer '%s' is already added at position %d\n",
+             ui_layer->name, (int)i);
 
       return;
     }
   }
 
-  active_layers->array[active_layers->size] = layer;
-  active_layers->size++;
+  active_ui_layers->array[active_ui_layers->size] = ui_layer;
+  active_ui_layers->size++;
 
-  layer->init(c);
+  ui_layer->init(ui_layer, c);
 }
 
 void
-remove_ui_layer(UILayerID layer_id)
+add_modal(Context* c, ModalID modal_id)
 {
-  assert(layer_id >= 0);
-  assert(layer_id < UI_LAYER_COUNT);
+  assert(modal_id >= 0);
+  assert(modal_id < MODAL_COUNT);
 
-  auto* active_layers = &s_active_ui_layers;
+  add_active_ui_layer(c, &s_active_modals, &s_modals[modal_id]);
+}
 
-  if (active_layers->size == 0) {
-    printf("WARNING: no active UI layers to remove\n");
+void
+add_overlay(Context* c, OverlayID overlay_id)
+{
+  assert(overlay_id >= 0);
+  assert(overlay_id < OVERLAY_COUNT);
+
+  add_active_ui_layer(c, &s_active_overlays, &s_overlays[overlay_id]);
+}
+
+void
+remove_active_ui_layer(ActiveUILayers* active_ui_layers, UILayer* ui_layer)
+{
+
+  if (active_ui_layers->size == 0) {
+    printf("WARNING: trying to remove UI layer '%s', "
+           "but there are no active UI layers to remove\n",
+           ui_layer->name);
 
     return;
   }
 
   int found_at = -1;
 
-  for (size_t i = 0; i < active_layers->size; ++i) {
-    auto* layer = active_layers->array[i];
+  for (size_t i = 0; i < active_ui_layers->size; ++i) {
+    auto* layer = active_ui_layers->array[i];
 
-    if (layer == &s_ui_layers[layer_id]) {
+    if (layer == ui_layer) {
       found_at = (int)i;
-      layer->deinit();
+      layer->deinit(layer);
 
       break;
     }
   }
 
   if (found_at < 0) {
-    printf("WARNING: UI layer %d not found in active layers\n", layer_id);
+    printf("WARNING: UI layer '%s' not found in active layers\n",
+           ui_layer->name);
 
     return;
   }
 
-  for (size_t i = (size_t)found_at; i < active_layers->size - 1; ++i) {
-    active_layers[i] = active_layers[i + 1];
+  for (size_t i = (size_t)found_at; i < active_ui_layers->size - 1; ++i) {
+    active_ui_layers[i] = active_ui_layers[i + 1];
   }
 
-  active_layers->size--;
+  active_ui_layers->size--;
 }
 
 void
-update_active_ui_layers(Context* c, float dt)
+remove_modal(ModalID modal_id)
 {
-  assert(s_active_ui_layers.capacity > 0);
+  assert(modal_id >= 0);
+  assert(modal_id < MODAL_COUNT);
 
-  for (size_t i = 0; i < s_active_ui_layers.size; ++i) {
-    s_active_ui_layers.array[i]->update(c, dt);
+  remove_active_ui_layer(&s_active_modals, (UILayer*)&s_modals[modal_id]);
+}
+
+void
+remove_overlay(OverlayID overlay_id)
+{
+  assert(overlay_id >= 0);
+  assert(overlay_id < OVERLAY_COUNT);
+
+  remove_active_ui_layer(&s_active_overlays, (UILayer*)&s_overlays[overlay_id]);
+}
+
+void
+update_active_ui_layers(Context* c, ActiveUILayers* active_ui_layers, float dt)
+{
+  assert(active_ui_layers->capacity > 0);
+
+  for (size_t i = 0; i < active_ui_layers->size; ++i) {
+    auto* layer = active_ui_layers->array[i];
+    layer->update(layer, c, dt);
   }
 }
 
 void
-draw_active_ui_layers(Context* c, Image* buf)
+update_active_modals(Context* c, float dt)
 {
-  assert(s_active_ui_layers.capacity > 0);
+  update_active_ui_layers(c, &s_active_modals, dt);
+}
 
-  for (size_t i = 0; i < s_active_ui_layers.size; ++i) {
-    s_active_ui_layers.array[i]->draw(c, buf);
+void
+update_active_overlays(Context* c, float dt)
+{
+  update_active_ui_layers(c, &s_active_overlays, dt);
+}
+
+void
+draw_active_ui_layers(Context* c, ActiveUILayers* active_ui_layers, Image* buf)
+{
+  assert(active_ui_layers->capacity > 0);
+
+  for (size_t i = 0; i < active_ui_layers->size; ++i) {
+    auto* layer = active_ui_layers->array[i];
+    layer->draw(layer, c, buf);
   }
+}
+
+void
+draw_active_modals(Context* c, Image* buf)
+{
+  draw_active_ui_layers(c, &s_active_modals, buf);
+}
+
+void
+draw_active_overlays(Context* c, Image* buf)
+{
+  draw_active_ui_layers(c, &s_active_overlays, buf);
+}
+
+UILayer*
+get_overlay(OverlayID overlay_id)
+{
+  assert(overlay_id >= 0);
+  assert(overlay_id < OVERLAY_COUNT);
+
+  return &s_overlays[overlay_id];
 }

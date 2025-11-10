@@ -3,16 +3,16 @@
 
 #include "scene_manager.h"
 #include "scene.h"
-#include "scenes/main_menu.h"
+#include "scenes/main_menu_bg.h"
 #include "scenes/demo.h"
 #include "scenes/vector_products.h"
 
 static Scene s_scenes[] = {
-  [MAIN_MENU_SCENE] = {
-    .init   = main_menu_scene_init,
-    .update = main_menu_scene_update,
-    .draw   = main_menu_scene_draw,
-    .deinit = main_menu_scene_deinit,
+  [MAIN_MENU_BG_SCENE] = {
+    .init   = main_menu_bg_scene_init,
+    .update = main_menu_bg_scene_update,
+    .draw   = main_menu_bg_scene_draw,
+    .deinit = main_menu_bg_scene_deinit,
   },
   [DEMO_SCENE] = {
     .init   = demo_scene_init,
