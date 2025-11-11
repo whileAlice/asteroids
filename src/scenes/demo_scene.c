@@ -1,7 +1,7 @@
 #include <raylib.h>
 #include <raymath.h>
 
-#include "demo.h"
+#include "demo_scene.h"
 #include "../context.h"
 #include "../draw_utils.h"
 #include "../pam.h"

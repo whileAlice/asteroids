@@ -4,9 +4,9 @@
 
 #include "ui_layer_manager.h"
 #include "ui_layer.h"
-#include "modals/main_menu.h"
-#include "overlays/osd.h"
-#include "overlays/log.h"
+#include "modals/main_menu_modal.h"
+#include "overlays/osd_overlay.h"
+#include "overlays/log_overlay.h"
 
 static UILayer s_modals[] = {
   [MAIN_MENU_MODAL] = {

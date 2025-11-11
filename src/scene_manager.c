@@ -3,9 +3,9 @@
 
 #include "scene_manager.h"
 #include "scene.h"
-#include "scenes/main_menu_bg.h"
-#include "scenes/demo.h"
-#include "scenes/vector_products.h"
+#include "scenes/main_menu_bg_scene.h"
+#include "scenes/demo_scene.h"
+#include "scenes/vector_products_scene.h"
 
 static Scene s_scenes[] = {
   [MAIN_MENU_BG_SCENE] = {

@@ -1,7 +1,7 @@
 #include <raylib.h>
 #include <raymath.h>
 
-#include "osd.h"
+#include "osd_overlay.h"
 #include "../ui_layer.h"
 #include "../context.h"
 #include "../log.h"
