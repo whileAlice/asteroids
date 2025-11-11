@@ -3,7 +3,7 @@
 #include <raylib.h>
 #include <raymath.h>
 
-#include "main_menu.h"
+#include "main_menu_modal.h"
 #include "../context.h"
 #include "../scene.h"
 #include "../scene_manager.h"

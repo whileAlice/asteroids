@@ -1,7 +1,7 @@
 #include <raylib.h>
 #include <raymath.h>
 
-#include "vector_products.h"
+#include "vector_products_scene.h"
 #include "../config.h"
 #include "../context.h"
 #include "../math_utils.h"

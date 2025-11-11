@@ -1,6 +1,6 @@
 #include <raylib.h>
 
-#include "main_menu_bg.h"
+#include "main_menu_bg_scene.h"
 #include "../context.h"
 #include "../draw_utils.h"
 
