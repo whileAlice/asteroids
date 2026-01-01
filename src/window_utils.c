@@ -1,88 +1,87 @@
-#include <raylib.h>
-
-#include "context.h"
 #include "window_utils.h"
+
 #include "config.h"
+#include "context.h"
 #include "math_utils.h"
 
-int
-get_integer_scale()
-{
-  const int scale_x = GetRenderWidth()  / PIXEL_BUFFER_WIDTH;
-  const int scale_y = GetRenderHeight() / PIXEL_BUFFER_HEIGHT;
+#include <raylib.h>
 
-  return MIN(scale_x, scale_y);
+int
+get_integer_scale ()
+{
+   const int scale_x = GetRenderWidth () / PIXEL_BUFFER_WIDTH;
+   const int scale_y = GetRenderHeight () / PIXEL_BUFFER_HEIGHT;
+
+   return MIN (scale_x, scale_y);
 }
 
 int
-get_texture_origin_x()
+get_texture_origin_x ()
 {
-   return GetRenderWidth() % PIXEL_BUFFER_WIDTH / 2;
+   return GetRenderWidth () % PIXEL_BUFFER_WIDTH / 2;
 }
 
 int
-get_texture_origin_y()
+get_texture_origin_y ()
 {
-  return GetRenderHeight() % PIXEL_BUFFER_HEIGHT / 2;
+   return GetRenderHeight () % PIXEL_BUFFER_HEIGHT / 2;
 }
 
 int
-get_mouse_x(Context* c)
+get_mouse_x (Context* c)
 {
-  const int mouse_x = buffer_x_from_screen_x(c, GetMouseX());
+   const int mouse_x = buffer_x_from_screen_x (c, GetMouseX ());
 
-
-  return CLAMP(mouse_x, 0, PIXEL_BUFFER_WIDTH - 1);
+   return CLAMP (mouse_x, 0, PIXEL_BUFFER_WIDTH - 1);
 }
 
 int
-get_mouse_y(Context* c)
+get_mouse_y (Context* c)
 {
-  const int mouse_y = buffer_y_from_screen_y(c, GetMouseY());
+   const int mouse_y = buffer_y_from_screen_y (c, GetMouseY ());
 
-
-  return CLAMP(mouse_y, 0, PIXEL_BUFFER_HEIGHT - 1);
+   return CLAMP (mouse_y, 0, PIXEL_BUFFER_HEIGHT - 1);
 }
 
 int
-buffer_x_from_screen_x(Context* c, int screen_x)
+buffer_x_from_screen_x (Context* c, int screen_x)
 {
-  const int buf_x = screen_x - c->buffer.texture_origin_x;
+   const int buf_x = screen_x - c->buffer.texture_origin_x;
 
-  return buf_x / c->buffer.integer_scale;
+   return buf_x / c->buffer.integer_scale;
 }
 
 int
-buffer_y_from_screen_y(Context* c, int screen_y)
+buffer_y_from_screen_y (Context* c, int screen_y)
 {
-  const int buf_y = screen_y - c->buffer.texture_origin_y;
+   const int buf_y = screen_y - c->buffer.texture_origin_y;
 
-  return buf_y / c->buffer.integer_scale;
+   return buf_y / c->buffer.integer_scale;
 }
 
 int
-screen_x_from_buffer_x(Context* c, int buf_x)
+screen_x_from_buffer_x (Context* c, int buf_x)
 {
-  const int screen_x = buf_x * c->buffer.integer_scale;
+   const int screen_x = buf_x * c->buffer.integer_scale;
 
-  return screen_x + c->buffer.texture_origin_x;
+   return screen_x + c->buffer.texture_origin_x;
 }
 
 int
-screen_y_from_buffer_y(Context* c, int buf_y)
+screen_y_from_buffer_y (Context* c, int buf_y)
 {
-  const int screen_y = buf_y * c->buffer.integer_scale;
+   const int screen_y = buf_y * c->buffer.integer_scale;
 
-  return screen_y + c->buffer.texture_origin_y;
+   return screen_y + c->buffer.texture_origin_y;
 }
 
 void
-set_mouse_pos(Context* c, Vector2 pos)
+set_mouse_pos (Context* c, Vector2 pos)
 {
-  const int mouse_x = screen_x_from_buffer_x(c, (int)pos.x);
-  const int mouse_y = screen_y_from_buffer_y(c, (int)pos.y);
+   const int mouse_x = screen_x_from_buffer_x (c, (int)pos.x);
+   const int mouse_y = screen_y_from_buffer_y (c, (int)pos.y);
 
-  SetMousePosition(mouse_x, mouse_y);
+   SetMousePosition (mouse_x, mouse_y);
 }
 
-int set_mouse_y(Context* c, int x);
+int set_mouse_y (Context* c, int x);

@@ -1,0 +1,52 @@
+BasedOnStyle: Mozilla
+
+AlignConsecutiveAssignments:
+  Enabled: true
+  AcrossComments: true
+  AlignCompound: true
+
+AlignConsecutiveDeclarations:
+  Enabled: true
+  AcrossComments: true
+  AlignFunctionDeclarations: true
+
+AlignConsecutiveMacros:
+  Enabled: true
+  AcrossComments: true
+
+AlignConsecutiveShortCaseStatements:
+  Enabled: true
+  AcrossComments: true
+  AlignCaseColons: true
+
+AlignEscapedNewlines: LeftWithLastLine
+AlignOperands: AlignAfterOperator
+
+AllowShortCaseLabelsOnASingleLine: true
+
+BinPackArguments: true
+BinPackParameters: BinPack
+
+BreakAfterReturnType: AllDefinitions
+
+BreakBeforeBraces: Custom
+BraceWrapping:
+  AfterFunction: true
+  AfterControlStatement: true
+  BeforeElse: true
+  BeforeWhile: true
+
+BreakBinaryOperations: RespectPrecedence
+ContinuationIndentWidth: 3
+
+IncludeBlocks: Regroup
+IncludeCategories:
+  - Regex:           '^"'
+    Priority:        1
+  - Regex:           '^<'
+    Priority:        2
+
+IndentCaseLabels: false
+IndentWidth: 3
+
+SpaceBeforeParens: Always
