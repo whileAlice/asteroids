@@ -1,11 +1,12 @@
+#include "scene_manager.h"
+
+#include "scene.h"
+#include "scenes/demo_scene.h"
+#include "scenes/main_menu_bg_scene.h"
+#include "scenes/vector_products_scene.h"
+
 #include <assert.h>
 #include <raylib.h>
-
-#include "scene_manager.h"
-#include "scene.h"
-#include "scenes/main_menu_bg_scene.h"
-#include "scenes/demo_scene.h"
-#include "scenes/vector_products_scene.h"
 
 static Scene s_scenes[] = {
   [MAIN_MENU_BG_SCENE] = {
@@ -30,46 +31,47 @@ static Scene s_scenes[] = {
 static Scene* s_current_scene;
 
 void
-set_current_scene(Context* c, SceneID scene_id)
+set_current_scene (Context* c, SceneID scene_id)
 {
-  assert(sizeof(s_scenes) / sizeof(s_scenes[0]) == SCENE_COUNT);
-  assert(scene_id >= 0);
-  assert(scene_id < SCENE_COUNT);
+   assert (sizeof (s_scenes) / sizeof (s_scenes[0]) == SCENE_COUNT);
+   assert (scene_id >= 0);
+   assert (scene_id < SCENE_COUNT);
 
-  if (s_current_scene != NULL) {
-    s_current_scene->deinit();
-  }
+   if (s_current_scene != NULL)
+   {
+      s_current_scene->deinit ();
+   }
 
-  s_current_scene = &s_scenes[scene_id];
-  s_current_scene->init(c);
+   s_current_scene = &s_scenes[scene_id];
+   s_current_scene->init (c);
 }
 
 void
-deinit_current_scene()
+deinit_current_scene ()
 {
-  s_current_scene->deinit();
+   s_current_scene->deinit ();
 }
 
 void
-update_current_scene(Context* c, float dt)
+update_current_scene (Context* c, float dt)
 {
-  assert(s_current_scene != NULL);
+   assert (s_current_scene != NULL);
 
-  s_current_scene->update(c, dt);
+   s_current_scene->update (c, dt);
 }
 
 void
-draw_current_scene(Context* c, Image* buf)
+draw_current_scene (Context* c, Image* buf)
 {
-  assert(s_current_scene != NULL);
+   assert (s_current_scene != NULL);
 
-  s_current_scene->draw(c, buf);
+   s_current_scene->draw (c, buf);
 }
 
 bool
-is_current_scene(SceneID scene_id)
+is_current_scene (SceneID scene_id)
 {
-  assert(s_current_scene != NULL);
+   assert (s_current_scene != NULL);
 
-  return s_current_scene == &s_scenes[scene_id];
+   return s_current_scene == &s_scenes[scene_id];
 }

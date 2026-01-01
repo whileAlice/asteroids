@@ -2,4 +2,4 @@
 
 #include "context.h"
 
-void update_state(Context* c);
+void update_state (Context* c);

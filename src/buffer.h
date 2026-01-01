@@ -2,4 +2,4 @@
 
 #include <raylib.h>
 
-Image generate_buffer_image();
+Image generate_buffer_image ();

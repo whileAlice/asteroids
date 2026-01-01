@@ -1,11 +1,11 @@
 #pragma once
 
-#include <raylib.h>
-
 #include "../context.h"
 #include "../ui_layer.h"
 
-void main_menu_modal_init  (UILayer* self, Context* c);
-void main_menu_modal_deinit(UILayer* self);
-void main_menu_modal_update(UILayer* self, Context* c, float dt);
-void main_menu_modal_draw  (UILayer* self, Context* c, Image* buf);
+#include <raylib.h>
+
+void main_menu_modal_init (UILayer* self, Context* c);
+void main_menu_modal_deinit (UILayer* self);
+void main_menu_modal_update (UILayer* self, Context* c, float dt);
+void main_menu_modal_draw (UILayer* self, Context* c, Image* buf);

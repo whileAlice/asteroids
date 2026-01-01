@@ -8,4 +8,4 @@
 #define APP_TITLE             "asteroids"
 #define FIXED_FONT_PATH       "assets/5x8font.def"
 
-#define EXIT_KEY              KEY_Q
+#define EXIT_KEY KEY_Q
