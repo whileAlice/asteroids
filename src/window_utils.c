@@ -46,33 +46,33 @@ get_mouse_y (Context* c)
 int
 buffer_x_from_screen_x (Context* c, int screen_x)
 {
-   const int buf_x = screen_x - c->buffer.texture_origin_x;
+   const int buf_x = screen_x - c->pixel_buffer->texture_origin_x;
 
-   return buf_x / c->buffer.integer_scale;
+   return buf_x / c->pixel_buffer->integer_scale;
 }
 
 int
 buffer_y_from_screen_y (Context* c, int screen_y)
 {
-   const int buf_y = screen_y - c->buffer.texture_origin_y;
+   const int buf_y = screen_y - c->pixel_buffer->texture_origin_y;
 
-   return buf_y / c->buffer.integer_scale;
+   return buf_y / c->pixel_buffer->integer_scale;
 }
 
 int
 screen_x_from_buffer_x (Context* c, int buf_x)
 {
-   const int screen_x = buf_x * c->buffer.integer_scale;
+   const int screen_x = buf_x * c->pixel_buffer->integer_scale;
 
-   return screen_x + c->buffer.texture_origin_x;
+   return screen_x + c->pixel_buffer->texture_origin_x;
 }
 
 int
 screen_y_from_buffer_y (Context* c, int buf_y)
 {
-   const int screen_y = buf_y * c->buffer.integer_scale;
+   const int screen_y = buf_y * c->pixel_buffer->integer_scale;
 
-   return screen_y + c->buffer.texture_origin_y;
+   return screen_y + c->pixel_buffer->texture_origin_y;
 }
 
 void

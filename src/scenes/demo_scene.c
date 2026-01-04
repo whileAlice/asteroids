@@ -30,13 +30,13 @@ demo_scene_update (Context* c, float dt)
 {
    s_pos = Vector2Add (s_pos, Vector2Scale (s_vel, dt));
 
-   float right_limit = (float)(c->buffer.image.width - s_hornet_image.width);
+   float right_limit = (float)(c->pixel_buffer->image.width - s_hornet_image.width);
    if (s_pos.x >= right_limit)
    {
       s_pos.x = right_limit - 1;
       s_vel.x = -s_vel.x;
    }
-   float bottom_limit = (float)(c->buffer.image.height - s_hornet_image.height);
+   float bottom_limit = (float)(c->pixel_buffer->image.height - s_hornet_image.height);
    if (s_pos.y >= bottom_limit)
    {
       s_pos.y = bottom_limit - 1;

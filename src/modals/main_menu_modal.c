@@ -2,7 +2,6 @@
 
 #include "../context.h"
 #include "../draw_utils.h"
-#include "../log.h"
 #include "../scene.h"
 #include "../scene_manager.h"
 
@@ -48,15 +47,12 @@ select_option (Context* c)
       }
 
       break;
-   case EXIT_OPTION: c->state.should_exit_app = true; break;
+   case EXIT_OPTION: c->state->should_exit_app = true; break;
    default:
       // TODO: implement unreachable
       assert (1 == 0);
       exit (1);
    }
-
-   // TODO: this needs a betters solution
-   clear_osd_buffer (c);
 }
 
 void
@@ -122,39 +118,39 @@ main_menu_modal_draw (UILayer* self, Context* c, Image* buf)
 {
    if (s_should_show_menu)
    {
-      draw_text_center (buf, &c->font.fixed_font, (Vector2){ .x = 0, .y = 40 },
+      draw_text_center (buf, &c->fonts->fixed_font, (Vector2){ .x = 0, .y = 40 },
                         TITLE_TEXT);
 
       Vector2 demo_option_origin = draw_text_center (
-         buf, &c->font.fixed_font, (Vector2){ .x = 0, .y = 60 }, DEMO_TEXT);
+         buf, &c->fonts->fixed_font, (Vector2){ .x = 0, .y = 60 }, DEMO_TEXT);
 
       if (s_menu_option == DEMO_OPTION)
       {
          Vector2 demo_selector_origin =
             Vector2Add (demo_option_origin, s_selector_offset);
-         draw_text (buf, &c->font.fixed_font, demo_selector_origin, "*");
+         draw_text (buf, &c->fonts->fixed_font, demo_selector_origin, "*");
       }
 
       Vector2 vector_products_option_origin =
-         draw_text_center (buf, &c->font.fixed_font,
+         draw_text_center (buf, &c->fonts->fixed_font,
                            (Vector2){ .x = 0, .y = 70 }, VECTOR_PRODUCTS_TEXT);
 
       if (s_menu_option == VECTOR_PRODUCTS_OPTION)
       {
          Vector2 vector_products_selector_origin =
             Vector2Add (vector_products_option_origin, s_selector_offset);
-         draw_text (buf, &c->font.fixed_font, vector_products_selector_origin,
+         draw_text (buf, &c->fonts->fixed_font, vector_products_selector_origin,
                     "*");
       }
 
       Vector2 exit_option_origin = draw_text_center (
-         buf, &c->font.fixed_font, (Vector2){ .x = 0, .y = 80 }, EXIT_TEXT);
+         buf, &c->fonts->fixed_font, (Vector2){ .x = 0, .y = 80 }, EXIT_TEXT);
 
       if (s_menu_option == EXIT_OPTION)
       {
          Vector2 exit_selector_origin =
             Vector2Add (exit_option_origin, s_selector_offset);
-         draw_text (buf, &c->font.fixed_font, exit_selector_origin, "*");
+         draw_text (buf, &c->fonts->fixed_font, exit_selector_origin, "*");
       }
    }
 }

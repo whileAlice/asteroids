@@ -2,7 +2,6 @@
 
 #include "config.h"
 #include "context.h"
-#include "log.h"
 #include "scene_manager.h"
 #include "ui_layer_manager.h"
 #include "update_input.h"
@@ -13,11 +12,8 @@
 void
 game_init (Context* c)
 {
-   load_fixed_fonts (&c->font.fixed_font, &c->font.inverted_fixed_font,
+   load_fixed_fonts (&c->fonts->fixed_font, &c->fonts->inverted_fixed_font,
                      FIXED_FONT_PATH);
-   // TODO: make separate buffers for log and osd
-   init_log_buffers (c);
-
    set_current_scene (c, MAIN_MENU_BG_SCENE);
 
    init_active_modals ();
@@ -37,7 +33,6 @@ game_deinit (Context* c)
    deinit_active_modals ();
    deinit_current_scene ();
 
-   deinit_log_buffers ();
    unload_fixed_font_images ();
 }
 

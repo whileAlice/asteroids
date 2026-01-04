@@ -49,4 +49,6 @@ IncludeCategories:
 IndentCaseLabels: false
 IndentWidth: 3
 
+WhitespaceSensitiveMacros: [IN_LOCK]
+
 SpaceBeforeParens: Always

@@ -7,5 +7,5 @@
 #define TARGET_FPS            60
 #define APP_TITLE             "asteroids"
 #define FIXED_FONT_PATH       "assets/5x8font.def"
-
-#define EXIT_KEY KEY_Q
+#define LOG_BUFFER_SIZE       4096
+#define EXIT_KEY              KEY_Q

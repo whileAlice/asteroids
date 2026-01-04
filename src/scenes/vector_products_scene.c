@@ -3,7 +3,6 @@
 #include "../config.h"
 #include "../context.h"
 #include "../draw_utils.h"
-#include "../log.h"
 #include "../math_utils.h"
 #include "../window_utils.h"
 
@@ -182,33 +181,33 @@ vector_products_scene_update (Context* c, float dt)
    float abc_angle_360 =
       abc_angle_signed <= 0 ? 2 * PI + abc_angle_signed : abc_angle_signed;
 
-   osd_print (2, 25, "cross-product magnitude");
-   osd_print (3, 22, "(C1-B1)(A2-B2)-(C2-B2)(A1-B1)");
-   osd_printf (4, 26, "(%*.f)(%*.f)-(%*.f)(%*.f) ", 3,
-               (double)s_point_c.x - (double)s_point_b.x, 3,
-               (double)INVERT_Y (s_point_a.y) - (double)INVERT_Y (s_point_b.y),
-               3,
-               (double)INVERT_Y (s_point_c.y) - (double)INVERT_Y (s_point_b.y),
-               3, (double)s_point_a.x - (double)s_point_b.x);
-   osd_printf (6, 33, "%*.f", 6, (double)cross_product_magnitude);
+   // osd_print (2, 25, "cross-product magnitude");
+   // osd_print (3, 22, "(C1-B1)(A2-B2)-(C2-B2)(A1-B1)");
+   // osd_printf (4, 26, "(%*.f)(%*.f)-(%*.f)(%*.f) ", 3,
+   //             (double)s_point_c.x - (double)s_point_b.x, 3,
+   //             (double)INVERT_Y (s_point_a.y) - (double)INVERT_Y (s_point_b.y),
+   //             3,
+   //             (double)INVERT_Y (s_point_c.y) - (double)INVERT_Y (s_point_b.y),
+   //             3, (double)s_point_a.x - (double)s_point_b.x);
+   // osd_printf (6, 33, "%*.f", 6, (double)cross_product_magnitude);
 
-   osd_print (8, 31, "dot product");
-   osd_print (9, 22, "(C1-B1)(A1-B1)+(C2-B2)(A2-B2)");
-   osd_printf (10, 26, "(%*.f)(%*.f)+(%*.f)(%*.f) ", 3,
-               (double)s_point_c.x - (double)s_point_b.x, 3,
-               (double)s_point_a.x - (double)s_point_b.x, 3,
-               (double)INVERT_Y (s_point_c.y) - (double)INVERT_Y (s_point_b.y),
-               3,
-               (double)INVERT_Y (s_point_a.y) - (double)INVERT_Y (s_point_b.y));
-   osd_printf (12, 33, "%*.f", 6, (double)dot_product);
+   // osd_print (8, 31, "dot product");
+   // osd_print (9, 22, "(C1-B1)(A1-B1)+(C2-B2)(A2-B2)");
+   // osd_printf (10, 26, "(%*.f)(%*.f)+(%*.f)(%*.f) ", 3,
+   //             (double)s_point_c.x - (double)s_point_b.x, 3,
+   //             (double)s_point_a.x - (double)s_point_b.x, 3,
+   //             (double)INVERT_Y (s_point_c.y) - (double)INVERT_Y (s_point_b.y),
+   //             3,
+   //             (double)INVERT_Y (s_point_a.y) - (double)INVERT_Y (s_point_b.y));
+   // osd_printf (12, 33, "%*.f", 6, (double)dot_product);
 
-   osd_print (14, 32, "ABC angle");
+   // osd_print (14, 32, "ABC angle");
    if (ab_length != 0.f && bc_length != 0.f)
    {
-      osd_printf (16, 32, "%*.f deg", 4,
-                  (double)abc_angle_signed * 180 / (double)PI);
-      osd_printf (17, 33, "%*.f deg", 3,
-                  (double)abc_angle_360 * 180 / (double)PI);
+      // osd_printf (16, 32, "%*.f deg", 4,
+      //             (double)abc_angle_signed * 180 / (double)PI);
+      // osd_printf (17, 33, "%*.f deg", 3,
+      //             (double)abc_angle_360 * 180 / (double)PI);
    }
 }
 
@@ -223,21 +222,21 @@ vector_products_scene_draw (Context* c, Image* buf)
    draw_circle_f (buf, s_point_b, 3.f, s_color_b);
    draw_circle_f (buf, s_point_c, 3.f, s_color_c);
 
-   draw_textf (buf, &c->font.fixed_font,
+   draw_textf (buf, &c->fonts->fixed_font,
                (Vector2){ .x = CLAMP (s_point_a.x - 40, 0,
-                                      (float)c->buffer.image.width - 1),
+                                      (float)c->pixel_buffer->image.width - 1),
                           .y = s_point_a.y - 10 },
                "A1: %.f, A2: %.f", (double)s_point_a.x,
                (double)INVERT_Y (s_point_a.y));
-   draw_textf (buf, &c->font.fixed_font,
+   draw_textf (buf, &c->fonts->fixed_font,
                (Vector2){ .x = CLAMP (s_point_b.x - 40, 0,
-                                      (float)c->buffer.image.width - 1),
+                                      (float)c->pixel_buffer->image.width - 1),
                           .y = s_point_b.y - 10 },
                "B1: %.f, B2: %.f", (double)s_point_b.x,
                (double)INVERT_Y (s_point_b.y));
-   draw_textf (buf, &c->font.fixed_font,
+   draw_textf (buf, &c->fonts->fixed_font,
                (Vector2){ .x = CLAMP (s_point_c.x - 40, 0,
-                                      (float)c->buffer.image.width - 1),
+                                      (float)c->pixel_buffer->image.width - 1),
                           .y = s_point_c.y - 10 },
                "C1: %.f, C2: %.f", (double)s_point_c.x,
                (double)INVERT_Y (s_point_c.y));
