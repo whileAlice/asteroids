@@ -185,7 +185,7 @@ raylib_tracelog_callback (int log_level, const char* fmt, va_list args)
    // TODO: assemble all these strings in a single temp buffer and preferably
    // integrate it with the assembly in log_to_file
    char* formatted_prefix = get_term_formatted_string (
-      TERM_YELLOW, TERM_DEFAULT, false, RAYLIB_PREFIX);
+      TERM_CYAN, TERM_DEFAULT, false, RAYLIB_PREFIX);
 
    int length = vsnprintf (NULL, 0, fmt, args);
    // TODO: propagate

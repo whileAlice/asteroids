@@ -29,14 +29,17 @@ static const char* s_bg_codes[] = {
    [TERM_DEFAULT] = "49",
 };
 
-// TODO: support is_bold
+// TODO: this should be also preferably integrated with
+// the various string assemblies in log.c
 char*
 get_term_formatted_string (TermColor fg_color, TermColor bg_color, bool is_bold,
                            const char* str)
 {
-   int length = snprintf (NULL, 0, "%s%s;%s;%sm%s%s", TERM_FORMAT_START,
-                          s_fg_codes[fg_color], s_bg_codes[bg_color], "1", str,
-                          TERM_FORMAT_RESET);
+   const char* format = is_bold ? "%s%s;%s;1m%s%s" : "%s%s;%sm%s%s";
+
+   int length =
+      snprintf (NULL, 0, format, TERM_FORMAT_START, s_fg_codes[fg_color],
+                s_bg_codes[bg_color], str, TERM_FORMAT_RESET);
    if (length < 0)
    {
       perror ("NULL snprintf");
@@ -45,9 +48,9 @@ get_term_formatted_string (TermColor fg_color, TermColor bg_color, bool is_bold,
 
    size_t formatted_str_size = length * sizeof (char) + 1;
    char*  formatted_str      = malloc (formatted_str_size);
-   length = snprintf (formatted_str, formatted_str_size, "%s%s;%s;%sm%s%s",
+   length = snprintf (formatted_str, formatted_str_size, format,
                       TERM_FORMAT_START, s_fg_codes[fg_color],
-                      s_bg_codes[bg_color], "1", str, TERM_FORMAT_RESET);
+                      s_bg_codes[bg_color], str, TERM_FORMAT_RESET);
    // TODO: propagate
    if (length < 0)
    {
