@@ -1,6 +1,7 @@
 #include "std_streamer_thread.h"
 
 #include "context.h"
+#include "log.h"
 #include "threads.h"
 
 #include <assert.h>
@@ -10,25 +11,32 @@
 #include <sys/epoll.h>
 #include <unistd.h>
 
-#define PRINTF_DUP(fmt, ...)                               \
-   fprintf (stdout_context.write_file, fmt, ##__VA_ARGS__)
-#define PERROR_DUP(fmt, ...)                                            \
-   do                                                                   \
-   {                                                                    \
-      fprintf (stderr_context.write_file, fmt, ##__VA_ARGS__);          \
-      if (errno)                                                        \
-         fprintf (stderr_context.write_file, ": %s", strerror (errno)); \
-                                                                        \
-      fputs ("\n", stderr_context.write_file);                          \
-   }                                                                    \
+#define DEBUG_DUP(fmt, ...)                                            \
+   log_to_file (stderr_context.write_file, DEBUG_LOG_LEVEL, true, fmt, \
+                ##__VA_ARGS__)
+
+// TODO: after implementing proper error functions,
+// we shouldn't need no-newline support in log_to_file.
+// Also, this must go, because there's a risk of errno
+// string/newline interleaving with other threads.
+#define PERROR_DUP(fmt, ...)                                               \
+   do                                                                      \
+   {                                                                       \
+      log_to_file (stderr_context.write_file, ERROR_LOG_LEVEL, false, fmt, \
+                   ##__VA_ARGS__);                                         \
+      if (errno)                                                           \
+         fprintf (stderr_context.write_file, ": %s", strerror (errno));    \
+                                                                           \
+      fputc ('\n', stderr_context.write_file);                             \
+   }                                                                       \
    while (0)
 
-#define FAIL(fmt, ...)                                                    \
-   do                                                                     \
-   {                                                                      \
-      fprintf (stderr, "%s: %s\n", fmt, ##__VA_ARGS__, strerror (errno)); \
-      goto exit;                                                          \
-   }                                                                      \
+#define FAIL(fmt, ...)            \
+   do                             \
+   {                              \
+      error (fmt, ##__VA_ARGS__); \
+      goto exit;                  \
+   }                              \
    while (0)
 
 #define FAIL_DUP(fmt, ...)             \
@@ -113,11 +121,11 @@ std_streamer_thread (void* arg)
          FAIL_DUP ("epoll ctl add %s", c->name);
    }
 
-   PRINTF_DUP ("streamer syncing...\n");
+   DEBUG_DUP ("streamer syncing...");
    SYNC_THREAD (&l->mutex, &l->cond, l->thread_ready_count, LOG_THREAD_COUNT,
                 l->should_abort_init, restore_streams);
 
-   PRINTF_DUP ("streamer ready!\n");
+   DEBUG_DUP ("streamer ready!");
 
    int ready_count;
    while (true)
@@ -156,18 +164,19 @@ std_streamer_thread (void* arg)
 
          if (c->write_file != NULL)
          {
+            assert (i < INTERNAL_LOG);
             IN_LOCK(&l->mutex,
-               log_buffer_write_string (l->buffer, buf);
+               log_buffer_write_string (l->buffers[i], buf);
             );
             fputs (buf, c->write_file);
          }
          else
-            PRINTF_DUP ("received data from %s pipe: %s\n", c->name, buf);
+            DEBUG_DUP ("received data from %s pipe: %s", c->name, buf);
       }
    }
 
 restore_streams:
-   PRINTF_DUP ("restoring streams...\n");
+   DEBUG_DUP ("restoring streams...");
 
    // restore std stream fds from backups
    err = dup2 (stdout_fd_copy, STDOUT_FILENO);
@@ -192,7 +201,7 @@ restore_streams:
    }
 
 exit:
-   printf ("streamer returning...\n");
+   debug ("streamer returning...");
 
    IN_LOCK(&c->state->mutex,
    {

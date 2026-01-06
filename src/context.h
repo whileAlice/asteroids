@@ -32,7 +32,7 @@ typedef struct input {
 } Input;
 
 typedef struct log {
-   LogBuffer*      buffer;
+   LogBuffer**     buffers;
    pthread_mutex_t mutex;
    pthread_cond_t  cond;
    size_t          thread_ready_count;

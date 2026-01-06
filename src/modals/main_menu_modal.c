@@ -4,6 +4,7 @@
 #include "../draw_utils.h"
 #include "../scene.h"
 #include "../scene_manager.h"
+#include "../threads.h"
 
 #include <assert.h>
 #include <raylib.h>
@@ -47,7 +48,11 @@ select_option (Context* c)
       }
 
       break;
-   case EXIT_OPTION: c->state->should_exit_app = true; break;
+   case EXIT_OPTION:
+      IN_LOCK(&c->state->mutex,
+         c->state->should_exit_app = true;
+      );
+      break;
    default:
       // TODO: implement unreachable
       assert (1 == 0);
@@ -118,8 +123,8 @@ main_menu_modal_draw (UILayer* self, Context* c, Image* buf)
 {
    if (s_should_show_menu)
    {
-      draw_text_center (buf, &c->fonts->fixed_font, (Vector2){ .x = 0, .y = 40 },
-                        TITLE_TEXT);
+      draw_text_center (buf, &c->fonts->fixed_font,
+                        (Vector2){ .x = 0, .y = 40 }, TITLE_TEXT);
 
       Vector2 demo_option_origin = draw_text_center (
          buf, &c->fonts->fixed_font, (Vector2){ .x = 0, .y = 60 }, DEMO_TEXT);

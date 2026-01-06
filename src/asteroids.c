@@ -36,11 +36,12 @@ main (void)
    if (err != 0)
       FAIL ("threads_init");
 
-   printf ("main syncing...\n");
+   debug ("main syncing...");
    SYNC_THREAD (&l->mutex, &l->cond, l->thread_ready_count, LOG_THREAD_COUNT,
                 l->should_abort_init, end);
+   debug ("main ready!");
 
-   msg ("main ready!\n");
+   SetTraceLogCallback(&raylib_tracelog_callback);
 
    InitWindow (INITIAL_WINDOW_WIDTH, INITIAL_WINDOW_HEIGHT, APP_TITLE);
 
@@ -70,7 +71,7 @@ main (void)
       FAIL ("wakeup pipe write");
 
 end:
-   printf ("main returning...\n");
+   debug ("main returning...");
 
    err = threads_deinit (c);
    if (err != 0)
