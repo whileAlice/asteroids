@@ -3,7 +3,6 @@
 #include "config.h"
 #include "context.h"
 #include "terminal.h"
-#include "threads.h"
 
 #include <assert.h>
 #include <pthread.h>
@@ -15,6 +14,8 @@
 #define INFO_PREFIX  "INFO:"
 #define DEBUG_PREFIX "DEBUG:"
 #define ERROR_PREFIX "ERROR:"
+
+#define RAYLIB_PREFIX "[raylib]"
 
 pthread_mutex_t s_stream_mutex = PTHREAD_MUTEX_INITIALIZER;
 
@@ -181,19 +182,65 @@ error (const char* fmt, ...)
 void
 raylib_tracelog_callback (int log_level, const char* fmt, va_list args)
 {
-   // TODO: add [raylib] after prefix
+   // TODO: assemble all these strings in a single temp buffer and preferably
+   // integrate it with the assembly in log_to_file
+   char* formatted_prefix = get_term_formatted_string (
+      TERM_YELLOW, TERM_DEFAULT, false, RAYLIB_PREFIX);
+
+   int length = vsnprintf (NULL, 0, fmt, args);
+   // TODO: propagate
+   if (length < 0)
+   {
+      perror ("NULL vsnprintf");
+      abort ();
+   }
+
+   size_t message_size = length * sizeof (char) + 1;
+   char*  message      = malloc (message_size);
+
+   length = vsnprintf (message, message_size, fmt, args);
+   if (length < 0)
+   {
+      perror ("message vsnprintf");
+      abort ();
+   }
+
+   length = snprintf (NULL, 0, "%s %s", formatted_prefix, message);
+   if (length < 0)
+   {
+      perror ("NULL snprintf");
+      abort ();
+   }
+
+   size_t message_with_prefix_size = length * sizeof (char) + 1;
+   char*  message_with_prefix      = malloc (message_with_prefix_size);
+
+   length = snprintf (message_with_prefix, message_with_prefix_size, "%s %s",
+                      formatted_prefix, message);
+   if (length < 0)
+   {
+      perror ("message_with_prefix snprintf");
+      abort ();
+   }
+
    switch (log_level)
    {
    case LOG_TRACE:
    case LOG_DEBUG:
-      vlog_to_file (stderr, DEBUG_LOG_LEVEL, true, fmt, args);
+      log_to_file (stderr, DEBUG_LOG_LEVEL, true, message_with_prefix);
       break;
-   case LOG_INFO: vlog_to_file (stderr, INFO_LOG_LEVEL, true, fmt, args); break;
+   case LOG_INFO:
+      log_to_file (stderr, INFO_LOG_LEVEL, true, message_with_prefix);
+      break;
    case LOG_WARNING:
    case LOG_ERROR:
    case LOG_FATAL:
-      vlog_to_file (stderr, ERROR_LOG_LEVEL, true, fmt, args);
+      log_to_file (stderr, ERROR_LOG_LEVEL, true, message_with_prefix);
       break;
    default: assert (0 == "Unreachable");
    }
+
+   free (message);
+   free (formatted_prefix);
+   free (message_with_prefix);
 }
