@@ -131,11 +131,6 @@ log_buffer_deinit (LogBuffer* lb)
    if (lb == NULL)
       return;
 
-   if (lb->data == NULL)
-      goto free_lb;
-
    free (lb->data);
-
-free_lb:
    free (lb);
 }

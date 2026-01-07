@@ -10,13 +10,11 @@
 #define READ_END  0
 #define WRITE_END 1
 
-typedef struct pixel_buffer {
-   Image     image;
-   Texture2D texture;
-   int       texture_origin_x;
-   int       texture_origin_y;
-   int       integer_scale;
-} PixelBuffer;
+typedef struct app {
+   pthread_mutex_t mutex;
+   pthread_cond_t  cond;
+   bool            should_quit;
+} App;
 
 typedef struct fonts {
    const FixedFont fixed_font;
@@ -42,20 +40,26 @@ typedef struct log {
    int             wakeup_pipe[2];
 } Log;
 
+typedef struct pixel_buffer {
+   Image     image;
+   Texture2D texture;
+   int       texture_origin_x;
+   int       texture_origin_y;
+   int       integer_scale;
+} PixelBuffer;
+
 typedef struct state {
-   pthread_mutex_t mutex;
-   pthread_cond_t  cond;
-   bool            should_show_osd;
-   bool            should_show_log;
-   bool            should_exit_app;
-   size_t          current_log_page;
+   bool   should_show_osd;
+   bool   should_show_log;
+   size_t current_log_page;
 } State;
 
 typedef struct context {
-   PixelBuffer* pixel_buffer;
+   App*         app;
    Fonts*       fonts;
    Input*       input;
    Log*         log;
+   PixelBuffer* pixel_buffer;
    State*       state;
 } Context;
 

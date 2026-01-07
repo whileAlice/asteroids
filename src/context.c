@@ -14,22 +14,22 @@ context_create (void)
       return NULL;
    }
 
-   c->pixel_buffer = calloc (1, sizeof (PixelBuffer));
-   if (c->pixel_buffer == NULL)
+   c->app = calloc (1, sizeof (App));
+   if (c->app == NULL)
    {
-      perror ("buffer malloc");
+      perror ("app calloc");
       return NULL;
    }
    c->fonts = calloc (1, sizeof (Fonts));
    if (c->fonts == NULL)
    {
-      perror ("fonts malloc");
+      perror ("fonts calloc");
       return NULL;
    }
    c->input = calloc (1, sizeof (Input));
    if (c->input == NULL)
    {
-      perror ("input malloc");
+      perror ("input calloc");
       return NULL;
    }
    c->log = log_create ();
@@ -38,10 +38,16 @@ context_create (void)
       perror ("log create");
       return NULL;
    }
+   c->pixel_buffer = calloc (1, sizeof (PixelBuffer));
+   if (c->pixel_buffer == NULL)
+   {
+      perror ("buffer calloc");
+      return NULL;
+   }
    c->state = calloc (1, sizeof (State));
    if (c->state == NULL)
    {
-      perror ("state malloc");
+      perror ("state calloc");
       return NULL;
    }
 

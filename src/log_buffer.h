@@ -1,11 +1,8 @@
 #pragma once
 
-#include <stddef.h>
+#include "string.h"
 
-typedef struct string_view {
-   const char* const data;
-   const size_t      length;
-} StringView;
+#include <stddef.h>
 
 // NOTE: top is null-terminated only if bottom does not exist.
 // If bottom exists, it is null-terminated.

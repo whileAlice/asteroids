@@ -13,7 +13,7 @@ window_loop (Context* c)
    c->pixel_buffer->texture_origin_x = get_texture_origin_x ();
    c->pixel_buffer->texture_origin_y = get_texture_origin_y ();
 
-   while (!c->state->should_exit_app && !WindowShouldClose ())
+   while (!c->app->should_quit && !WindowShouldClose ())
    {
       if (IsWindowResized ())
       {

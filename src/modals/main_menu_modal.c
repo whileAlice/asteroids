@@ -49,8 +49,8 @@ select_option (Context* c)
 
       break;
    case EXIT_OPTION:
-      IN_LOCK(&c->state->mutex,
-         c->state->should_exit_app = true;
+      IN_LOCK(&c->app->mutex,
+         c->app->should_quit = true;
       );
       break;
    default:

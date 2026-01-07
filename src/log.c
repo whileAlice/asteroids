@@ -53,8 +53,13 @@ log_create (void)
 void
 log_deinit (Log* log)
 {
+   if (log == NULL)
+      return;
+
    for (size_t i = 0; i < LOG_COUNT; ++i)
       log_buffer_deinit (log->buffers[i]);
+
+   free (log->buffers);
 
    free (log);
 }

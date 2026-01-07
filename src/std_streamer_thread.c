@@ -122,18 +122,18 @@ std_streamer_thread (void* arg)
    }
 
    DEBUG_DUP ("streamer syncing...");
-   SYNC_THREAD (&l->mutex, &l->cond, l->thread_ready_count, LOG_THREAD_COUNT,
-                l->should_abort_init, restore_streams);
+   SYNC_THREAD (&l->mutex, &l->cond, l->thread_ready_count,
+                STREAMER_THREAD_COUNT, l->should_abort_init, restore_streams);
 
    DEBUG_DUP ("streamer ready!");
 
    int ready_count;
    while (true)
    {
-      IN_LOCK(&c->state->mutex,
-         if (c->state->should_exit_app)
+      IN_LOCK(&c->app->mutex,
+         if (c->app->should_quit)
          {
-            pthread_mutex_unlock(&c->state->mutex);
+            pthread_mutex_unlock(&c->app->mutex);
             goto restore_streams;
          }
       );
@@ -203,10 +203,10 @@ restore_streams:
 exit:
    debug ("streamer returning...");
 
-   IN_LOCK(&c->state->mutex,
+   IN_LOCK(&c->app->mutex,
    {
-      c->state->should_exit_app = true;
-      pthread_cond_broadcast(&c->state->cond);
+      c->app->should_quit = true;
+      pthread_cond_broadcast(&c->app->cond);
    });
 
    return NULL;

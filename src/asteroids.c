@@ -1,6 +1,7 @@
 #include "buffer.h"
 #include "config.h"
 #include "context.h"
+#include "error.h"
 #include "game_loop.h"
 #include "log.h"
 #include "threads.h"
@@ -26,6 +27,7 @@ main (void)
    ssize_t  length;
    Context* c = context_create ();
 
+   errors_init (c->app);
    Log* l = c->log;
 
    err = pipe (c->log->wakeup_pipe);
@@ -37,11 +39,11 @@ main (void)
       FAIL ("threads_init");
 
    debug ("main syncing...");
-   SYNC_THREAD (&l->mutex, &l->cond, l->thread_ready_count, LOG_THREAD_COUNT,
-                l->should_abort_init, end);
+   SYNC_THREAD (&l->mutex, &l->cond, l->thread_ready_count,
+                STREAMER_THREAD_COUNT, l->should_abort_init, end);
    debug ("main ready!");
 
-   SetTraceLogCallback(&raylib_tracelog_callback);
+   SetTraceLogCallback (&raylib_tracelog_callback);
 
    InitWindow (INITIAL_WINDOW_WIDTH, INITIAL_WINDOW_HEIGHT, APP_TITLE);
 
@@ -61,8 +63,8 @@ main (void)
 
    CloseWindow ();
 
-   IN_LOCK(&c->state->mutex,
-      c->state->should_exit_app = true;
+   IN_LOCK(&c->app->mutex,
+      c->app->should_quit = true;
    );
 
    const char wakeup = '\0';

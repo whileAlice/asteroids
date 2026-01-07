@@ -37,7 +37,16 @@
    }                                                                \
    while (0);
 
-#define LOG_THREAD_COUNT 2
+typedef enum thread_idx {
+   MAIN_THREAD,
+   STREAMER_THREAD,
+   THREAD_COUNT,
+} ThreadIdx;
 
-int threads_init (Context* c);
-int threads_deinit (Context* c);
+// main + streamer
+#define STREAMER_THREAD_COUNT 2
+
+// clang-format off
+int       threads_init   (Context* c);
+int       threads_deinit (Context* c);
+ThreadIdx get_thread_idx (pthread_t thread_id);
