@@ -64,4 +64,4 @@ typedef struct context {
 } Context;
 
 Context* context_create (void);
-void     context_deinit (Context* c);
+void     context_free (Context* c);

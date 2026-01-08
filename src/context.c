@@ -55,15 +55,16 @@ context_create (void)
 }
 
 void
-context_deinit (Context* c)
+context_free (Context* c)
 {
    if (c == NULL)
       return;
 
-   free (c->pixel_buffer);
+   free (c->app);
    free (c->fonts);
    free (c->input);
-   log_deinit (c->log);
+   log_free (c->log);
+   free (c->pixel_buffer);
    free (c->state);
 
    free (c);

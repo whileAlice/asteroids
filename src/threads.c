@@ -7,6 +7,11 @@
 
 static pthread_t s_thread_ids[THREAD_COUNT];
 
+static const char* thread_names[THREAD_COUNT] = {
+   [MAIN_THREAD]     = "main",
+   [STREAMER_THREAD] = "streamer",
+};
+
 int
 threads_init (Context* c)
 {
@@ -80,4 +85,15 @@ get_thread_idx (pthread_t thread_id)
          return (ThreadIdx)i;
 
    return -1;
+}
+
+const char*
+get_thread_name (pthread_t thread_id)
+{
+   ThreadIdx idx = get_thread_idx (thread_id);
+
+   if (idx >= 0 && idx < THREAD_COUNT)
+      return thread_names[idx];
+
+   return "unknown";
 }

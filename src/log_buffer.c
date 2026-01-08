@@ -126,7 +126,7 @@ log_buffer_clear (LogBuffer* lb)
 }
 
 void
-log_buffer_deinit (LogBuffer* lb)
+log_buffer_free (LogBuffer* lb)
 {
    if (lb == NULL)
       return;

@@ -31,12 +31,12 @@
    }                                                                       \
    while (0)
 
-#define FAIL(fmt, ...)            \
-   do                             \
-   {                              \
-      error (fmt, ##__VA_ARGS__); \
-      goto exit;                  \
-   }                              \
+#define FAIL_GOTO(fmt, ...)           \
+   do                                 \
+   {                                  \
+      error_set (fmt, ##__VA_ARGS__); \
+      goto exit;                      \
+   }                                  \
    while (0)
 
 #define FAIL_DUP(fmt, ...)             \
@@ -64,9 +64,9 @@ std_streamer_thread (void* arg)
    int epoll_fd;
 
    if (pipe (l->stdout_pipe) == -1)
-      FAIL ("stdout pipe");
+      FAIL_GOTO ("stdout pipe");
    if (pipe (l->stderr_pipe) == -1)
-      FAIL ("stderr pipe");
+      FAIL_GOTO ("stderr pipe");
 
    StreamContext stdout_context = { .read_fd = l->stdout_pipe[READ_END],
                                     .name    = "stdout" };
@@ -85,23 +85,23 @@ std_streamer_thread (void* arg)
    // backup std stream fds
    stdout_fd_copy = dup (STDOUT_FILENO);
    if (stdout_fd_copy == -1)
-      FAIL ("stdout fd copy dup");
+      FAIL_GOTO ("stdout fd copy dup");
    stderr_fd_copy = dup (STDERR_FILENO);
    if (stderr_fd_copy == -1)
-      FAIL ("stderr fd copy dup");
+      FAIL_GOTO ("stderr fd copy dup");
 
    // open backups for writing
    stdout_context.write_file = fdopen (stdout_fd_copy, "w");
    if (stdout_context.write_file == NULL)
-      FAIL ("stdout copy fdopen");
+      FAIL_GOTO ("stdout copy fdopen");
    stderr_context.write_file = fdopen (stderr_fd_copy, "w");
    if (stderr_context.write_file == NULL)
-      FAIL ("stderr copy fdopen");
+      FAIL_GOTO ("stderr copy fdopen");
 
    // replace original std stream fds with pipe write ends
    err = dup2 (l->stderr_pipe[WRITE_END], STDERR_FILENO);
    if (err == -1)
-      FAIL ("stderr pipe dup2");
+      FAIL_GOTO ("stderr pipe dup2");
    err = dup2 (l->stdout_pipe[WRITE_END], STDOUT_FILENO);
    if (err == -1)
       FAIL_DUP ("stdout pipe dup2");
@@ -121,11 +121,11 @@ std_streamer_thread (void* arg)
          FAIL_DUP ("epoll ctl add %s", c->name);
    }
 
-   DEBUG_DUP ("streamer syncing...");
+   DEBUG_DUP ("syncing...");
    SYNC_THREAD (&l->mutex, &l->cond, l->thread_ready_count,
                 STREAMER_THREAD_COUNT, l->should_abort_init, restore_streams);
 
-   DEBUG_DUP ("streamer ready!");
+   DEBUG_DUP ("ready!");
 
    int ready_count;
    while (true)
@@ -201,7 +201,7 @@ restore_streams:
    }
 
 exit:
-   debug ("streamer returning...");
+   log_debug ("returning...");
 
    IN_LOCK(&c->app->mutex,
    {

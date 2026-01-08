@@ -12,14 +12,6 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#define FAIL(msg)          \
-   do                      \
-   {                       \
-      perror (msg);        \
-      return EXIT_FAILURE; \
-   }                       \
-   while (0)
-
 int
 main (void)
 {
@@ -27,21 +19,20 @@ main (void)
    ssize_t  length;
    Context* c = context_create ();
 
-   errors_init (c->app);
    Log* l = c->log;
 
    err = pipe (c->log->wakeup_pipe);
    if (err == -1)
-      FAIL ("wakeup pipe");
+      ERROR_RETURN (EXIT_FAILURE, "wakeup pipe");
 
    err = threads_init (c);
    if (err != 0)
-      FAIL ("threads_init");
+      ERROR_RETURN (EXIT_FAILURE, "threads_init");
 
-   debug ("main syncing...");
+   log_debug ("syncing...");
    SYNC_THREAD (&l->mutex, &l->cond, l->thread_ready_count,
                 STREAMER_THREAD_COUNT, l->should_abort_init, end);
-   debug ("main ready!");
+   log_debug ("ready!");
 
    SetTraceLogCallback (&raylib_tracelog_callback);
 
@@ -63,6 +54,11 @@ main (void)
 
    CloseWindow ();
 
+   error_set ("error");
+   error_set ("error2");
+   error_set ("error3");
+   errors_print ();
+
    IN_LOCK(&c->app->mutex,
       c->app->should_quit = true;
    );
@@ -70,16 +66,16 @@ main (void)
    const char wakeup = '\0';
    length = write (c->log->wakeup_pipe[WRITE_END], &wakeup, sizeof (char));
    if (length <= 0)
-      FAIL ("wakeup pipe write");
+      ERROR_RETURN (EXIT_FAILURE, "wakeup pipe write");
 
 end:
-   debug ("main returning...");
+   log_debug ("returning...");
 
    err = threads_deinit (c);
    if (err != 0)
-      FAIL ("threads deinit");
+      ERROR_RETURN (EXIT_FAILURE, "threads deinit");
 
-   context_deinit (c);
+   context_free (c);
 
    return EXIT_SUCCESS;
 }

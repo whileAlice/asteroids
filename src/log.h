@@ -20,10 +20,10 @@ typedef enum log_level {
 
 // clang-format off
 Log* log_create               (void);
-void log_deinit               (Log* log);
+void log_free               (Log* log);
 void vlog_to_file             (FILE* output, LogLevel log_level, bool with_newline, const char* fmt, va_list args);
 void log_to_file              (FILE* output, LogLevel log_level, bool with_newline, const char* fmt, ...);
-void info                     (const char* fmt, ...);
-void debug                    (const char* fmt, ...);
-void error                    (const char* fmt, ...);
+void log_info                     (const char* fmt, ...);
+void log_debug                    (const char* fmt, ...);
+void log_error                    (const char* fmt, ...);
 void raylib_tracelog_callback (int log_level, const char *text, va_list args);

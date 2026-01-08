@@ -3,6 +3,7 @@
 #include "config.h"
 #include "context.h"
 #include "terminal.h"
+#include "threads.h"
 
 #include <assert.h>
 #include <pthread.h>
@@ -16,8 +17,6 @@
 #define ERROR_PREFIX "ERROR:"
 
 #define RAYLIB_PREFIX "[raylib]"
-
-pthread_mutex_t s_stream_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 Log*
 log_create (void)
@@ -51,13 +50,13 @@ log_create (void)
 }
 
 void
-log_deinit (Log* log)
+log_free (Log* log)
 {
    if (log == NULL)
       return;
 
    for (size_t i = 0; i < LOG_COUNT; ++i)
-      log_buffer_deinit (log->buffers[i]);
+      log_buffer_free (log->buffers[i]);
 
    free (log->buffers);
 
@@ -88,6 +87,16 @@ vlog_to_file (FILE* output, LogLevel log_level, bool with_newline,
    default: assert (0 == "Unreachable");
    }
 
+   char* thread_prefix = strdupf ("[%s]", get_thread_name (pthread_self ()));
+   if (thread_prefix == NULL)
+   {
+      perror ("strdupf");
+      abort ();
+   }
+
+   char* formatted_thread_prefix = get_term_formatted_string (
+      TERM_GREEN, TERM_DEFAULT, false, thread_prefix);
+
    // TODO: assemble all these strings in a single temp buffer
    char* formatted_prefix =
       get_term_formatted_string (prefix_color, TERM_DEFAULT, true, prefix);
@@ -110,7 +119,8 @@ vlog_to_file (FILE* output, LogLevel log_level, bool with_newline,
       abort ();
    }
 
-   length = snprintf (NULL, 0, "%s %s", formatted_prefix, message);
+   length = snprintf (NULL, 0, "%s %s %s", formatted_prefix,
+                      formatted_thread_prefix, message);
    if (length < 0)
    {
       perror ("NULL snprintf");
@@ -121,8 +131,8 @@ vlog_to_file (FILE* output, LogLevel log_level, bool with_newline,
    char*  message_with_prefix =
       calloc (length + 1 + (with_newline ? 1 : 0), sizeof (char));
 
-   length = snprintf (message_with_prefix, message_with_prefix_size, "%s %s",
-                      formatted_prefix, message);
+   length = snprintf (message_with_prefix, message_with_prefix_size, "%s %s %s",
+                      formatted_prefix, formatted_thread_prefix, message);
    if (length < 0)
    {
       perror ("message_with_prefix snprintf");
@@ -135,8 +145,10 @@ vlog_to_file (FILE* output, LogLevel log_level, bool with_newline,
    fputs (message_with_prefix, output);
 
    free (message);
+   free (thread_prefix);
    free (formatted_prefix);
    free (message_with_prefix);
+   free (formatted_thread_prefix);
 }
 
 void
@@ -152,7 +164,7 @@ log_to_file (FILE* output, LogLevel log_level, bool with_newline,
 }
 
 void
-info (const char* fmt, ...)
+log_info (const char* fmt, ...)
 {
    va_list args;
    va_start (args, fmt);
@@ -163,7 +175,7 @@ info (const char* fmt, ...)
 }
 
 void
-debug (const char* fmt, ...)
+log_debug (const char* fmt, ...)
 {
    va_list args;
    va_start (args, fmt);
@@ -174,7 +186,7 @@ debug (const char* fmt, ...)
 }
 
 void
-error (const char* fmt, ...)
+log_error (const char* fmt, ...)
 {
    va_list args;
    va_start (args, fmt);
@@ -189,8 +201,8 @@ raylib_tracelog_callback (int log_level, const char* fmt, va_list args)
 {
    // TODO: assemble all these strings in a single temp buffer and preferably
    // integrate it with the assembly in log_to_file
-   char* formatted_prefix = get_term_formatted_string (
-      TERM_CYAN, TERM_DEFAULT, false, RAYLIB_PREFIX);
+   char* formatted_prefix =
+      get_term_formatted_string (TERM_CYAN, TERM_DEFAULT, false, RAYLIB_PREFIX);
 
    int length = vsnprintf (NULL, 0, fmt, args);
    // TODO: propagate

@@ -1,30 +1,102 @@
 #include "error.h"
 
-#include "context.h"
+#include "log.h"
 #include "threads.h"
 
 #include <assert.h>
-#include <errno.h>
 #include <pthread.h>
+#include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
 
-static Error* s_errors[THREAD_COUNT] = {
+// adding one more entry to account for the possibility of a thread
+// erroring before its ID is obtained and stored by the main thread
+#define UNKNOWN_THREAD THREAD_COUNT
+
+static Error* s_errors[THREAD_COUNT + 1] = {
    [MAIN_THREAD]     = NULL,
    [STREAMER_THREAD] = NULL,
+   [UNKNOWN_THREAD]  = NULL,
 };
 
-static App* s_app;
+static pthread_mutex_t s_error_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 void
-errors_init (App* app)
+error_set (const char* fmt, ...)
 {
-   assert (app != NULL);
-   s_app = app;
+   va_list args;
+   va_start (args, fmt);
+
+   Error**   prev_error;
+   ThreadIdx thread_idx = get_thread_idx (pthread_self ());
+
+   pthread_mutex_lock (&s_error_mutex);
+
+   if ((int)thread_idx == -1)
+      prev_error = &s_errors[UNKNOWN_THREAD];
+   else
+      prev_error = &s_errors[thread_idx];
+
+   Error* new_error = malloc (sizeof (Error));
+
+   new_error->message = vstrdupf (fmt, args);
+   if (new_error->message == NULL)
+   {
+      va_list args_copy;
+      va_start (args_copy, fmt);
+
+      fputs ("ERROR: set error vstrdupf\n", stderr);
+      fputs ("ERROR: last error message: ", stderr);
+      fprintf (stderr, fmt, args_copy);
+      fputc ('\n', stderr);
+
+      va_end (args_copy);
+
+      abort ();
+   }
+
+   va_end (args);
+
+   new_error->next = *prev_error;
+   *prev_error     = new_error;
+
+   pthread_mutex_unlock (&s_error_mutex);
 }
 
 void
-errors_deinit (void)
+error_print (Error* err)
+{
+   if (err == NULL)
+      return;
+
+   StringBuilder* sb = sb_create (NULL);
+
+   while (err != NULL)
+   {
+      sb_append (sb, err->message);
+      if (err->next != NULL)
+         sb_append (sb, ": ");
+
+      err = err->next;
+   }
+
+   log_error (sb->data);
+
+   sb_free (sb);
+}
+
+void
+errors_print (void)
+{
+   size_t errors_len = sizeof (s_errors) / sizeof (s_errors[0]);
+   for (size_t i = 0; i < errors_len; ++i)
+   {
+      error_print (s_errors[i]);
+   }
+}
+
+void
+errors_free (void)
 {
    for (size_t i = 0; i < THREAD_COUNT; ++i)
    {
@@ -41,38 +113,4 @@ errors_deinit (void)
 
       s_errors[i] = NULL;
    }
-
-   s_app = NULL;
-}
-
-void
-set_error (const char* fmt, ...)
-{
-   va_list args;
-   va_start (args, fmt);
-
-   if (s_app == NULL)
-   {
-      vfprintf (stderr, fmt, args);
-
-      if (errno != 0)
-         fprintf (stderr, ": %s", strerror (errno));
-
-      fputc ('\n', stderr);
-
-      abort ();
-   }
-
-
-
-   ThreadIdx thread_idx = get_thread_idx (pthread_self ());
-   Error*    error      = s_errors[thread_idx];
-
-   pthread_mutex_lock (&s_app->mutex);
-
-end:
-   s_app->should_quit = true;
-   pthread_cond_broadcast (&s_app->cond);
-
-   pthread_mutex_unlock (&s_app->mutex);
 }

@@ -4,16 +4,9 @@
 
 #include <assert.h>
 #include <stddef.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#define FAIL(msg, retval) \
-   do                     \
-   {                      \
-      set_error (msg);    \
-      return retval;      \
-   }                      \
-   while (0)
 
 #define INITIAL_SB_CAPACITY 32
 
@@ -31,11 +24,11 @@ sb_create (const char* initial_string)
 
    StringBuilder* sb = malloc (sizeof (StringBuilder));
    if (sb == NULL)
-      FAIL ("sb malloc", NULL);
+      ERROR_RETURN (NULL, "sb malloc");
 
    char* data = malloc (capacity * sizeof (char));
    if (data == NULL)
-      FAIL ("data calloc", NULL);
+      ERROR_RETURN (NULL, "data calloc");
 
    if (initial_string != NULL)
       strcpy (data, initial_string);
@@ -76,7 +69,7 @@ sb_append (StringBuilder* sb, const char* string)
 
       sb->data = realloc (sb->data, new_capacity * sizeof (char));
       if (sb->data == NULL)
-         FAIL ("realloc", false);
+         ERROR_RETURN (false, "realloc");
 
       sb->capacity = new_capacity;
    }
@@ -99,21 +92,11 @@ sb_clear (StringBuilder* sb)
 }
 
 void
-sb_deinit (StringBuilder* sb)
+sb_free (StringBuilder* sb)
 {
    if (sb == NULL)
       return;
 
    free (sb->data);
    free (sb);
-}
-
-static inline size_t
-align_to_power_of_two (const size_t num)
-{
-   size_t power_of_two = 2;
-   while (power_of_two < num)
-      power_of_two <<= 1;
-
-   return power_of_two;
 }

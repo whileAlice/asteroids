@@ -38,7 +38,7 @@
    while (0);
 
 typedef enum thread_idx {
-   MAIN_THREAD,
+   MAIN_THREAD = 0,
    STREAMER_THREAD,
    THREAD_COUNT,
 } ThreadIdx;
@@ -47,6 +47,7 @@ typedef enum thread_idx {
 #define STREAMER_THREAD_COUNT 2
 
 // clang-format off
-int       threads_init   (Context* c);
-int       threads_deinit (Context* c);
-ThreadIdx get_thread_idx (pthread_t thread_id);
+int         threads_init    (Context* c);
+int         threads_deinit  (Context* c);
+ThreadIdx   get_thread_idx  (pthread_t thread_id);
+const char* get_thread_name (pthread_t thread_id);

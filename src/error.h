@@ -1,8 +1,14 @@
 #pragma once
 
-#include "context.h"
-
 #include <pthread.h>
+
+#define ERROR_RETURN(retval, fmt, ...) \
+   do                                  \
+   {                                   \
+      error_set (fmt, ##__VA_ARGS__);  \
+      return retval;                   \
+   }                                   \
+   while (0)
 
 // NOTE: errors are fatal, there can be only one per thread
 typedef struct error {
@@ -11,6 +17,7 @@ typedef struct error {
 } Error;
 
 // clang-format off
-void errors_init   (App* app);
-void errors_deinit (void);
-void set_error     (const char* fmt, ...);
+void error_set     (const char* fmt, ...);
+void error_print   (Error* error);
+void errors_print  (void);
+void errors_free   (void);
