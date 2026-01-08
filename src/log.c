@@ -18,32 +18,26 @@
 
 #define RAYLIB_PREFIX "[raylib]"
 
+static const char* s_log_names[LOG_COUNT] = {
+   [STOUT_LOG]    = "stdout",
+   [STDERR_LOG]   = "stderr",
+   [INTERNAL_LOG] = "internal",
+};
+
 Log*
 log_create (void)
 {
    Log* log = calloc (1, sizeof (Log));
    if (log == NULL)
-   {
-      perror ("log calloc");
-      return NULL;
-   }
+      ERROR_RETURN (NULL, "calloc");
 
    log->buffers = calloc (LOG_COUNT, sizeof (LogBuffer*));
 
-   // TODO: use this inside error message after moving from perror
-   const char* log_names[LOG_COUNT] = {
-      [STOUT_LOG]    = "stdout",
-      [STDERR_LOG]   = "stderr",
-      [INTERNAL_LOG] = "internal",
-   };
    for (size_t i = 0; i < LOG_COUNT; ++i)
    {
       log->buffers[i] = log_buffer_create (LOG_BUFFER_SIZE);
       if (log->buffers[i] == NULL)
-      {
-         perror ("log buffer create");
-         return NULL;
-      }
+         ERROR_RETURN (NULL, "log buffer create %s", s_log_names[i]);
    }
 
    return log;
@@ -67,6 +61,10 @@ void
 vlog_to_file (FILE* output, LogLevel log_level, bool with_newline,
               const char* fmt, va_list args)
 {
+   va_list args_copy, args_fail;
+   va_copy (args_copy, args);
+   va_copy (args_fail, args);
+
    TermColor   prefix_color = TERM_DEFAULT;
    const char* prefix       = INFO_PREFIX;
 
@@ -91,7 +89,7 @@ vlog_to_file (FILE* output, LogLevel log_level, bool with_newline,
    if (thread_prefix == NULL)
    {
       perror ("strdupf");
-      abort ();
+      goto fail;
    }
 
    char* formatted_thread_prefix = get_term_formatted_string (
@@ -105,26 +103,26 @@ vlog_to_file (FILE* output, LogLevel log_level, bool with_newline,
    // TODO: propagate
    if (length < 0)
    {
-      perror ("NULL vsnprintf");
-      abort ();
+      perror ("null vsnprintf");
+      goto fail;
    }
 
    size_t message_size = length * sizeof (char) + 1;
    char*  message      = malloc (message_size);
 
-   length = vsnprintf (message, message_size, fmt, args);
+   length = vsnprintf (message, message_size, fmt, args_copy);
    if (length < 0)
    {
       perror ("message vsnprintf");
-      abort ();
+      goto fail;
    }
 
    length = snprintf (NULL, 0, "%s %s %s", formatted_prefix,
                       formatted_thread_prefix, message);
    if (length < 0)
    {
-      perror ("NULL snprintf");
-      abort ();
+      perror ("null snprintf");
+      goto fail;
    }
 
    size_t message_with_prefix_size = length * sizeof (char) + 1;
@@ -135,8 +133,8 @@ vlog_to_file (FILE* output, LogLevel log_level, bool with_newline,
                       formatted_prefix, formatted_thread_prefix, message);
    if (length < 0)
    {
-      perror ("message_with_prefix snprintf");
-      abort ();
+      perror ("message with prefix snprintf");
+      goto fail;
    }
 
    if (with_newline)
@@ -149,6 +147,15 @@ vlog_to_file (FILE* output, LogLevel log_level, bool with_newline,
    free (formatted_prefix);
    free (message_with_prefix);
    free (formatted_thread_prefix);
+
+   return;
+
+fail:
+   fputs ("Fatal failure in vlog_to_file(). Last error message: ", stderr);
+   vfprintf (stderr, fmt, args_fail);
+   fputc ('\n', stderr);
+
+   abort ();
 }
 
 void
@@ -199,34 +206,38 @@ log_error (const char* fmt, ...)
 void
 raylib_tracelog_callback (int log_level, const char* fmt, va_list args)
 {
+   va_list args_copy, args_fail;
+   va_copy (args_copy, args);
+   va_copy (args_fail, args);
+
    // TODO: assemble all these strings in a single temp buffer and preferably
    // integrate it with the assembly in log_to_file
    char* formatted_prefix =
       get_term_formatted_string (TERM_CYAN, TERM_DEFAULT, false, RAYLIB_PREFIX);
 
    int length = vsnprintf (NULL, 0, fmt, args);
-   // TODO: propagate
+   // TODO: maybe these shouldn't be as immediately fatal as in our logs?
    if (length < 0)
    {
-      perror ("NULL vsnprintf");
-      abort ();
+      perror ("null vsnprintf");
+      goto fail;
    }
 
    size_t message_size = length * sizeof (char) + 1;
    char*  message      = malloc (message_size);
 
-   length = vsnprintf (message, message_size, fmt, args);
+   length = vsnprintf (message, message_size, fmt, args_copy);
    if (length < 0)
    {
       perror ("message vsnprintf");
-      abort ();
+      goto fail;
    }
 
    length = snprintf (NULL, 0, "%s %s", formatted_prefix, message);
    if (length < 0)
    {
-      perror ("NULL snprintf");
-      abort ();
+      perror ("null snprintf");
+      goto fail;
    }
 
    size_t message_with_prefix_size = length * sizeof (char) + 1;
@@ -236,8 +247,8 @@ raylib_tracelog_callback (int log_level, const char* fmt, va_list args)
                       formatted_prefix, message);
    if (length < 0)
    {
-      perror ("message_with_prefix snprintf");
-      abort ();
+      perror ("message with prefix snprintf");
+      goto fail;
    }
 
    switch (log_level)
@@ -260,4 +271,14 @@ raylib_tracelog_callback (int log_level, const char* fmt, va_list args)
    free (message);
    free (formatted_prefix);
    free (message_with_prefix);
+
+   return;
+
+fail:
+   fputs ("Fatal failure in raylib_tracelog_callback(). Last error message: ",
+          stderr);
+   vfprintf (stderr, fmt, args_fail);
+   fputc ('\n', stderr);
+
+   abort ();
 }

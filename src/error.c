@@ -4,6 +4,7 @@
 #include "threads.h"
 
 #include <assert.h>
+#include <errno.h>
 #include <pthread.h>
 #include <stdarg.h>
 #include <stdlib.h>
@@ -38,21 +39,17 @@ error_set (const char* fmt, ...)
       prev_error = &s_errors[thread_idx];
 
    Error* new_error = malloc (sizeof (Error));
+   if (new_error == NULL)
+   {
+      log_error ("set error malloc");
+      goto fail;
+   }
 
    new_error->message = vstrdupf (fmt, args);
    if (new_error->message == NULL)
    {
-      va_list args_copy;
-      va_start (args_copy, fmt);
-
-      fputs ("ERROR: set error vstrdupf\n", stderr);
-      fputs ("ERROR: last error message: ", stderr);
-      fprintf (stderr, fmt, args_copy);
-      fputc ('\n', stderr);
-
-      va_end (args_copy);
-
-      abort ();
+      log_error ("set error vstrdupf");
+      goto fail;
    }
 
    va_end (args);
@@ -61,6 +58,18 @@ error_set (const char* fmt, ...)
    *prev_error     = new_error;
 
    pthread_mutex_unlock (&s_error_mutex);
+
+   return;
+
+fail:
+   va_list args_copy;
+   va_start (args_copy, fmt);
+
+   vlog_to_file (stderr, ERROR_LOG_LEVEL, true, fmt, args_copy);
+
+   va_end (args_copy);
+
+   abort ();
 }
 
 void
@@ -78,6 +87,14 @@ error_print (Error* err)
          sb_append (sb, ": ");
 
       err = err->next;
+   }
+
+   if (errno != 0)
+   {
+      // TODO: sb_appendf
+      sb_append (sb, " (errno: ");
+      sb_append (sb, strerror (errno));
+      sb_append (sb, ")");
    }
 
    log_error (sb->data);

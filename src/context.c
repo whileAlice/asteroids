@@ -9,47 +9,31 @@ context_create (void)
 {
    Context* c = malloc (sizeof (Context));
    if (c == NULL)
-   {
-      perror ("malloc");
-      return NULL;
-   }
+      ERROR_RETURN (NULL, "malloc");
 
    c->app = calloc (1, sizeof (App));
    if (c->app == NULL)
-   {
-      perror ("app calloc");
-      return NULL;
-   }
+      ERROR_RETURN (NULL, "app calloc");
+
    c->fonts = calloc (1, sizeof (Fonts));
    if (c->fonts == NULL)
-   {
-      perror ("fonts calloc");
-      return NULL;
-   }
+      ERROR_RETURN (NULL, "fonts calloc");
+
    c->input = calloc (1, sizeof (Input));
    if (c->input == NULL)
-   {
-      perror ("input calloc");
-      return NULL;
-   }
+      ERROR_RETURN (NULL, "input calloc");
+
    c->log = log_create ();
    if (c->log == NULL)
-   {
-      perror ("log create");
-      return NULL;
-   }
+      ERROR_RETURN (NULL, "log create");
+
    c->pixel_buffer = calloc (1, sizeof (PixelBuffer));
    if (c->pixel_buffer == NULL)
-   {
-      perror ("buffer calloc");
-      return NULL;
-   }
+      ERROR_RETURN (NULL, "pixel buffer calloc");
+
    c->state = calloc (1, sizeof (State));
    if (c->state == NULL)
-   {
-      perror ("state calloc");
-      return NULL;
-   }
+      ERROR_RETURN (NULL, "state calloc");
 
    return c;
 }

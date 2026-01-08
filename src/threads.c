@@ -28,10 +28,7 @@ threads_init (Context* c)
 
    // TODO: maybe handle this a bit more here
    if (err != 0)
-   {
-      perror ("pthread create");
-      return err;
-   }
+      ERROR_RETURN (-1, "pthread create");
 
    return 0;
 }
@@ -43,36 +40,23 @@ threads_deinit (Context* c)
 
    err = pthread_join (s_thread_ids[STREAMER_THREAD], NULL);
    if (err != 0)
-   {
-      perror ("pthread join");
-      return err;
-   }
+      ERROR_RETURN (err, "pthread join");
 
    err = pthread_mutex_destroy (&c->log->mutex);
    if (err != 0)
-   {
-      perror ("pthread mutex destroy");
-      return err;
-   }
+      ERROR_RETURN (err, "pthread mutex destroy log");
+
    err = pthread_mutex_destroy (&c->app->mutex);
    if (err != 0)
-   {
-      perror ("pthread mutex destroy");
-      return err;
-   }
+      ERROR_RETURN (err, "pthread mutex destroy app");
 
    err = pthread_cond_destroy (&c->log->cond);
    if (err != 0)
-   {
-      perror ("pthread cond destroy");
-      return err;
-   }
+      ERROR_RETURN (err, "pthread cond destroy log");
+
    err = pthread_cond_destroy (&c->app->cond);
    if (err != 0)
-   {
-      perror ("pthread cond destroy");
-      return err;
-   }
+      ERROR_RETURN (err, "pthread cond destroy app");
 
    return 0;
 }

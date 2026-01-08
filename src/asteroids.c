@@ -7,6 +7,7 @@
 #include "threads.h"
 #include "window_loop.h"
 
+#include <errno.h>
 #include <pthread.h>
 #include <raylib.h>
 #include <stdlib.h>
@@ -53,6 +54,10 @@ main (void)
    UnloadImage (c->pixel_buffer->image);
 
    CloseWindow ();
+
+   // raylib seems to trigger EAGAIN a lot and does not clean it
+   if (errno == EAGAIN)
+      errno = 0;
 
    error_set ("error");
    error_set ("error2");

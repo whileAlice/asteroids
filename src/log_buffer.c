@@ -11,17 +11,11 @@ log_buffer_create (const size_t size)
 {
    LogBuffer* lb = malloc (sizeof (LogBuffer));
    if (lb == NULL)
-   {
-      perror ("lb malloc");
-      return NULL;
-   }
+      ERROR_RETURN (NULL, "malloc");
 
    lb->data = calloc (LOG_BUFFER_SIZE, sizeof (char));
    if (lb->data == NULL)
-   {
-      perror ("data calloc");
-      return NULL;
-   }
+      ERROR_RETURN (NULL, "data calloc");
 
    lb->pos      = 0;
    lb->count    = 0;
@@ -104,10 +98,7 @@ log_buffer_copy (LogBuffer* lb)
 {
    char* log = malloc (lb->count * sizeof (char));
    if (log == NULL)
-   {
-      perror ("malloc");
-      return NULL;
-   }
+      ERROR_RETURN (NULL, "malloc");
 
    size_t first_char_pos = lb->count == lb->capacity ? lb->pos + 1 : 0;
 

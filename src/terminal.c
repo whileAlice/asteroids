@@ -1,5 +1,7 @@
 #include "terminal.h"
 
+#include "error.h"
+
 #include <stdlib.h>
 
 #define TERM_FORMAT_START "\033["
@@ -41,22 +43,15 @@ get_term_formatted_string (TermColor fg_color, TermColor bg_color, bool is_bold,
       snprintf (NULL, 0, format, TERM_FORMAT_START, s_fg_codes[fg_color],
                 s_bg_codes[bg_color], str, TERM_FORMAT_RESET);
    if (length < 0)
-   {
-      perror ("NULL snprintf");
-      abort ();
-   }
+      ERROR_RETURN (NULL, "null snprintf");
 
    size_t formatted_str_size = length * sizeof (char) + 1;
    char*  formatted_str      = malloc (formatted_str_size);
    length = snprintf (formatted_str, formatted_str_size, format,
                       TERM_FORMAT_START, s_fg_codes[fg_color],
                       s_bg_codes[bg_color], str, TERM_FORMAT_RESET);
-   // TODO: propagate
    if (length < 0)
-   {
-      perror ("formatted_str snprintf");
-      abort ();
-   }
+      ERROR_RETURN (NULL, "formatted str snprintf");
 
    return formatted_str;
 }
