@@ -3,7 +3,7 @@
 #include <stdio.h>
 
 typedef enum event_idx {
-   STDOUT_EVENT,
+   STDOUT_EVENT = 0,
    STDERR_EVENT,
    WAKEUP_EVENT,
    EVENT_COUNT,
@@ -11,9 +11,11 @@ typedef enum event_idx {
 
 typedef struct stream_context {
    const char* name;
-   int         read_fd;
-   int         write_fd;
-   FILE*       write_file;
+   int         pipe[2];
+   int         stream_fd_copy;
+   int         stream_fd_original;
+   FILE*       stream_file_copy;
+   FILE*       stream_file_original;
 } StreamContext;
 
 void* std_streamer_thread (void* arg);

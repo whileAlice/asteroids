@@ -8,6 +8,7 @@
 #include "window_loop.h"
 
 #include <errno.h>
+#include <fcntl.h>
 #include <pthread.h>
 #include <raylib.h>
 #include <stdlib.h>
@@ -19,10 +20,9 @@ main (void)
    int      err;
    ssize_t  length;
    Context* c = context_create ();
+   Log*     l = c->log;
 
-   Log* l = c->log;
-
-   err = pipe (c->log->wakeup_pipe);
+   err = pipe2 (c->log->wakeup_pipe, O_NONBLOCK);
    if (err == -1)
       ERROR_RETURN (EXIT_FAILURE, "wakeup pipe");
 

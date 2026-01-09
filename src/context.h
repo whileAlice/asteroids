@@ -35,8 +35,6 @@ typedef struct log {
    pthread_cond_t  cond;
    size_t          thread_ready_count;
    bool            should_abort_init;
-   int             stdout_pipe[2];
-   int             stderr_pipe[2];
    int             wakeup_pipe[2];
 } Log;
 

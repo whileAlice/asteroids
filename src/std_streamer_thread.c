@@ -6,17 +6,18 @@
 #include "threads.h"
 
 #include <assert.h>
+#include <errno.h>
 #include <stdio.h>
 #include <sys/epoll.h>
 #include <unistd.h>
 
-#define LOG_DEBUG_DUP(fmt, ...)                                        \
-   log_to_file (stderr_context.write_file, DEBUG_LOG_LEVEL, true, fmt, \
-                ##__VA_ARGS__)
+#define LOG_DEBUG_DUP(fmt, ...)                                 \
+   log_to_file (stream_contexts[STDERR_EVENT].stream_file_copy, \
+                DEBUG_LOG_LEVEL, true, fmt, ##__VA_ARGS__)
 
-#define LOG_ERROR_DUP(fmt, ...)                                        \
-   log_to_file (stderr_context.write_file, ERROR_LOG_LEVEL, true, fmt, \
-                ##__VA_ARGS__)
+#define LOG_ERROR_DUP(fmt, ...)                                 \
+   log_to_file (stream_contexts[STDERR_EVENT].stream_file_copy, \
+                ERROR_LOG_LEVEL, true, fmt, ##__VA_ARGS__)
 
 #define BUFFER_SIZE 4096
 
@@ -30,68 +31,82 @@ std_streamer_thread (void* arg)
    ssize_t length;
    char    buf[BUFFER_SIZE];
 
-   int stdout_fd_copy;
-   int stderr_fd_copy;
-   int epoll_fd;
-
-   if (pipe (l->stdout_pipe) == -1)
-      ERROR_GOTO (exit, "stdout pipe");
-   if (pipe (l->stderr_pipe) == -1)
-      ERROR_GOTO (exit, "stderr pipe");
-
-   StreamContext stdout_context = { .read_fd = l->stdout_pipe[READ_END],
-                                    .name    = "stdout" };
-   StreamContext stderr_context = { .read_fd = l->stderr_pipe[READ_END],
-                                    .name    = "stderr" };
-   StreamContext wakeup_context = { .read_fd = l->wakeup_pipe[READ_END],
-                                    .name    = "wakeup" };
-
-   struct epoll_event all_events[EVENT_COUNT] = {
-      [STDOUT_EVENT] = { .data.ptr = &stdout_context },
-      [STDERR_EVENT] = { .data.ptr = &stderr_context },
-      [WAKEUP_EVENT] = { .data.ptr = &wakeup_context },
-   };
+   int                epoll_fd;
    struct epoll_event ready_events[EVENT_COUNT];
 
+   StreamContext stream_contexts[EVENT_COUNT] = {
+      [STDOUT_EVENT] = {
+         .name                 = "stdout",
+         .stream_fd_original   = STDOUT_FILENO,
+         .stream_file_original = stdout,
+      },
+      [STDERR_EVENT] = {
+         .name                 = "stderr",
+         .stream_fd_original   = STDERR_FILENO,
+         .stream_file_original = stderr,
+      },
+      // wakeup pipe is managed by the main thread
+      [WAKEUP_EVENT]  = {
+         .name = "wakeup",
+         .pipe = { l->wakeup_pipe[READ_END],
+                   l->wakeup_pipe[WRITE_END] },
+      },
+   };
+
+   // prepare pipes that will forward std output streams
+   for (size_t i = 0; i <= STDERR_EVENT; ++i)
+   {
+      err = pipe2 (stream_contexts[i].pipe, O_NONBLOCK);
+      if (err == -1)
+         ERROR_GOTO (exit, "%s pipe", stream_contexts[i].name);
+   }
+
    // backup std stream fds
-   stdout_fd_copy = dup (STDOUT_FILENO);
-   if (stdout_fd_copy == -1)
-      ERROR_GOTO (exit, "stdout fd copy dup");
-   stderr_fd_copy = dup (STDERR_FILENO);
-   if (stderr_fd_copy == -1)
-      ERROR_GOTO (exit, "stderr fd copy dup");
+   for (size_t i = 0; i <= STDERR_EVENT; ++i)
+   {
+      stream_contexts[i].stream_fd_copy =
+         dup (stream_contexts[i].stream_fd_original);
+      if (stream_contexts[i].stream_fd_copy == -1)
+         ERROR_GOTO (exit, "%s stream fd copy dup", stream_contexts[i].name);
+   }
 
    // open backups for writing
-   stdout_context.write_file = fdopen (stdout_fd_copy, "w");
-   if (stdout_context.write_file == NULL)
-      ERROR_GOTO (exit, "stdout copy fdopen");
-   stderr_context.write_file = fdopen (stderr_fd_copy, "w");
-   if (stderr_context.write_file == NULL)
-      ERROR_GOTO (exit, "stderr copy fdopen");
+   for (size_t i = 0; i <= STDERR_EVENT; ++i)
+   {
+      stream_contexts[i].stream_file_copy =
+         fdopen (stream_contexts[i].stream_fd_copy, "w");
+      if (stream_contexts[i].stream_file_copy == NULL)
+         ERROR_GOTO (exit, "%s stream file copy fdopen",
+                     stream_contexts[i].name);
+   }
 
    // replace original std stream fds with pipe write ends
-   err = dup2 (l->stderr_pipe[WRITE_END], STDERR_FILENO);
-   if (err == -1)
-      ERROR_GOTO (exit, "stderr pipe dup2");
-   err = dup2 (l->stdout_pipe[WRITE_END], STDOUT_FILENO);
-   if (err == -1)
-      ERROR_GOTO (restore_streams, "stdout pipe dup2");
+   for (size_t i = 0; i <= STDERR_EVENT; ++i)
+   {
+      err = dup2 (stream_contexts[i].pipe[WRITE_END],
+                  stream_contexts[i].stream_fd_original);
+      if (err == -1)
+         ERROR_GOTO (restore_streams, "%s pipe write end dup2");
+   }
 
    epoll_fd = epoll_create1 (0);
    if (epoll_fd == -1)
       ERROR_GOTO (restore_streams, "epoll create");
 
-   // poll all pipe read ends
+   // prepare all pipe read ends for polling
    for (size_t i = 0; i < EVENT_COUNT; ++i)
    {
-      StreamContext* c     = all_events[i].data.ptr;
-      all_events[i].events = EPOLLIN;
+      struct epoll_event event = { .events   = EPOLLIN,
+                                   .data.ptr = &stream_contexts[i] };
 
-      err = epoll_ctl (epoll_fd, EPOLL_CTL_ADD, c->read_fd, &all_events[i]);
+      err = epoll_ctl (epoll_fd, EPOLL_CTL_ADD,
+                       stream_contexts[i].pipe[READ_END], &event);
       if (err == -1)
-         ERROR_GOTO (restore_streams, "epoll ctl add %s", c->name);
+         ERROR_GOTO (restore_streams, "epoll ctl add %s",
+                     stream_contexts[i].name);
    }
 
+   // wait for main
    LOG_DEBUG_DUP ("syncing...");
    SYNC_THREAD (&l->mutex, &l->cond, l->thread_ready_count,
                 STREAMER_THREAD_COUNT, l->should_abort_init, restore_streams);
@@ -110,6 +125,7 @@ std_streamer_thread (void* arg)
          }
       });
 
+      // poll all pipe read ends
       ready_count = epoll_wait (epoll_fd, ready_events, EVENT_COUNT, -1);
       if (ready_count == -1)
          ERROR_GOTO (restore_streams, "epoll wait");
@@ -126,21 +142,30 @@ std_streamer_thread (void* arg)
 
          assert (ready_events[i].events & EPOLLIN);
 
-         length = read (c->read_fd, buf, sizeof (buf) - 1);
+         length = read (c->pipe[READ_END], buf, sizeof (buf) - 1);
          switch (length)
          {
-         case -1: ERROR_GOTO (restore_streams, "%s read", c->name);
+         case -1:
+            if (errno == EAGAIN)
+            {
+               errno = 0;
+               continue;
+            }
+            ERROR_GOTO (restore_streams, "%s read", c->name);
          case 0 : ERROR_GOTO (restore_streams, "%s EOF", c->name);
          default: buf[length] = '\0';
          }
 
-         if (c->write_file != NULL)
+         // write forwarded std streams to buffer
+         // and print them to the terminal
+         if (c->stream_file_copy != NULL)
          {
             assert (i < INTERNAL_LOG);
+
             IN_LOCK(&l->mutex,
                log_buffer_write_string (l->buffers[i], buf);
             );
-            fputs (buf, c->write_file);
+            fputs (buf, c->stream_file_copy);
          }
          else
             LOG_DEBUG_DUP ("received data from %s pipe: %s", c->name, buf);
@@ -151,31 +176,53 @@ restore_streams:
    LOG_DEBUG_DUP ("restoring streams...");
 
    // restore std stream fds from backups
-   err = dup2 (stdout_fd_copy, STDOUT_FILENO);
-   if (err == -1)
+   for (size_t i = 0; i <= STDERR_EVENT; ++i)
    {
-      LOG_ERROR_DUP ("stdout fd copy dup2");
-      goto exit;
+      err = dup2 (stream_contexts[i].stream_fd_copy,
+                  stream_contexts[i].stream_fd_original);
+      if (err == -1)
+      {
+         LOG_ERROR_DUP ("%s fd copy dup2", stream_contexts[i].name);
+         goto exit;
+      }
    }
-   err = dup2 (stdout_fd_copy, STDERR_FILENO);
-   if (err == -1)
+
+   // check stream pipes if something was sent in between
+   // quit initiation and stream restoration
+   for (size_t i = 0; i <= STDERR_EVENT; ++i)
    {
-      LOG_ERROR_DUP ("stderr fd copy dup2");
-      goto exit;
+      length = read (stream_contexts[i].pipe[READ_END], buf, sizeof (buf) - 1);
+      switch (length)
+      {
+      case -1:
+         if (errno == EAGAIN)
+         {
+            errno = 0;
+            continue;
+         }
+         ERROR_GOTO (exit, "%s read", stream_contexts[i].name);
+      case 0 : ERROR_GOTO (exit, "%s EOF", stream_contexts[i].name);
+      default: buf[length] = '\0';
+      }
+
+      IN_LOCK(&l->mutex,
+         log_buffer_write_string (l->buffers[i], buf);
+      );
+      fputs (buf, stream_contexts[i].stream_file_original);
    }
 
    // close backups
-   err = close (stdout_fd_copy);
-   if (err == -1)
-      ERROR_GOTO (exit, "stdout fd copy close");
-
-   err = close (stderr_fd_copy);
-   if (err == -1)
-      ERROR_GOTO (exit, "stderr fd copy close");
+   for (size_t i = 0; i <= STDERR_EVENT; ++i)
+   {
+      err = close (stream_contexts[i].stream_fd_copy);
+      if (err == -1)
+         ERROR_GOTO (exit, "%s stream fd copy close", stream_contexts[i].name);
+   }
 
 exit:
    log_debug ("returning...");
 
+   // if exiting due to own error, bring down the rest of the app as well
    IN_LOCK(&c->app->mutex,
    {
       c->app->should_quit = true;
