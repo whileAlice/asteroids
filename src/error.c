@@ -65,7 +65,7 @@ fail:
    va_list args_copy;
    va_start (args_copy, fmt);
 
-   vlog_to_file (stderr, ERROR_LOG_LEVEL, true, fmt, args_copy);
+   vlog_to_file (stderr, ERROR_LOG_LEVEL, fmt, args_copy);
 
    va_end (args_copy);
 

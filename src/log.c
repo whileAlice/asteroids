@@ -12,6 +12,14 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+#define PERROR_GOTO(label, msg) \
+   do                           \
+   {                            \
+      perror (msg);             \
+      goto label;               \
+   }                            \
+   while (0)
+
 #define INFO_PREFIX  "INFO:"
 #define DEBUG_PREFIX "DEBUG:"
 #define ERROR_PREFIX "ERROR:"
@@ -58,8 +66,7 @@ log_free (Log* log)
 }
 
 void
-vlog_to_file (FILE* output, LogLevel log_level, bool with_newline,
-              const char* fmt, va_list args)
+vlog_to_file (FILE* output, LogLevel log_level, const char* fmt, va_list args)
 {
    va_list args_copy, args_fail;
    va_copy (args_copy, args);
@@ -87,58 +94,48 @@ vlog_to_file (FILE* output, LogLevel log_level, bool with_newline,
 
    char* thread_prefix = strdupf ("[%s]", get_thread_name (pthread_self ()));
    if (thread_prefix == NULL)
-   {
-      perror ("strdupf");
-      goto fail;
-   }
+      PERROR_GOTO (fail, "strdupf");
 
    char* formatted_thread_prefix = get_term_formatted_string (
       TERM_GREEN, TERM_DEFAULT, false, thread_prefix);
+   if (formatted_thread_prefix == NULL)
+      PERROR_GOTO (fail, "get term formatted thread prefix");
 
    // TODO: assemble all these strings in a single temp buffer
    char* formatted_prefix =
       get_term_formatted_string (prefix_color, TERM_DEFAULT, true, prefix);
+   if (formatted_prefix == NULL)
+      PERROR_GOTO (fail, "get term formatted prefix");
 
    int length = vsnprintf (NULL, 0, fmt, args);
    // TODO: propagate
    if (length < 0)
-   {
-      perror ("null vsnprintf");
-      goto fail;
-   }
+      PERROR_GOTO (fail, "null vsnprintf");
 
    size_t message_size = length * sizeof (char) + 1;
    char*  message      = malloc (message_size);
+   if (message == NULL)
+      PERROR_GOTO (fail, "message malloc");
 
    length = vsnprintf (message, message_size, fmt, args_copy);
    if (length < 0)
-   {
-      perror ("message vsnprintf");
-      goto fail;
-   }
+      PERROR_GOTO (fail, "message vsnprintf");
 
-   length = snprintf (NULL, 0, "%s %s %s", formatted_prefix,
+   length = snprintf (NULL, 0, "%s %s %s\n", formatted_prefix,
                       formatted_thread_prefix, message);
    if (length < 0)
-   {
-      perror ("null snprintf");
-      goto fail;
-   }
+      PERROR_GOTO (fail, "null snprintf");
 
    size_t message_with_prefix_size = length * sizeof (char) + 1;
-   char*  message_with_prefix =
-      calloc (length + 1 + (with_newline ? 1 : 0), sizeof (char));
+   char*  message_with_prefix      = malloc (message_with_prefix_size);
+   if (message_with_prefix == NULL)
+      PERROR_GOTO (fail, "message with prefix malloc");
 
-   length = snprintf (message_with_prefix, message_with_prefix_size, "%s %s %s",
-                      formatted_prefix, formatted_thread_prefix, message);
+   length =
+      snprintf (message_with_prefix, message_with_prefix_size, "%s %s %s\n",
+                formatted_prefix, formatted_thread_prefix, message);
    if (length < 0)
-   {
-      perror ("message with prefix snprintf");
-      goto fail;
-   }
-
-   if (with_newline)
-      message_with_prefix[length] = '\n';
+      PERROR_GOTO (fail, "message with prefix snprintf");
 
    fputs (message_with_prefix, output);
 
@@ -159,13 +156,12 @@ fail:
 }
 
 void
-log_to_file (FILE* output, LogLevel log_level, bool with_newline,
-             const char* fmt, ...)
+log_to_file (FILE* output, LogLevel log_level, const char* fmt, ...)
 {
    va_list args;
    va_start (args, fmt);
 
-   vlog_to_file (output, log_level, with_newline, fmt, args);
+   vlog_to_file (output, log_level, fmt, args);
 
    va_end (args);
 }
@@ -176,7 +172,7 @@ log_info (const char* fmt, ...)
    va_list args;
    va_start (args, fmt);
 
-   vlog_to_file (stderr, INFO_LOG_LEVEL, true, fmt, args);
+   vlog_to_file (stderr, INFO_LOG_LEVEL, fmt, args);
 
    va_end (args);
 }
@@ -187,7 +183,7 @@ log_debug (const char* fmt, ...)
    va_list args;
    va_start (args, fmt);
 
-   vlog_to_file (stderr, DEBUG_LOG_LEVEL, true, fmt, args);
+   vlog_to_file (stderr, DEBUG_LOG_LEVEL, fmt, args);
 
    va_end (args);
 }
@@ -198,7 +194,7 @@ log_error (const char* fmt, ...)
    va_list args;
    va_start (args, fmt);
 
-   vlog_to_file (stderr, ERROR_LOG_LEVEL, true, fmt, args);
+   vlog_to_file (stderr, ERROR_LOG_LEVEL, fmt, args);
 
    va_end (args);
 }
@@ -218,52 +214,44 @@ raylib_tracelog_callback (int log_level, const char* fmt, va_list args)
    int length = vsnprintf (NULL, 0, fmt, args);
    // TODO: maybe these shouldn't be as immediately fatal as in our logs?
    if (length < 0)
-   {
-      perror ("null vsnprintf");
-      goto fail;
-   }
+      PERROR_GOTO (fail, "null vsnprintf");
 
    size_t message_size = length * sizeof (char) + 1;
    char*  message      = malloc (message_size);
+   if (message == NULL)
+      PERROR_GOTO (fail, "message malloc");
 
    length = vsnprintf (message, message_size, fmt, args_copy);
    if (length < 0)
-   {
-      perror ("message vsnprintf");
-      goto fail;
-   }
+      PERROR_GOTO (fail, "message vsnprintf");
 
    length = snprintf (NULL, 0, "%s %s", formatted_prefix, message);
    if (length < 0)
-   {
-      perror ("null snprintf");
-      goto fail;
-   }
+      PERROR_GOTO (fail, "null snprintf");
 
    size_t message_with_prefix_size = length * sizeof (char) + 1;
    char*  message_with_prefix      = malloc (message_with_prefix_size);
+   if (message_with_prefix == NULL)
+      PERROR_GOTO (fail, "message with prefix malloc");
 
    length = snprintf (message_with_prefix, message_with_prefix_size, "%s %s",
                       formatted_prefix, message);
    if (length < 0)
-   {
-      perror ("message with prefix snprintf");
-      goto fail;
-   }
+      PERROR_GOTO (fail, "message with prefix snprintf");
 
    switch (log_level)
    {
    case LOG_TRACE:
    case LOG_DEBUG:
-      log_to_file (stderr, DEBUG_LOG_LEVEL, true, message_with_prefix);
+      log_to_file (stderr, DEBUG_LOG_LEVEL, message_with_prefix);
       break;
    case LOG_INFO:
-      log_to_file (stderr, INFO_LOG_LEVEL, true, message_with_prefix);
+      log_to_file (stderr, INFO_LOG_LEVEL, message_with_prefix);
       break;
    case LOG_WARNING:
    case LOG_ERROR:
    case LOG_FATAL:
-      log_to_file (stderr, ERROR_LOG_LEVEL, true, message_with_prefix);
+      log_to_file (stderr, ERROR_LOG_LEVEL, message_with_prefix);
       break;
    default: assert (0 == "Unreachable");
    }

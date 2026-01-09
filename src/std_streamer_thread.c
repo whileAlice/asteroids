@@ -13,11 +13,11 @@
 
 #define LOG_DEBUG_DUP(fmt, ...)                                 \
    log_to_file (stream_contexts[STDERR_EVENT].stream_file_copy, \
-                DEBUG_LOG_LEVEL, true, fmt, ##__VA_ARGS__)
+                DEBUG_LOG_LEVEL, fmt, ##__VA_ARGS__)
 
 #define LOG_ERROR_DUP(fmt, ...)                                 \
    log_to_file (stream_contexts[STDERR_EVENT].stream_file_copy, \
-                ERROR_LOG_LEVEL, true, fmt, ##__VA_ARGS__)
+                ERROR_LOG_LEVEL, fmt, ##__VA_ARGS__)
 
 #define BUFFER_SIZE 4096
 
@@ -116,14 +116,8 @@ std_streamer_thread (void* arg)
    int ready_count;
    while (true)
    {
-      IN_LOCK(&c->app->mutex,
-      {
-         if (c->app->should_quit)
-         {
-            pthread_mutex_unlock(&c->app->mutex);
-            goto restore_streams;
-         }
-      });
+      if (c->app->should_quit)
+         goto restore_streams;
 
       // poll all pipe read ends
       ready_count = epoll_wait (epoll_fd, ready_events, EVENT_COUNT, -1);
@@ -162,10 +156,10 @@ std_streamer_thread (void* arg)
          {
             assert (i < INTERNAL_LOG);
 
+            fputs (buf, c->stream_file_copy);
             IN_LOCK(&l->mutex,
                log_buffer_write_string (l->buffers[i], buf);
             );
-            fputs (buf, c->stream_file_copy);
          }
          else
             LOG_DEBUG_DUP ("received data from %s pipe: %s", c->name, buf);
