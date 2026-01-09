@@ -17,14 +17,30 @@
 int
 main (void)
 {
+#ifdef __APPLE__
+   // weird framework initialization shenanigans
+   errno = 0;
+#endif
+
    int      err;
    ssize_t  length;
    Context* c = context_create ();
    Log*     l = c->log;
 
-   err = pipe2 (c->log->wakeup_pipe, O_NONBLOCK);
+   err = pipe (c->log->wakeup_pipe);
    if (err == -1)
       ERROR_RETURN (EXIT_FAILURE, "wakeup pipe");
+
+   for (size_t i = 0; i <= WRITE_END; ++i)
+   {
+      int flags = fcntl (c->log->wakeup_pipe[i], F_GETFL);
+      if (flags == -1)
+         ERROR_RETURN (EXIT_FAILURE, "wakeup pipe[%zu] F_GETFL", i);
+
+      err = fcntl(c->log->wakeup_pipe[i], F_SETFL, flags | O_NONBLOCK);
+      if (err == -1)
+         ERROR_RETURN (EXIT_FAILURE, "wakeup pipe[%zu] O_NONBLOCK", i);
+   }
 
    err = threads_init (c);
    if (err != 0)

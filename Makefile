@@ -13,6 +13,8 @@ OBJ = ${SRC:.c=.o}
 INC = raylib5.5
 LNK = ${SRCDIR}/libraylib.a
 
+UNAME_S := $(shell uname -s)
+
 CC = clang
 # TODO: verify if any of this is redundant
 CFLAGS = -I./${INC} -Wall -Wextra -Wconversion -Wdouble-promotion        \
@@ -20,8 +22,12 @@ CFLAGS = -I./${INC} -Wall -Wextra -Wconversion -Wdouble-promotion        \
          -fsanitize=undefined -fsanitize-trap -std=c23                   \
          -D_POSIX_C_SOURCE=200809L
 
+ifeq ($(UNAME_S),Darwin)
+    FLAGS := -framework IOKit -framework Cocoa
+endif
+
 ${BIN}: ${OBJ} ${LNK} ${ASTBINDIR}
-	${CC} -o ${BIN} ${OBJ} ${LNK}
+	${CC} -g -o ${BIN} ${OBJ} ${FLAGS} ${LNK}
 
 ${ASTBINDIR}: ${AST}
 	mkdir -p ${ASTBINDIR}

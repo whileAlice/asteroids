@@ -65,7 +65,7 @@ ThreadIdx
 get_thread_idx (pthread_t thread_id)
 {
    for (size_t i = 0; i < THREAD_COUNT; ++i)
-      if pthread_equal (s_thread_ids[i], thread_id)
+      if (pthread_equal (s_thread_ids[i], thread_id))
          return (ThreadIdx)i;
 
    return -1;

@@ -2,6 +2,9 @@
 
 #include <stdio.h>
 
+typedef struct kevent64_s  Kevent64_s;
+typedef struct epoll_event EpollEvent;
+
 typedef enum event_idx {
    STDOUT_EVENT = 0,
    STDERR_EVENT,
@@ -18,4 +21,4 @@ typedef struct stream_context {
    FILE*       stream_file_original;
 } StreamContext;
 
-void* std_streamer_thread (void* arg);
+void*      std_streamer_thread           (void* arg);
