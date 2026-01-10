@@ -14,7 +14,7 @@ typedef struct log_view {
 typedef struct log_buffer {
    char*  data;
    size_t pos;
-   size_t count;
+   size_t size;
    size_t capacity;
 } LogBuffer;
 

@@ -18,7 +18,7 @@ log_buffer_create (const size_t size)
       ERROR_RETURN (NULL, "data calloc");
 
    lb->pos      = 0;
-   lb->count    = 0;
+   lb->size     = 0;
    lb->capacity = size;
 
    return lb;
@@ -31,8 +31,8 @@ log_buffer_write_char (LogBuffer* lb, const char ch)
 
    lb->pos = (lb->pos + 1) % lb->capacity;
 
-   if (lb->count < lb->capacity)
-      lb->count += 1;
+   if (lb->size < lb->capacity)
+      lb->size += 1;
 }
 
 void
@@ -61,18 +61,18 @@ log_buffer_write_string (LogBuffer* lb, const char* str)
    // of the next string
    lb->data[lb->pos] = '\0';
 
-   if (lb->count < lb->capacity)
-      lb->count = lb->count + str_len > lb->capacity ? lb->capacity
-                                                     : lb->count + str_len;
+   if (lb->size < lb->capacity)
+      lb->size =
+         lb->size + str_len > lb->capacity ? lb->capacity : lb->size + str_len;
 }
 
 LogView
 log_buffer_view (LogBuffer* lb)
 {
-   if (lb->count < lb->capacity)
-      return (LogView){ .top = { .data = lb->data, .length = lb->count } };
+   if (lb->size < lb->capacity)
+      return (LogView){ .top = { .data = lb->data, .length = lb->size } };
 
-   size_t first_char_pos = lb->count == lb->capacity ? lb->pos + 1 : 0;
+   size_t first_char_pos = lb->size == lb->capacity ? lb->pos + 1 : 0;
    return (LogView){
       .top    = { .data   = &lb->data[first_char_pos],
                   .length = lb->capacity - first_char_pos, },
@@ -84,7 +84,7 @@ log_buffer_view (LogBuffer* lb)
 void
 log_buffer_print (LogBuffer* lb)
 {
-   if (lb->count == 0)
+   if (lb->size == 0)
       return;
 
    LogView lv = log_buffer_view (lb);
@@ -96,14 +96,14 @@ log_buffer_print (LogBuffer* lb)
 char*
 log_buffer_copy (LogBuffer* lb)
 {
-   char* log = malloc (lb->count * sizeof (char));
+   char* log = malloc (lb->size * sizeof (char));
    if (log == NULL)
       ERROR_RETURN (NULL, "malloc");
 
-   size_t first_char_pos = lb->count == lb->capacity ? lb->pos + 1 : 0;
+   size_t first_char_pos = lb->size == lb->capacity ? lb->pos + 1 : 0;
 
    // TODO: rewrite using double memcpy
-   for (size_t i = 0; i < lb->count; ++i)
+   for (size_t i = 0; i < lb->size; ++i)
       log[i] = lb->data[(i + first_char_pos) % lb->capacity];
 
    return log;
@@ -112,8 +112,8 @@ log_buffer_copy (LogBuffer* lb)
 void
 log_buffer_clear (LogBuffer* lb)
 {
-   lb->pos   = 0;
-   lb->count = 0;
+   lb->pos  = 0;
+   lb->size = 0;
 }
 
 void
