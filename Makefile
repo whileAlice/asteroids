@@ -11,9 +11,14 @@ SRC = ${wildcard ${SRCDIR}/*.c ${SRCDIR}/**/*.c}
 AST = ${wildcard ${ASTDIR}/*.*}
 OBJ = ${SRC:.c=.o}
 INC = raylib5.5
-LNK = ${SRCDIR}/libraylib.a
+LIB = ${SRCDIR}/libraylib.a
+LNK = -lm
 
 UNAME_S := $(shell uname -s)
+
+ifeq ($(UNAME_S),Darwin)
+    FLAGS := -framework IOKit -framework Cocoa
+endif
 
 CC = clang
 # TODO: verify if any of this is redundant
@@ -22,12 +27,8 @@ CFLAGS = -I./${INC} -Wall -Wextra -Wconversion -Wdouble-promotion        \
          -fsanitize=undefined -fsanitize-trap -std=c23                   \
          -D_POSIX_C_SOURCE=200809L
 
-ifeq ($(UNAME_S),Darwin)
-    FLAGS := -framework IOKit -framework Cocoa
-endif
-
-${BIN}: ${OBJ} ${LNK} ${ASTBINDIR}
-	${CC} -g -o ${BIN} ${OBJ} ${FLAGS} ${LNK}
+${BIN}: ${OBJ} ${LIB} ${ASTBINDIR}
+	${CC} -g -o ${BIN} ${OBJ} ${FLAGS} ${LIB} ${LNK}
 
 ${ASTBINDIR}: ${AST}
 	mkdir -p ${ASTBINDIR}
@@ -43,11 +44,11 @@ rerun: clean run
 runopt: CFLAGS += -O3
 runopt: run
 
-${LNK}: ${INC}
+${LIB}: ${INC}
 	cd ${INC} && make
 
 clean:
-	rm -f ${BIN} ${OBJ} ${LNK} ${ASTBINDIR}/*
+	rm -f ${BIN} ${OBJ} ${LIB} ${ASTBINDIR}/*
 
 cleandeps:
 	cd ${INC} && make clean
