@@ -9,8 +9,8 @@
 int
 get_integer_scale ()
 {
-   const int scale_x = GetRenderWidth () / PIXEL_BUFFER_WIDTH;
-   const int scale_y = GetRenderHeight () / PIXEL_BUFFER_HEIGHT;
+   const int scale_x = GetScreenWidth () / PIXEL_BUFFER_WIDTH;
+   const int scale_y = GetScreenHeight () / PIXEL_BUFFER_HEIGHT;
 
    return MIN (scale_x, scale_y);
 }
@@ -18,13 +18,13 @@ get_integer_scale ()
 int
 get_texture_origin_x ()
 {
-   return GetRenderWidth () % PIXEL_BUFFER_WIDTH / 2;
+   return GetScreenWidth () % PIXEL_BUFFER_WIDTH / 2;
 }
 
 int
 get_texture_origin_y ()
 {
-   return GetRenderHeight () % PIXEL_BUFFER_HEIGHT / 2;
+   return GetScreenHeight () % PIXEL_BUFFER_HEIGHT / 2;
 }
 
 int

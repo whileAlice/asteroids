@@ -37,7 +37,7 @@ main (void)
       if (flags == -1)
          ERROR_RETURN (EXIT_FAILURE, "wakeup pipe[%zu] F_GETFL", i);
 
-      err = fcntl(c->log->wakeup_pipe[i], F_SETFL, flags | O_NONBLOCK);
+      err = fcntl (c->log->wakeup_pipe[i], F_SETFL, flags | O_NONBLOCK);
       if (err == -1)
          ERROR_RETURN (EXIT_FAILURE, "wakeup pipe[%zu] O_NONBLOCK", i);
    }

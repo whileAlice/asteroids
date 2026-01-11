@@ -75,10 +75,10 @@ std_streamer_thread (void* arg)
       {
          int flags = fcntl (stream_contexts[i].pipe[j], F_GETFL);
          if (flags == -1)
-            ERROR_GOTO (exit, "%s pipe[%zu] F_GETFL",
-                          stream_contexts[i].name, i);
+            ERROR_GOTO (exit, "%s pipe[%zu] F_GETFL", stream_contexts[i].name,
+                        i);
 
-         err = fcntl(stream_contexts[i].pipe[j], F_SETFL, flags | O_NONBLOCK);
+         err = fcntl (stream_contexts[i].pipe[j], F_SETFL, flags | O_NONBLOCK);
          if (err == -1)
          {
             ERROR_GOTO (exit, "%s pipe[%zu] O_NONBLOCK",
@@ -116,7 +116,7 @@ std_streamer_thread (void* arg)
    }
 
 #ifdef __APPLE__
-   kq = kqueue();
+   kq = kqueue ();
    if (kq == -1)
       ERROR_GOTO (restore_streams, "kqueue");
 #else
@@ -133,12 +133,13 @@ std_streamer_thread (void* arg)
                            .filter = EVFILT_READ,
                            .flags  = EV_ADD,
                            .udata  = (uint64_t)&stream_contexts[i] };
-      err = kevent64(kq, &event, 1, NULL, 0, 0, NULL);
+
+      err = kevent64 (kq, &event, 1, NULL, 0, 0, NULL);
       if (err == -1)
-         ERROR_GOTO (restore_streams, "kevent64 add %s", stream_contexts[i].name);
+         ERROR_GOTO (restore_streams, "kevent64 add %s",
+                     stream_contexts[i].name);
 #else
-      EpollEvent event = { .events   = EPOLLIN,
-                           .data.ptr = &stream_contexts[i] };
+      EpollEvent event = { .events = EPOLLIN, .data.ptr = &stream_contexts[i] };
 
       err = epoll_ctl (epoll_fd, EPOLL_CTL_ADD,
                        stream_contexts[i].pipe[READ_END], &event);
@@ -161,9 +162,9 @@ std_streamer_thread (void* arg)
       if (c->app->should_quit)
          goto restore_streams;
 
-     // poll all pipe read ends
+      // poll all pipe read ends
 #ifdef __APPLE__
-      ready_count = kevent64(kq, NULL, 0, ready_events, EVENT_COUNT, 0, NULL);
+      ready_count = kevent64 (kq, NULL, 0, ready_events, EVENT_COUNT, 0, NULL);
       if (ready_count == -1)
          ERROR_GOTO (restore_streams, "kevent64 wait");
 #else
