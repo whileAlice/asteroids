@@ -224,27 +224,27 @@ update_active_overlays (Context* c, float dt)
 }
 
 void
-draw_active_ui_layers (Context* c, ActiveUILayers* active_ui_layers, Image* buf)
+draw_active_ui_layers (Context* c, ActiveUILayers* active_ui_layers)
 {
    assert (active_ui_layers->capacity > 0);
 
    for (size_t i = 0; i < active_ui_layers->size; ++i)
    {
       UILayer* layer = active_ui_layers->array[i];
-      layer->draw (c, buf);
+      layer->draw (c);
    }
 }
 
 void
-draw_active_modals (Context* c, Image* buf)
+draw_active_modals (Context* c)
 {
-   draw_active_ui_layers (c, &s_active_modals, buf);
+   draw_active_ui_layers (c, &s_active_modals);
 }
 
 void
-draw_active_overlays (Context* c, Image* buf)
+draw_active_overlays (Context* c)
 {
-   draw_active_ui_layers (c, &s_active_overlays, buf);
+   draw_active_ui_layers (c, &s_active_overlays);
 }
 
 const char*

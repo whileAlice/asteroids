@@ -64,16 +64,13 @@ demo_scene_update (Context* c, float dt)
 }
 
 void
-demo_scene_draw (Context* c, Image* buf)
+demo_scene_draw (Context* c)
 {
-   clear_rgb_image (buf, rgb_from_rgba (PINK));
+   clear_rgb_image (c->pixel_buffer->image, rgb_from_rgba (PINK));
 
-   draw_rectangle (buf, (Vector2){ .x = 20.f, .y = 20.f },
-                   (Vector2){ .x = 100.f, .y = 100.f }, BLUE, DARKBLUE);
-   draw_triangle (buf, (Vector2){ .x = 50.0f, .y = 100.0f },
-                  (Vector2){ .x = 100.0f, .y = 40.0f },
-                  (Vector2){ .x = 200.0f, .y = 180.0f }, MAROON, DARKPURPLE);
-   draw_line (buf, (Vector2){ .x = 310.f, .y = 20.f },
-              (Vector2){ .x = 200.f, .y = 180.f }, RED);
-   draw_rgba_image (buf, s_hornet_image, s_pos);
+   draw_rectangle ((Vector2){ 20, 20 }, (Vector2){ 100, 100 }, BLUE, DARKBLUE);
+   draw_triangle ((Vector2){ 50, 100 }, (Vector2){ 100, 40 },
+                  (Vector2){ 200, 180 }, MAROON, DARKPURPLE);
+   draw_line ((Vector2){ 310, 20 }, (Vector2){ 200, 180 }, RED);
+   draw_rgba_image (s_pos, s_hornet_image);
 }

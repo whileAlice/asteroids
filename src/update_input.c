@@ -7,7 +7,7 @@
 void
 update_input (Context* c)
 {
-   c->input->show_osd =
+   c->input->toggle_osd =
       IsKeyPressed (KEY_GRAVE) && !IsKeyDown (KEY_RIGHT_SHIFT);
    c->input->toggle_log =
       IsKeyPressed (KEY_GRAVE) && IsKeyDown (KEY_RIGHT_SHIFT);

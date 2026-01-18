@@ -4,6 +4,7 @@
 #include "font.h"
 #include "math_utils.h"
 #include "raylib.h"
+#include "string.h"
 
 #include <assert.h>
 #include <math.h>
@@ -11,49 +12,63 @@
 #include <stdlib.h>
 #include <string.h>
 
+static Image*           s_buffer;
+static const FixedFont* s_font;
+
 void
-draw_rgb_pixel (Image* buf, int x, int y, Color3 pixel)
+set_draw_buffer (Image* buffer)
 {
-   int index = index_from_xy (buf, x, y);
+   s_buffer = buffer;
+}
+
+void
+set_draw_font (const FixedFont* font)
+{
+   s_font = font;
+}
+
+void
+draw_rgb_pixel (int x, int y, Color3 pixel)
+{
+   int index = index_from_xy (s_buffer, x, y);
    if (index == -1)
       return;
 
-   Color3* pixels_buf = (Color3*)buf->data;
+   Color3* pixels_buf = (Color3*)s_buffer->data;
    pixels_buf[index]  = pixel;
 }
 
 void
-draw_rgb_pixel_unsafe (Image* buf, int x, int y, Color3 pixel)
+draw_rgb_pixel_unsafe (int x, int y, Color3 pixel)
 {
-   size_t index = index_from_xy_unsafe (buf, x, y);
+   size_t index = index_from_xy_unsafe (s_buffer, x, y);
 
-   Color3* pixels_buf = (Color3*)buf->data;
+   Color3* pixels_buf = (Color3*)s_buffer->data;
    pixels_buf[index]  = pixel;
 }
 
 void
-draw_rgba_pixel (Image* buf, int x, int y, Color pixel)
+draw_rgba_pixel (int x, int y, Color pixel)
 {
-   int index = index_from_xy (buf, x, y);
+   int index = index_from_xy (s_buffer, x, y);
    if (index == -1)
       return;
 
-   blend_rgba_pixel_on_rgb_buffer (buf, x, y, pixel, index);
+   blend_rgba_pixel_on_rgb_buffer (index, pixel);
 }
 
 void
-draw_rgba_pixel_unsafe (Image* buf, int x, int y, Color pixel)
+draw_rgba_pixel_unsafe (int x, int y, Color pixel)
 {
-   size_t index = index_from_xy_unsafe (buf, x, y);
+   size_t index = index_from_xy_unsafe (s_buffer, x, y);
 
-   blend_rgba_pixel_on_rgb_buffer (buf, x, y, pixel, index);
+   blend_rgba_pixel_on_rgb_buffer (index, pixel);
 }
 
 static void
-blend_rgba_pixel_on_rgb_buffer (Image* buf, int x, int y, Color pixel,
-                                size_t index)
+blend_rgba_pixel_on_rgb_buffer (size_t index, Color pixel)
 {
-   Color3* pixels_buf = (Color3*)buf->data;
+   Color3* pixels_buf = (Color3*)s_buffer->data;
 
    switch (pixel.a)
    {
@@ -68,16 +83,16 @@ blend_rgba_pixel_on_rgb_buffer (Image* buf, int x, int y, Color pixel,
 }
 
 void
-draw_rgb_image_i (Image* buf, const Image* img, int origin_x, int origin_y)
+draw_rgb_image_i (int origin_x, int origin_y, const Image* img)
 {
    assert (img->format == PIXELFORMAT_UNCOMPRESSED_R8G8B8);
 
-   const int start_x = CLAMP (origin_x, 0, buf->width - 1);
-   const int start_y = CLAMP (origin_y, 0, buf->height - 1);
-   const int end_x   = CLAMPR (start_x + img->width - 1, buf->width - 1);
-   const int end_y   = CLAMPR (start_y + img->height - 1, buf->height - 1);
+   const int start_x = CLAMP (origin_x, 0, s_buffer->width - 1);
+   const int start_y = CLAMP (origin_y, 0, s_buffer->height - 1);
+   const int end_x   = CLAMPR (start_x + img->width - 1, s_buffer->width - 1);
+   const int end_y   = CLAMPR (start_y + img->height - 1, s_buffer->height - 1);
 
-   Color3* pixels_buf = (Color3*)buf->data;
+   Color3* pixels_buf = (Color3*)s_buffer->data;
    Color3* pixels_img = (Color3*)img->data;
    int     img_x, img_y = 0;
 
@@ -88,7 +103,7 @@ draw_rgb_image_i (Image* buf, const Image* img, int origin_x, int origin_y)
 
       for (int buf_x = start_x; buf_x <= end_x; ++buf_x)
       {
-         size_t index_buf = index_from_xy_unsafe (buf, buf_x, buf_y);
+         size_t index_buf = index_from_xy_unsafe (s_buffer, buf_x, buf_y);
          size_t index_img = index_from_xy_unsafe (img, img_x, img_y);
 
          pixels_buf[index_buf] = pixels_img[index_img];
@@ -100,16 +115,16 @@ draw_rgb_image_i (Image* buf, const Image* img, int origin_x, int origin_y)
 }
 
 void
-draw_rgba_image_i (Image* buf, const Image* img, int origin_x, int origin_y)
+draw_rgba_image_i (int origin_x, int origin_y, const Image* img)
 {
    assert (img->format == PIXELFORMAT_UNCOMPRESSED_R8G8B8A8);
 
-   const int start_x = CLAMP (origin_x, 0, buf->width - 1);
-   const int start_y = CLAMP (origin_y, 0, buf->height - 1);
-   const int end_x   = CLAMPR (start_x + img->width - 1, buf->width - 1);
-   const int end_y   = CLAMPR (start_y + img->height - 1, buf->height - 1);
+   const int start_x = CLAMP (origin_x, 0, s_buffer->width - 1);
+   const int start_y = CLAMP (origin_y, 0, s_buffer->height - 1);
+   const int end_x   = CLAMPR (start_x + img->width - 1, s_buffer->width - 1);
+   const int end_y   = CLAMPR (start_y + img->height - 1, s_buffer->height - 1);
 
-   Color3* pixels_buf = (Color3*)buf->data;
+   Color3* pixels_buf = (Color3*)s_buffer->data;
    Color*  pixels_img = (Color*)img->data;
    int     img_x, img_y = 0;
 
@@ -120,7 +135,7 @@ draw_rgba_image_i (Image* buf, const Image* img, int origin_x, int origin_y)
 
       for (int buf_x = start_x; buf_x <= end_x; ++buf_x)
       {
-         size_t index_buf = index_from_xy_unsafe (buf, buf_x, buf_y);
+         size_t index_buf = index_from_xy_unsafe (s_buffer, buf_x, buf_y);
          size_t index_img = index_from_xy_unsafe (img, img_x, img_y);
 
          blend_rgba_pixel_on_rgb_pixel (&pixels_buf[index_buf],
@@ -133,49 +148,54 @@ draw_rgba_image_i (Image* buf, const Image* img, int origin_x, int origin_y)
 }
 
 void
-draw_rgb_image (Image* buf, const Image* img, Vector2 origin)
+draw_rgb_image (Vector2 origin, const Image* img)
 {
-   draw_rgb_image_i (buf, img, (int)roundf (origin.x), (int)roundf (origin.y));
+   draw_rgb_image_i ((int)roundf (origin.x), (int)roundf (origin.y), img);
 }
 
 void
-draw_rgba_image (Image* buf, const Image* img, Vector2 origin)
+draw_rgba_image (Vector2 origin, const Image* img)
 {
-   draw_rgba_image_i (buf, img, (int)roundf (origin.x), (int)roundf (origin.y));
+   draw_rgba_image_i ((int)roundf (origin.x), (int)roundf (origin.y), img);
 }
 
 void
-draw_glyph (Image* buf, const FixedFont* font, int origin_x, int origin_y,
-            size_t glyph_index)
+draw_glyph (int origin_x, int origin_y, size_t glyph_index)
 {
-   const int total_glyph_width =
-      font->glyph_width + font->glyph_margins.left + font->glyph_margins.right;
-   const int total_glyph_height =
-      font->glyph_height + font->glyph_margins.top + font->glyph_margins.bottom;
+   const int total_glyph_width = s_font->glyph_width +
+                                 s_font->glyph_margins.left +
+                                 s_font->glyph_margins.right;
+   const int total_glyph_height = s_font->glyph_height +
+                                  s_font->glyph_margins.top +
+                                  s_font->glyph_margins.bottom;
+
    int row          = 0;
-   int init_sheet_x = 0 + font->glyph_margins.left;
+   int init_sheet_x = 0 + s_font->glyph_margins.left;
    for (size_t i = 0; i < glyph_index; ++i)
    {
       init_sheet_x += total_glyph_width;
 
-      if (init_sheet_x >= font->glyph_sheet->width)
+      if (init_sheet_x >= s_font->glyph_sheet->width)
       {
-         init_sheet_x -= font->glyph_sheet->width;
+         init_sheet_x -= s_font->glyph_sheet->width;
          row++;
       }
    }
 
-   int sheet_y = row * total_glyph_height + font->glyph_margins.top;
+   int sheet_y = row * total_glyph_height + s_font->glyph_margins.top;
 
    // TODO: make a function out of this
-   const int start_x = CLAMP (origin_x, 0, buf->width - 1);
-   const int start_y = CLAMP (origin_y, 0, buf->height - 1);
-   const int end_x   = CLAMPR (start_x + font->glyph_width - 1, buf->width - 1);
-   const int end_y = CLAMPR (start_y + font->glyph_height - 1, buf->height - 1);
+   const int start_x = CLAMP (origin_x, 0, s_buffer->width - 1);
+   const int start_y = CLAMP (origin_y, 0, s_buffer->height - 1);
+
+   const int end_x =
+      CLAMPR (start_x + s_font->glyph_width - 1, s_buffer->width - 1);
+   const int end_y =
+      CLAMPR (start_y + s_font->glyph_height - 1, s_buffer->height - 1);
 
    // TODO: this could be generalized
-   Color3* pixels_buf   = (Color3*)buf->data;
-   Color*  pixels_sheet = (Color*)font->glyph_sheet->data;
+   Color3* pixels_buf   = (Color3*)s_buffer->data;
+   Color*  pixels_sheet = (Color*)s_font->glyph_sheet->data;
 
    // TODO: this looks like it could be optimized?
    for (int buf_y = start_y; buf_y <= end_y; ++buf_y)
@@ -184,9 +204,9 @@ draw_glyph (Image* buf, const FixedFont* font, int origin_x, int origin_y,
 
       for (int buf_x = start_x; buf_x <= end_x; ++buf_x)
       {
-         size_t index_buf = index_from_xy_unsafe (buf, buf_x, buf_y);
+         size_t index_buf = index_from_xy_unsafe (s_buffer, buf_x, buf_y);
          size_t index_sheet =
-            index_from_xy_unsafe (font->glyph_sheet, sheet_x, sheet_y);
+            index_from_xy_unsafe (s_font->glyph_sheet, sheet_x, sheet_y);
 
          blend_rgba_pixel_on_rgb_pixel (&pixels_buf[index_buf],
                                         &pixels_sheet[index_sheet]);
@@ -199,20 +219,19 @@ draw_glyph (Image* buf, const FixedFont* font, int origin_x, int origin_y,
 }
 
 void
-draw_text_i (Image* buf, const FixedFont* font, int origin_x, int origin_y,
-             const char* text)
+draw_text_i (int origin_x, int origin_y, const char* text)
 {
-   assert (font->glyph_count > 0);
+   assert (s_font->glyph_count > 0);
 
    const int text_len         = (int)strlen (text);
-   const int stride_x         = font->glyph_width + font->glyph_spacing;
-   const int stride_y         = font->glyph_height + font->glyph_spacing;
+   const int stride_x         = s_font->glyph_width + s_font->glyph_spacing;
+   const int stride_y         = s_font->glyph_height + s_font->glyph_spacing;
    int       current_origin_x = origin_x;
    int       current_origin_y = origin_y;
 
    for (int i = 0; i < text_len; ++i)
    {
-      if (current_origin_x >= buf->width)
+      if (current_origin_x >= s_buffer->width)
          return;
 
       switch (text[i])
@@ -232,74 +251,84 @@ draw_text_i (Image* buf, const FixedFont* font, int origin_x, int origin_y,
          continue;
       }
 
-      draw_glyph (buf, font, current_origin_x, current_origin_y, glyph_index);
+      draw_glyph (current_origin_x, current_origin_y, glyph_index);
       current_origin_x += stride_x;
    }
 }
 
 void
-draw_text (Image* buf, const FixedFont* font, Vector2 origin, const char* text)
+draw_text (Vector2 origin, const char* text)
 {
-   draw_text_i (buf, font, (int)roundf (origin.x), (int)roundf (origin.y),
-                text);
+   draw_text_i ((int)roundf (origin.x), (int)roundf (origin.y), text);
 }
 
-// TODO: this could be prolly integrated somehow with osd_printf
 void
-draw_textf (Image* buf, const FixedFont* font, Vector2 origin, const char* fmt,
-            ...)
+draw_textf_i (int origin_x, int origin_y, const char* fmt, ...)
 {
-   char text_buf[1024];
-
    va_list args;
    va_start (args, fmt);
 
-   vsnprintf (text_buf, 1024 * sizeof (char), fmt, args);
-   draw_text (buf, font, origin, text_buf);
+   char* str = vstrdupf (fmt, args);
 
    va_end (args);
+
+   draw_text_i (origin_x, origin_y, str);
+   free (str);
+}
+
+void
+draw_textf (Vector2 origin, const char* fmt, ...)
+{
+   va_list args;
+   va_start (args, fmt);
+
+   char* str = vstrdupf (fmt, args);
+
+   va_end (args);
+
+   draw_text (origin, str);
+   free (str);
 }
 
 Vector2
-draw_text_center (Image* buf, const FixedFont* font, Vector2 origin,
-                  const char* text)
+draw_text_center (Vector2 origin, const char* text)
 {
-   int     text_width = get_text_width (font, text);
+   int     text_width = get_text_width (text);
    Vector2 origin_centered =
-      center_horizontally (origin, text_width, buf->width);
+      center_horizontally (origin, text_width, s_buffer->width);
 
-   draw_text (buf, font, origin_centered, text);
+   draw_text (origin_centered, text);
 
    return origin_centered;
 }
 
 int
-get_text_width (const FixedFont* font, const char* text)
+get_text_width (const char* text)
 {
    size_t text_len = strlen (text);
    if (text_len == 0)
       return 0;
 
-   int width = font->glyph_width;
+   int width = s_font->glyph_width;
 
    for (size_t i = 1; i < strlen (text); ++i)
    {
-      width += font->glyph_width + font->glyph_spacing;
+      width += s_font->glyph_width + s_font->glyph_spacing;
    }
 
    return width;
 }
 
 void
-draw_circle_fi (Image* buf, int center_x, int center_y, int radius, Color color)
+draw_circle_fi (int center_x, int center_y, int radius, Color color)
 {
    if (radius < 1)
       return;
 
-   const int start_x = CLAMP (center_x - radius, 0, buf->width - 1);
-   const int start_y = CLAMP (center_y - radius, 0, buf->height - 1);
-   const int end_x   = CLAMPR (start_x + radius * 2 - 1, buf->width - 1);
-   const int end_y   = CLAMPR (start_y + radius * 2 - 1, buf->height - 1);
+   const int start_x = CLAMP (center_x - radius, 0, s_buffer->width - 1);
+   const int start_y = CLAMP (center_y - radius, 0, s_buffer->height - 1);
+   const int end_x   = CLAMPR (start_x + radius * 2 - 1, s_buffer->width - 1);
+   const int end_y   = CLAMPR (start_y + radius * 2 - 1, s_buffer->height - 1);
 
    for (int y = start_y; y <= end_y; ++y)
    {
@@ -312,22 +341,21 @@ draw_circle_fi (Image* buf, int center_x, int center_y, int radius, Color color)
          if ((center_x - x) * (center_x - x) + (center_y - y) * (center_y - y) <
              radius * radius - radius_mod)
          {
-            draw_rgba_pixel_unsafe (buf, x, y, color);
+            draw_rgba_pixel_unsafe (x, y, color);
          }
       }
    }
 }
 
 void
-draw_circle_f (Image* buf, Vector2 center, float radius, Color color)
+draw_circle_f (Vector2 center, float radius, Color color)
 {
-   draw_circle_fi (buf, (int)roundf (center.x), (int)roundf (center.y),
+   draw_circle_fi ((int)roundf (center.x), (int)roundf (center.y),
                    (int)roundf (radius), color);
 }
 
 void
-draw_line_i (Image* buf, int start_x, int start_y, int end_x, int end_y,
-             Color pixel)
+draw_line_i (int start_x, int start_y, int end_x, int end_y, Color pixel)
 {
    bool is_steep = abs (end_y - start_y) > abs (end_x - start_x);
 
@@ -354,10 +382,10 @@ draw_line_i (Image* buf, int start_x, int start_y, int end_x, int end_y,
       for (int i = start_x; i <= end_x; ++i)
       {
          pixel.a = (uint8_t)(255.f * fractional_part (intersect_y));
-         draw_rgba_pixel (buf, (int)(intersect_y) + 1, i, pixel);
+         draw_rgba_pixel ((int)(intersect_y) + 1, i, pixel);
 
          pixel.a = (uint8_t)(255.f * (1.0f - fractional_part (intersect_y)));
-         draw_rgba_pixel (buf, (int)(intersect_y), i, pixel);
+         draw_rgba_pixel ((int)(intersect_y), i, pixel);
 
          intersect_y += gradient;
       }
@@ -367,10 +395,10 @@ draw_line_i (Image* buf, int start_x, int start_y, int end_x, int end_y,
       for (int i = start_x; i <= end_x; ++i)
       {
          pixel.a = (uint8_t)(255.f * fractional_part (intersect_y));
-         draw_rgba_pixel (buf, i, (int)(intersect_y) + 1, pixel);
+         draw_rgba_pixel (i, (int)(intersect_y) + 1, pixel);
 
          pixel.a = (uint8_t)(255.f * (1.0f - fractional_part (intersect_y)));
-         draw_rgba_pixel (buf, i, (int)(intersect_y), pixel);
+         draw_rgba_pixel (i, (int)(intersect_y), pixel);
 
          intersect_y += gradient;
       }
@@ -378,68 +406,67 @@ draw_line_i (Image* buf, int start_x, int start_y, int end_x, int end_y,
 }
 
 void
-draw_line (Image* buf, Vector2 start, Vector2 end, Color pixel)
+draw_line (Vector2 start, Vector2 end, Color pixel)
 {
-   draw_line_i (buf, (int)roundf (start.x), (int)roundf (start.y),
+   draw_line_i ((int)roundf (start.x), (int)roundf (start.y),
                 (int)roundf (end.x), (int)roundf (end.y), pixel);
 }
 
 void
-draw_rectangle_fi (Image* buf, int origin_x, int origin_y, int width,
-                   int height, Color pixel)
+draw_rectangle_fi (int origin_x, int origin_y, int width, int height,
+                   Color pixel)
 {
    if (width == 0 || height == 0)
       return;
 
-   const int start_x = CLAMP (origin_x, 0, buf->width - 1);
-   const int start_y = CLAMP (origin_y, 0, buf->height - 1);
-   const int end_x   = CLAMPR (start_x + width - 1, buf->width - 1);
-   const int end_y   = CLAMPR (start_y + height - 1, buf->height - 1);
+   const int start_x = CLAMP (origin_x, 0, s_buffer->width - 1);
+   const int start_y = CLAMP (origin_y, 0, s_buffer->height - 1);
+   const int end_x   = CLAMPR (start_x + width - 1, s_buffer->width - 1);
+   const int end_y   = CLAMPR (start_y + height - 1, s_buffer->height - 1);
 
    for (int y = start_y; y <= end_y; ++y)
    {
       for (int x = start_x; x <= end_x; ++x)
       {
-         draw_rgba_pixel_unsafe (buf, x, y, pixel);
+         draw_rgba_pixel_unsafe (x, y, pixel);
       }
    }
 }
 
 void
-draw_rectangle_f (Image* buf, Vector2 origin, Vector2 size, Color pixel)
+draw_rectangle_f (Vector2 origin, Vector2 size, Color pixel)
 {
-   draw_rectangle_fi (buf, (int)roundf (origin.x), (int)roundf (origin.y),
+   draw_rectangle_fi ((int)roundf (origin.x), (int)roundf (origin.y),
                       (int)roundf (size.x), (int)roundf (size.y), pixel);
 }
 
 void
-draw_rectangle_wi (Image* buf, int origin_x, int origin_y, int width,
-                   int height, Color pixel)
+draw_rectangle_wi (int origin_x, int origin_y, int width, int height,
+                   Color pixel)
 {
-   draw_quad_wi (buf, origin_x, origin_y, origin_x + width, origin_y,
+   draw_quad_wi (origin_x, origin_y, origin_x + width, origin_y,
                  origin_x + width, origin_y + height, origin_x,
                  origin_y + height, pixel);
 }
 
 void
-draw_rectangle_i (Image* buf, int origin_x, int origin_y, int width, int height,
+draw_rectangle_i (int origin_x, int origin_y, int width, int height,
                   Color border, Color fill)
 {
-   draw_rectangle_fi (buf, origin_x, origin_y, width, height, fill);
-   draw_rectangle_wi (buf, origin_x, origin_y, width, height, border);
+   draw_rectangle_fi (origin_x, origin_y, width, height, fill);
+   draw_rectangle_wi (origin_x, origin_y, width, height, border);
 }
 
 void
-draw_rectangle (Image* buf, Vector2 origin, Vector2 size, Color border,
-                Color fill)
+draw_rectangle (Vector2 origin, Vector2 size, Color border, Color fill)
 {
-   draw_rectangle_i (buf, (int)roundf (origin.x), (int)roundf (origin.y),
+   draw_rectangle_i ((int)roundf (origin.x), (int)roundf (origin.y),
                      (int)roundf (size.x), (int)roundf (size.y), border, fill);
 }
 
 void
-draw_triangle_fi (Image* buf, int a_x, int a_y, int b_x, int b_y, int c_x,
-                  int c_y, Color pixel)
+draw_triangle_fi (int a_x, int a_y, int b_x, int b_y, int c_x, int c_y,
+                  Color pixel)
 {
    // TODO: convert to scanline-based approach
    if (!is_clockwise (a_x, a_y, b_x, b_y, c_x, c_y))
@@ -448,10 +475,10 @@ draw_triangle_fi (Image* buf, int a_x, int a_y, int b_x, int b_y, int c_x,
       SWAP (a_y, b_y);
    }
 
-   const int min_x = CLAMP (MIN (MIN (a_x, b_x), c_x), 0, buf->width - 1);
-   const int min_y = CLAMP (MIN (MIN (a_y, b_y), c_y), 0, buf->height - 1);
-   const int max_x = CLAMP (MAX (MAX (a_x, b_x), c_x), 0, buf->width - 1);
-   const int max_y = CLAMP (MAX (MAX (a_y, b_y), c_y), 0, buf->height - 1);
+   const int min_x = CLAMP (MIN (MIN (a_x, b_x), c_x), 0, s_buffer->width - 1);
+   const int min_y = CLAMP (MIN (MIN (a_y, b_y), c_y), 0, s_buffer->height - 1);
+   const int max_x = CLAMP (MAX (MAX (a_x, b_x), c_x), 0, s_buffer->width - 1);
+   const int max_y = CLAMP (MAX (MAX (a_y, b_y), c_y), 0, s_buffer->height - 1);
 
    for (int y = min_y; y <= max_y; ++y)
    {
@@ -461,46 +488,45 @@ draw_triangle_fi (Image* buf, int a_x, int a_y, int b_x, int b_y, int c_x,
              is_clockwise (b_x, b_y, c_x, c_y, x, y) &&
              is_clockwise (c_x, c_y, a_x, a_y, x, y))
          {
-            draw_rgba_pixel_unsafe (buf, x, y, pixel);
+            draw_rgba_pixel_unsafe (x, y, pixel);
          }
       }
    }
 }
 
 void
-draw_triangle_wi (Image* buf, int a_x, int a_y, int b_x, int b_y, int c_x,
-                  int c_y, Color pixel)
+draw_triangle_wi (int a_x, int a_y, int b_x, int b_y, int c_x, int c_y,
+                  Color pixel)
 {
-   draw_line_i (buf, a_x, a_y, b_x, b_y, pixel);
-   draw_line_i (buf, b_x, b_y, c_x, c_y, pixel);
-   draw_line_i (buf, c_x, c_y, a_x, a_y, pixel);
+   draw_line_i (a_x, a_y, b_x, b_y, pixel);
+   draw_line_i (b_x, b_y, c_x, c_y, pixel);
+   draw_line_i (c_x, c_y, a_x, a_y, pixel);
 }
 
 void
-draw_triangle_i (Image* buf, int a_x, int a_y, int b_x, int b_y, int c_x,
-                 int c_y, Color border, Color fill)
+draw_triangle_i (int a_x, int a_y, int b_x, int b_y, int c_x, int c_y,
+                 Color border, Color fill)
 {
-   draw_triangle_fi (buf, a_x, a_y, b_x, b_y, c_x, c_y, fill);
-   draw_triangle_wi (buf, a_x, a_y, b_x, b_y, c_x, c_y, border);
+   draw_triangle_fi (a_x, a_y, b_x, b_y, c_x, c_y, fill);
+   draw_triangle_wi (a_x, a_y, b_x, b_y, c_x, c_y, border);
 }
 
 void
-draw_triangle (Image* buf, Vector2 a, Vector2 b, Vector2 c, Color border,
-               Color fill)
+draw_triangle (Vector2 a, Vector2 b, Vector2 c, Color border, Color fill)
 {
-   draw_triangle_i (buf, (int)roundf (a.x), (int)roundf (a.y),
-                    (int)roundf (b.x), (int)roundf (b.y), (int)roundf (c.x),
-                    (int)roundf (c.y), border, fill);
+   draw_triangle_i ((int)roundf (a.x), (int)roundf (a.y), (int)roundf (b.x),
+                    (int)roundf (b.y), (int)roundf (c.x), (int)roundf (c.y),
+                    border, fill);
 }
 
 void
-draw_quad_wi (Image* buf, int a_x, int a_y, int b_x, int b_y, int c_x, int c_y,
-              int d_x, int d_y, Color pixel)
+draw_quad_wi (int a_x, int a_y, int b_x, int b_y, int c_x, int c_y, int d_x,
+              int d_y, Color pixel)
 {
-   draw_line_i (buf, a_x, a_y, b_x, b_y, pixel);
-   draw_line_i (buf, b_x, b_y, c_x, c_y, pixel);
-   draw_line_i (buf, c_x, c_y, d_x, d_y, pixel);
-   draw_line_i (buf, d_x, d_y, a_x, a_y, pixel);
+   draw_line_i (a_x, a_y, b_x, b_y, pixel);
+   draw_line_i (b_x, b_y, c_x, c_y, pixel);
+   draw_line_i (c_x, c_y, d_x, d_y, pixel);
+   draw_line_i (d_x, d_y, a_x, a_y, pixel);
 }
 
 void

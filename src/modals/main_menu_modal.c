@@ -69,43 +69,40 @@ main_menu_modal_update (Context* c, float dt)
 }
 
 void
-main_menu_modal_draw (Context* c, Image* buf)
+main_menu_modal_draw (Context* c)
 {
    if (s_should_show_menu)
    {
-      draw_text_center (buf, &c->fonts->fixed_font,
-                        (Vector2){ .x = 0, .y = 40 }, TITLE_TEXT);
+      draw_text_center ((Vector2){ 0, 40 }, TITLE_TEXT);
 
-      Vector2 demo_option_origin = draw_text_center (
-         buf, &c->fonts->fixed_font, (Vector2){ .x = 0, .y = 60 }, DEMO_TEXT);
+      Vector2 demo_option_origin =
+         draw_text_center ((Vector2){ 0, 60 }, DEMO_TEXT);
 
       if (s_menu_option == DEMO_OPTION)
       {
          Vector2 demo_selector_origin =
             Vector2Add (demo_option_origin, s_selector_offset);
-         draw_text (buf, &c->fonts->fixed_font, demo_selector_origin, "*");
+         draw_text (demo_selector_origin, "*");
       }
 
       Vector2 vector_products_option_origin =
-         draw_text_center (buf, &c->fonts->fixed_font,
-                           (Vector2){ .x = 0, .y = 70 }, VECTOR_PRODUCTS_TEXT);
+         draw_text_center ((Vector2){ 0, 70 }, VECTOR_PRODUCTS_TEXT);
 
       if (s_menu_option == VECTOR_PRODUCTS_OPTION)
       {
          Vector2 vector_products_selector_origin =
             Vector2Add (vector_products_option_origin, s_selector_offset);
-         draw_text (buf, &c->fonts->fixed_font, vector_products_selector_origin,
-                    "*");
+         draw_text (vector_products_selector_origin, "*");
       }
 
-      Vector2 exit_option_origin = draw_text_center (
-         buf, &c->fonts->fixed_font, (Vector2){ .x = 0, .y = 80 }, EXIT_TEXT);
+      Vector2 exit_option_origin =
+         draw_text_center ((Vector2){ 0, 80 }, EXIT_TEXT);
 
       if (s_menu_option == EXIT_OPTION)
       {
          Vector2 exit_selector_origin =
             Vector2Add (exit_option_origin, s_selector_offset);
-         draw_text (buf, &c->fonts->fixed_font, exit_selector_origin, "*");
+         draw_text (exit_selector_origin, "*");
       }
    }
 }

@@ -1,6 +1,7 @@
 #include "buffer.h"
 #include "config.h"
 #include "context.h"
+#include "draw_utils.h"
 #include "error.h"
 #include "event.h"
 #include "game_loop.h"
@@ -68,6 +69,8 @@ main (void)
                           FIXED_FONT_PATH))
       ERROR_GOTO (end, "load fixed fonts");
 
+   set_draw_font (&f->fixed_font);
+   set_draw_buffer (pb->image);
    set_buffer_scale_and_texture_origin (c);
 
    while (!should_quit_app (c))
@@ -86,7 +89,7 @@ main (void)
             float dt = GetFrameTime ();
 
             game_update (c, dt);
-            game_draw (c, pb->image);
+            game_draw (c);
 
             UpdateTexture (pb->texture, pb->image->data);
 

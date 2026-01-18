@@ -49,13 +49,13 @@ log_overlay_update (Context* c, float dt)
 }
 
 void
-log_overlay_draw (Context* c, Image* buf)
+log_overlay_draw (Context* c)
 {
    if (!c->state->should_show_log)
       return;
 
-   box_blur (s_overlay, buf, 1);
+   box_blur (s_overlay, c->pixel_buffer->image, 1);
    brighten_image_by_percentage (s_overlay, s_overlay, 20);
-   draw_rgb_image (buf, s_overlay, Vector2Zero ());
+   draw_rgb_image (Vector2Zero (), s_overlay);
    // draw_log (c, buf, true);
 }

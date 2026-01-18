@@ -8,7 +8,7 @@ typedef struct ui_layer {
    bool (*init) (Context* c);
    bool (*deinit) (void);
    void (*update) (Context* c, float dt);
-   void (*draw) (Context* c, Image* buf);
+   void (*draw) (Context* c);
 } UILayer;
 
 typedef enum overlay_id {

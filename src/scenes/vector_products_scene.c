@@ -17,6 +17,7 @@ typedef enum selected_point { A, B, C } SelectedPoint;
 static Vector2       s_point_a, s_point_b, s_point_c;
 static Color         s_color_a, s_color_b, s_color_c;
 static SelectedPoint s_current_point, s_previous_point;
+static float         s_cross_product_magnitude;
 
 bool
 vector_products_scene_init (Context* c)
@@ -70,7 +71,7 @@ vector_products_scene_update (Context* c, float dt)
       .y = (float)mouse_y,
    };
 
-   // TODO: this is also kinda meh. probably unavoidable, since
+   // TODO: this is a bit meh. probably unavoidable, since
    // the mouse is moved only on the next frame, but it should
    // be possible to handle it more gracefully.
    bool should_wait_frame = false;
@@ -137,11 +138,11 @@ vector_products_scene_update (Context* c, float dt)
    }
 
    // NOTE: flips sign depending on Y inversion
-   // float cross_product_magnitude =
-   //    (s_point_c.x - s_point_b.x) *
-   //       (INVERT_Y (s_point_a.y) - INVERT_Y (s_point_b.y)) -
-   //    (INVERT_Y (s_point_c.y) - INVERT_Y (s_point_b.y)) *
-   //       (s_point_a.x - s_point_b.x);
+   s_cross_product_magnitude =
+      (s_point_c.x - s_point_b.x) *
+         (INVERT_Y (s_point_a.y) - INVERT_Y (s_point_b.y)) -
+      (INVERT_Y (s_point_c.y) - INVERT_Y (s_point_b.y)) *
+         (s_point_a.x - s_point_b.x);
 
    // NOTE: it's the same regardless of Y inversion
    // float dot_product =
@@ -164,19 +165,9 @@ vector_products_scene_update (Context* c, float dt)
    // float abc_angle = acosf(cos_abc_norm);
 
    // NOTE: flips ABC <-> CBA depending on Y inversion
-   // float abc_angle_signed = atan2f (cross_product_magnitude, dot_product);
+   // float abc_angle_signed = atan2f (s_cross_product_magnitude, dot_product);
    // float abc_angle_360 =
    //    abc_angle_signed <= 0 ? 2 * PI + abc_angle_signed : abc_angle_signed;
-
-   // osd_print (2, 25, "cross-product magnitude");
-   // osd_print (3, 22, "(C1-B1)(A2-B2)-(C2-B2)(A1-B1)");
-   // osd_printf (4, 26, "(%*.f)(%*.f)-(%*.f)(%*.f) ", 3,
-   //             (double)s_point_c.x - (double)s_point_b.x, 3,
-   //             (double)INVERT_Y (s_point_a.y) - (double)INVERT_Y
-   //             (s_point_b.y), 3, (double)INVERT_Y (s_point_c.y) -
-   //             (double)INVERT_Y (s_point_b.y), 3, (double)s_point_a.x -
-   //             (double)s_point_b.x);
-   // osd_printf (6, 33, "%*.f", 6, (double)cross_product_magnitude);
 
    // osd_print (8, 31, "dot product");
    // osd_print (9, 22, "(C1-B1)(A1-B1)+(C2-B2)(A2-B2)");
@@ -199,32 +190,40 @@ vector_products_scene_update (Context* c, float dt)
 }
 
 void
-vector_products_scene_draw (Context* c, Image* buf)
+vector_products_scene_draw (Context* c)
 {
-   clear_rgb_image (buf, rgb_from_rgba (LIGHTGRAY));
+   set_draw_font (&c->fonts->fixed_font);
 
-   draw_line (buf, s_point_a, s_point_b, BLACK);
-   draw_line (buf, s_point_b, s_point_c, BLACK);
-   draw_circle_f (buf, s_point_a, 3.f, s_color_a);
-   draw_circle_f (buf, s_point_b, 3.f, s_color_b);
-   draw_circle_f (buf, s_point_c, 3.f, s_color_c);
+   clear_rgb_image (c->pixel_buffer->image, rgb_from_rgba (LIGHTGRAY));
 
-   draw_textf (buf, &c->fonts->fixed_font,
-               (Vector2){ .x = CLAMP (s_point_a.x - 40, 0,
-                                      (float)c->pixel_buffer->image->width - 1),
-                          .y = s_point_a.y - 10 },
-               "A1: %.f, A2: %.f", (double)s_point_a.x,
-               (double)INVERT_Y (s_point_a.y));
-   draw_textf (buf, &c->fonts->fixed_font,
-               (Vector2){ .x = CLAMP (s_point_b.x - 40, 0,
-                                      (float)c->pixel_buffer->image->width - 1),
-                          .y = s_point_b.y - 10 },
-               "B1: %.f, B2: %.f", (double)s_point_b.x,
-               (double)INVERT_Y (s_point_b.y));
-   draw_textf (buf, &c->fonts->fixed_font,
-               (Vector2){ .x = CLAMP (s_point_c.x - 40, 0,
-                                      (float)c->pixel_buffer->image->width - 1),
-                          .y = s_point_c.y - 10 },
-               "C1: %.f, C2: %.f", (double)s_point_c.x,
-               (double)INVERT_Y (s_point_c.y));
+   draw_line (s_point_a, s_point_b, BLACK);
+   draw_line (s_point_b, s_point_c, BLACK);
+   draw_circle_f (s_point_a, 3.f, s_color_a);
+   draw_circle_f (s_point_b, 3.f, s_color_b);
+   draw_circle_f (s_point_c, 3.f, s_color_c);
+
+   draw_textf (get_origin (c, s_point_a), "A1: %.f, A2: %.f",
+               (double)s_point_a.x, (double)INVERT_Y (s_point_a.y));
+   draw_textf (get_origin (c, s_point_b), "B1: %.f, B2: %.f",
+               (double)s_point_b.x, (double)INVERT_Y (s_point_b.y));
+   draw_textf (get_origin (c, s_point_c), "C1: %.f, C2: %.f",
+               (double)s_point_c.x, (double)INVERT_Y (s_point_c.y));
+
+   // draw_text (buf, f, 2, 25, "cross-product magnitude");
+   // osd_print (3, 22, "(C1-B1)(A2-B2)-(C2-B2)(A1-B1)");
+   // osd_printf (4, 26, "(%*.f)(%*.f)-(%*.f)(%*.f) ", 3,
+   //             (double)s_point_c.x - (double)s_point_b.x, 3,
+   //             (double)INVERT_Y (s_point_a.y) - (double)INVERT_Y
+   //             (s_point_b.y), 3, (double)INVERT_Y (s_point_c.y) -
+   //             (double)INVERT_Y (s_point_b.y), 3, (double)s_point_a.x -
+   //             (double)s_point_b.x);
+   // osd_printf (6, 33, "%*.f", 6, (double)s_cross_product_magnitude);
+}
+
+Vector2
+get_origin (Context* c, Vector2 pos)
+{
+   float buffer_width = (float)c->pixel_buffer->image->width;
+   return (Vector2){ .x = CLAMP (pos.x - 40, 0, buffer_width - 1),
+                     .y = pos.y - 10 };
 }

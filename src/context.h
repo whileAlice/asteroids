@@ -27,7 +27,7 @@ typedef struct fonts {
 } Fonts;
 
 typedef struct input {
-   bool show_osd;
+   bool toggle_osd;
    bool toggle_log;
    bool log_page_up;
    bool log_page_down;

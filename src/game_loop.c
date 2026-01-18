@@ -62,9 +62,9 @@ game_update (Context* c, float dt)
 }
 
 void
-game_draw (Context* c, Image* buf)
+game_draw (Context* c)
 {
-   draw_current_scene (c, buf);
-   draw_active_modals (c, buf);
-   draw_active_overlays (c, buf);
+   draw_current_scene (c);
+   draw_active_modals (c);
+   draw_active_overlays (c);
 }

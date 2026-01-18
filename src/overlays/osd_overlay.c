@@ -1,9 +1,12 @@
 #include "osd_overlay.h"
 
 #include "../context.h"
+#include "../draw_utils.h"
 
 #include <raylib.h>
 #include <raymath.h>
+
+double s_fps;
 
 bool
 osd_overlay_init (Context* c)
@@ -20,18 +23,21 @@ osd_overlay_deinit (void)
 void
 osd_overlay_update (Context* c, float dt)
 {
-   if (!c->state->should_show_log)
+   if (!c->state->should_show_osd)
       return;
 
-   // osd_printf (0, 0, "fps: %*.1f", 4, 1. / (double)dt);
+   s_fps = 1. / (double)dt;
 }
 
 void
-osd_overlay_draw (Context* c, Image* buf)
+osd_overlay_draw (Context* c)
 {
-   if (!c->state->should_show_log)
+   if (!c->state->should_show_osd)
       return;
 
-   // bool is_inverted = c->state->should_show_log;
-   // draw_osd (c, buf, is_inverted);
+   FixedFont* font = c->state->should_show_log ? &c->fonts->inverted_fixed_font
+                                               : &c->fonts->fixed_font;
+   set_draw_font(font);
+
+   draw_textf_i (10, 10, "fps: %*.1f", 4, s_fps);
 }

@@ -15,5 +15,5 @@ typedef struct scene {
    bool (*init) (Context* c);
    bool (*deinit) (void);
    void (*update) (Context* c, float dt);
-   void (*draw) (Context* c, Image* buf);
+   void (*draw) (Context* c);
 } Scene;

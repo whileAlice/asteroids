@@ -63,11 +63,11 @@ update_current_scene (Context* c, float dt)
 }
 
 void
-draw_current_scene (Context* c, Image* buf)
+draw_current_scene (Context* c)
 {
    assert (s_current_scene != NULL);
 
-   s_current_scene->draw (c, buf);
+   s_current_scene->draw (c);
 }
 
 bool

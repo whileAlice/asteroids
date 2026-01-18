@@ -14,8 +14,11 @@ update_state (Context* c)
       c->input->toggle_log = false;
    }
 
-   if (c->input->show_osd)
+   if (c->input->toggle_osd)
+   {
       c->state->should_show_osd = !c->state->should_show_osd;
+      c->input->toggle_osd = false;
+   }
 
    if (c->input->switch_fullscreen)
       ToggleBorderlessWindowed ();

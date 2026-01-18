@@ -8,7 +8,6 @@ AlignConsecutiveAssignments:
 AlignConsecutiveDeclarations:
   Enabled: true
   AcrossComments: true
-  AlignFunctionDeclarations: true
 
 AlignConsecutiveMacros:
   Enabled: true
