@@ -4,6 +4,14 @@
 
 #include <stdarg.h>
 
+#define WARNING_RETURN(retval, fmt, ...) \
+   do                                    \
+   {                                     \
+      log_warning (fmt, ##__VA_ARGS__);  \
+      return retval;                     \
+   }                                     \
+   while (0)
+
 typedef enum log_idx {
    STOUT_LOG = 0,
    STDERR_LOG,

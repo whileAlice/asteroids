@@ -1,12 +1,11 @@
 #pragma once
 
 #include "../context.h"
-#include "../ui_layer.h"
 
 #include <raylib.h>
 
 // clang-format off
-bool osd_overlay_init   (UILayer* self, Context* c);
-bool osd_overlay_deinit (UILayer* self);
-void osd_overlay_update (UILayer* self, Context* c, float dt);
-void osd_overlay_draw   (UILayer* self, Context* c, Image* buf);
+bool osd_overlay_init   (Context* c);
+bool osd_overlay_deinit (void);
+void osd_overlay_update (Context* c, float dt);
+void osd_overlay_draw   (Context* c, Image* buf);

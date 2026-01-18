@@ -28,7 +28,7 @@ typedef struct fonts {
 
 typedef struct input {
    bool show_osd;
-   bool show_log;
+   bool toggle_log;
    bool log_page_up;
    bool log_page_down;
    bool switch_fullscreen;

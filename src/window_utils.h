@@ -14,3 +14,4 @@ int  buffer_y_from_screen_y              (Context* c, int screen_y);
 int  screen_x_from_buffer_x              (Context* c, int buf_x);
 int  screen_y_from_buffer_y              (Context* c, int buf_y);
 void set_mouse_pos                       (Context* c, Vector2 pos);
+bool should_close_window                 (Context* c);

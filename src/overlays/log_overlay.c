@@ -2,7 +2,6 @@
 
 #include "../context.h"
 #include "../draw_utils.h"
-#include "../ui_layer.h"
 
 #include <raylib.h>
 #include <raymath.h>
@@ -10,7 +9,7 @@
 static Image* s_overlay;
 
 bool
-log_overlay_init (UILayer* self, Context* c)
+log_overlay_init (Context* c)
 {
    // log_printf ("loaded fixed font with %d glyphs",
    //             c->fonts->fixed_font.glyph_count);
@@ -25,9 +24,8 @@ log_overlay_init (UILayer* self, Context* c)
 }
 
 bool
-log_overlay_deinit (UILayer* self)
+log_overlay_deinit (void)
 {
-   self->is_visible = false;
    UnloadImage (*s_overlay);
    free (s_overlay);
 
@@ -35,16 +33,9 @@ log_overlay_deinit (UILayer* self)
 }
 
 void
-log_overlay_update (UILayer* self, Context* c, float dt)
+log_overlay_update (Context* c, float dt)
 {
-   // TODO: this should be somewhere else?
-   // maybe set is_visible directly somehow by the input?
-   if (c->state->should_show_log)
-   {
-      self->is_visible = true;
-   }
-
-   if (!self->is_visible)
+   if (!c->state->should_show_log)
       return;
 
    if (c->input->log_page_up)
@@ -58,9 +49,9 @@ log_overlay_update (UILayer* self, Context* c, float dt)
 }
 
 void
-log_overlay_draw (UILayer* self, Context* c, Image* buf)
+log_overlay_draw (Context* c, Image* buf)
 {
-   if (!self->is_visible)
+   if (!c->state->should_show_log)
       return;
 
    box_blur (s_overlay, buf, 1);

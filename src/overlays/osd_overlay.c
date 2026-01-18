@@ -1,37 +1,35 @@
 #include "osd_overlay.h"
 
 #include "../context.h"
-#include "../ui_layer.h"
 
 #include <raylib.h>
 #include <raymath.h>
 
 bool
-osd_overlay_init (UILayer* self, Context* c)
+osd_overlay_init (Context* c)
 {
    return true;
 }
 
 bool
-osd_overlay_deinit (UILayer* self)
+osd_overlay_deinit (void)
 {
-   self->is_visible = false;
    return true;
 }
 
 void
-osd_overlay_update (UILayer* self, Context* c, float dt)
+osd_overlay_update (Context* c, float dt)
 {
-   if (!self->is_visible)
+   if (!c->state->should_show_log)
       return;
 
    // osd_printf (0, 0, "fps: %*.1f", 4, 1. / (double)dt);
 }
 
 void
-osd_overlay_draw (UILayer* self, Context* c, Image* buf)
+osd_overlay_draw (Context* c, Image* buf)
 {
-   if (!self->is_visible)
+   if (!c->state->should_show_log)
       return;
 
    // bool is_inverted = c->state->should_show_log;

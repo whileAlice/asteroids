@@ -8,8 +8,11 @@
 void
 update_state (Context* c)
 {
-   if (c->input->show_log)
+   if (c->input->toggle_log)
+   {
       c->state->should_show_log = !c->state->should_show_log;
+      c->input->toggle_log = false;
+   }
 
    if (c->input->show_osd)
       c->state->should_show_osd = !c->state->should_show_osd;

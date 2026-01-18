@@ -2,6 +2,7 @@
 
 #include "config.h"
 #include "context.h"
+#include "event.h"
 #include "math_utils.h"
 
 #include <raylib.h>
@@ -92,4 +93,12 @@ set_mouse_pos (Context* c, Vector2 pos)
    SetMousePosition (mouse_x, mouse_y);
 }
 
-int set_mouse_y (Context* c, int x);
+bool
+should_close_window (Context* c)
+{
+   if (!WindowShouldClose ())
+      return false;
+
+   app_quit_initiate (c);
+   return true;
+}

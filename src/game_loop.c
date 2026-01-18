@@ -21,12 +21,16 @@ game_init (Context* c)
    if (!init_active_overlays ())
       ERROR_RETURN (false, "init active overlays");
 
-   add_modal (c, MAIN_MENU_MODAL);
-   add_overlay (c, LOG_OVERLAY);
-   add_overlay (c, OSD_OVERLAY);
+   if (!add_modal (c, MAIN_MENU_MODAL))
+      ERROR_RETURN (false, "add modal");
 
-   UILayer* overlay    = get_overlay (OSD_OVERLAY);
-   overlay->is_visible = true;
+   if (!add_overlay (c, LOG_OVERLAY))
+      ERROR_RETURN (false, "log overlay");
+
+   if (!add_overlay (c, OSD_OVERLAY))
+      ERROR_RETURN (false, "osd overlay");
+
+   c->state->should_show_osd = true;
 
    return true;
 }

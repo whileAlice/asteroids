@@ -28,7 +28,7 @@ static SceneID    s_new_scene;
 static Vector2    s_selector_offset = { .x = -10.f, .y = 0.f };
 
 bool
-main_menu_modal_init (UILayer* self, Context* c)
+main_menu_modal_init (Context* c)
 {
    s_should_show_menu = true;
    s_menu_option      = DEMO_OPTION;
@@ -37,13 +37,13 @@ main_menu_modal_init (UILayer* self, Context* c)
 }
 
 bool
-main_menu_modal_deinit (UILayer* self)
+main_menu_modal_deinit (void)
 {
    return true;
 }
 
 void
-main_menu_modal_update (UILayer* self, Context* c, float dt)
+main_menu_modal_update (Context* c, float dt)
 {
    if (s_should_show_menu)
    {
@@ -69,7 +69,7 @@ main_menu_modal_update (UILayer* self, Context* c, float dt)
 }
 
 void
-main_menu_modal_draw (UILayer* self, Context* c, Image* buf)
+main_menu_modal_draw (Context* c, Image* buf)
 {
    if (s_should_show_menu)
    {

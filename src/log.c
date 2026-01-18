@@ -92,6 +92,7 @@ vlog_to_file (FILE* output, LogLevel log_level, const char* fmt, va_list args)
       case WARNING_LOG_LEVEL:
          prefix_color = TERM_YELLOW;
          prefix       = WARNING_PREFIX;
+         break;
       case ERROR_LOG_LEVEL:
          prefix_color = TERM_RED;
          prefix       = ERROR_PREFIX;

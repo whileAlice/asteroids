@@ -78,7 +78,7 @@ main (void)
 
       while (!e->should_deinit_game)
       {
-         while (!e->has_event)
+         while (!e->has_event && !should_close_window (c))
          {
             if (IsWindowResized ())
                set_buffer_scale_and_texture_origin (c);

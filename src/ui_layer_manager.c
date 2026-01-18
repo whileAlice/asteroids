@@ -12,8 +12,6 @@
 
 static UILayer s_modals[] = {
   [MAIN_MENU_MODAL] = {
-    .name = "main menu modal",
-
     .init   = main_menu_modal_init,
     .deinit = main_menu_modal_deinit,
     .update = main_menu_modal_update,
@@ -22,21 +20,26 @@ static UILayer s_modals[] = {
 };
 static UILayer s_overlays[] = {
   [LOG_OVERLAY] = {
-    .name = "log overlay",
-
     .init   = log_overlay_init,
     .deinit = log_overlay_deinit,
     .update = log_overlay_update,
     .draw   = log_overlay_draw,
   },
   [OSD_OVERLAY] = {
-    .name = "osd overlay",
-
     .init   = osd_overlay_init,
     .deinit = osd_overlay_deinit,
     .update = osd_overlay_update,
     .draw   = osd_overlay_draw,
   }
+};
+
+static const char* s_modal_names[MODAL_COUNT] = {
+   [MAIN_MENU_MODAL] = "main menu modal",
+};
+
+static const char* s_overlay_names[OVERLAY_COUNT] = {
+   [LOG_OVERLAY] = "log overlay",
+   [OSD_OVERLAY] = "osd overlay",
 };
 
 static ActiveUILayers s_active_modals;
@@ -80,7 +83,7 @@ deinit_active_ui_layers (ActiveUILayers* active_ui_layers)
    for (size_t i = 0; i < active_ui_layers->size; ++i)
    {
       UILayer* layer = active_ui_layers->array[i];
-      if (!layer->deinit (layer))
+      if (!layer->deinit ())
          ERROR_RETURN (false, "deinit");
    }
 
@@ -102,7 +105,7 @@ deinit_active_overlays (void)
    return deinit_active_ui_layers (&s_active_overlays);
 }
 
-void
+bool
 add_active_ui_layer (Context* c, ActiveUILayers* active_ui_layers,
                      UILayer* ui_layer)
 {
@@ -111,52 +114,43 @@ add_active_ui_layer (Context* c, ActiveUILayers* active_ui_layers,
 
    // TODO: for larger arrays a map would be better
    for (size_t i = 0; i < active_ui_layers->size; ++i)
-   {
-      if (ui_layer == active_ui_layers->array[i])
-      {
-         // TODO: implement enum -> string conversion
-         log_warning ("UI layer '%s' is already added at position %d",
-                      ui_layer->name, (int)i);
-
-         return;
-      }
-   }
+      if (active_ui_layers->array[i] == ui_layer)
+         WARNING_RETURN (true, "UI layer '%s' is already added at position %d",
+                         get_ui_layer_name (ui_layer), (int)i);
 
    active_ui_layers->array[active_ui_layers->size] = ui_layer;
    active_ui_layers->size++;
 
-   ui_layer->init (ui_layer, c);
+   return ui_layer->init (c);
 }
 
-void
+bool
 add_modal (Context* c, ModalID modal_id)
 {
    assert (modal_id >= 0);
    assert (modal_id < MODAL_COUNT);
 
-   add_active_ui_layer (c, &s_active_modals, &s_modals[modal_id]);
+   return add_active_ui_layer (c, &s_active_modals, &s_modals[modal_id]);
 }
 
-void
+bool
 add_overlay (Context* c, OverlayID overlay_id)
 {
    assert (overlay_id >= 0);
    assert (overlay_id < OVERLAY_COUNT);
 
-   add_active_ui_layer (c, &s_active_overlays, &s_overlays[overlay_id]);
+   return add_active_ui_layer (c, &s_active_overlays, &s_overlays[overlay_id]);
 }
 
-void
+bool
 remove_active_ui_layer (ActiveUILayers* active_ui_layers, UILayer* ui_layer)
 {
 
    if (active_ui_layers->size == 0)
-   {
-      log_warning ("trying to remove UI layer '%s', "
-                   "but there are no active UI layers to remove\n",
-                   ui_layer->name);
-      return;
-   }
+      WARNING_RETURN (true,
+                      "trying to remove UI layer '%s', "
+                      "but there are no active UI layers to remove",
+                      get_ui_layer_name (ui_layer));
 
    int found_at = -1;
 
@@ -167,44 +161,42 @@ remove_active_ui_layer (ActiveUILayers* active_ui_layers, UILayer* ui_layer)
       if (layer == ui_layer)
       {
          found_at = (int)i;
-         layer->deinit (layer);
+
+         if (!layer->deinit ())
+            ERROR_RETURN (false, "deinit");
 
          break;
       }
    }
 
    if (found_at < 0)
-   {
-      log_warning ("UI layer '%s' not found in active layers", ui_layer->name);
-
-      return;
-   }
+      WARNING_RETURN (true, "UI layer '%s' not found in active layers",
+                      get_ui_layer_name (ui_layer));
 
    for (size_t i = (size_t)found_at; i < active_ui_layers->size - 1; ++i)
-   {
       active_ui_layers[i] = active_ui_layers[i + 1];
-   }
 
    active_ui_layers->size--;
+
+   return true;
 }
 
-void
+bool
 remove_modal (ModalID modal_id)
 {
    assert (modal_id >= 0);
    assert (modal_id < MODAL_COUNT);
 
-   remove_active_ui_layer (&s_active_modals, (UILayer*)&s_modals[modal_id]);
+   return remove_active_ui_layer (&s_active_modals, &s_modals[modal_id]);
 }
 
-void
+bool
 remove_overlay (OverlayID overlay_id)
 {
    assert (overlay_id >= 0);
    assert (overlay_id < OVERLAY_COUNT);
 
-   remove_active_ui_layer (&s_active_overlays,
-                           (UILayer*)&s_overlays[overlay_id]);
+   return remove_active_ui_layer (&s_active_overlays, &s_overlays[overlay_id]);
 }
 
 void
@@ -215,7 +207,7 @@ update_active_ui_layers (Context* c, ActiveUILayers* active_ui_layers, float dt)
    for (size_t i = 0; i < active_ui_layers->size; ++i)
    {
       UILayer* layer = active_ui_layers->array[i];
-      layer->update (layer, c, dt);
+      layer->update (c, dt);
    }
 }
 
@@ -239,7 +231,7 @@ draw_active_ui_layers (Context* c, ActiveUILayers* active_ui_layers, Image* buf)
    for (size_t i = 0; i < active_ui_layers->size; ++i)
    {
       UILayer* layer = active_ui_layers->array[i];
-      layer->draw (layer, c, buf);
+      layer->draw (c, buf);
    }
 }
 
@@ -255,11 +247,16 @@ draw_active_overlays (Context* c, Image* buf)
    draw_active_ui_layers (c, &s_active_overlays, buf);
 }
 
-UILayer*
-get_overlay (OverlayID overlay_id)
+const char*
+get_ui_layer_name (UILayer* ui_layer)
 {
-   assert (overlay_id >= 0);
-   assert (overlay_id < OVERLAY_COUNT);
+   for (size_t i = 0; i < MODAL_COUNT; ++i)
+      if (s_modals[i].init == ui_layer->init)
+         return s_modal_names[i];
 
-   return &s_overlays[overlay_id];
+   for (size_t i = 0; i < OVERLAY_COUNT; ++i)
+      if (s_overlays[i].init == ui_layer->init)
+         return s_overlay_names[i];
+
+   return "unknown UI layer";
 }
