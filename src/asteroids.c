@@ -46,8 +46,8 @@ main (void)
    log_info ("Initializing game...");
 
    log_debug ("Syncing with the standard stream handler thread...");
-   SYNC_THREAD (&l->mutex, &l->cond, l->thread_ready_count,
-                LOG_THREAD_COUNT, l->should_abort_init, end);
+   SYNC_TWO_THREADS (&l->mutex, &l->cond, l->thread_ready_count,
+                     l->should_abort_init, end);
    log_debug ("Ready!");
 
    SetTraceLogCallback (&raylib_tracelog_callback);

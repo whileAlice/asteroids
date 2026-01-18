@@ -146,10 +146,9 @@ std_stream_handler (void* arg)
 #endif
    }
 
-   // wait for main
    LOG_DEBUG_DUP ("Syncing with the main thread...");
-   SYNC_THREAD (&l->mutex, &l->cond, l->thread_ready_count, LOG_THREAD_COUNT,
-                l->should_abort_init, restore_streams);
+   SYNC_TWO_THREADS (&l->mutex, &l->cond, l->thread_ready_count,
+                     l->should_abort_init, restore_streams);
 
    LOG_DEBUG_DUP ("Ready!");
 
