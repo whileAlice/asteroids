@@ -1,6 +1,7 @@
 #include "font.h"
 
 #include "draw_utils.h"
+#include "error.h"
 #include "pam.h"
 #include "token.h"
 
@@ -26,39 +27,34 @@ static int  s_glyph_margin;
 static int  s_glyph_spacing;
 static int  s_glyph_count;
 
-static Image s_glyph_sheet;
-static Image s_glyph_sheet_inverted;
+static Image* s_glyph_sheet;
+static Image* s_glyph_sheet_inverted;
 
 static int s_line_count = 0;
 
-void
+bool
 load_fixed_fonts (FixedFont* fixed_font, FixedFont* fixed_font_inverted,
                   const char* font_def)
 {
    FILE* fp = fopen (font_def, "r");
    if (fp == NULL)
-   {
-      printf ("ERROR: couldn't open file: %s\n", font_def);
-      exit (1);
-   }
+      ERRNO_RETURN (false, "couldn't open file '%s'", font_def);
 
    char buf[32];
    s_line_count++;
    const char* header = read_next_line (fp, buf, font_def, &s_line_count);
+   if (header == NULL)
+      ERROR_RETURN (false, "read next line");
+
    if (strcmp (header, FONTDEF) != 0)
-   {
-      printf ("ERROR: wrong header in file %s; expected: \"%s\", got: \"%s\"\n",
-              font_def, FONTDEF, header);
-      exit (1);
-   }
+      ERROR_RETURN (false,
+                    "wrong header in file '%s'; expected: \"%s\", got: \"%s\"",
+                    font_def, FONTDEF, header);
 
    read_all_font_tokens (fp, buf, font_def);
 
    if (fclose (fp) == EOF)
-   {
-      printf ("ERROR: could not close file %s\n", font_def);
-      exit (1);
-   }
+      ERRNO_RETURN (false, "couldn't close file '%s'", font_def);
 
    char font_path[64] = "assets/";
    strcat (font_path, s_font_filename);
@@ -71,7 +67,7 @@ load_fixed_fonts (FixedFont* fixed_font, FixedFont* fixed_font_inverted,
                              .right  = s_glyph_margin };
 
    *fixed_font = (FixedFont){
-      .glyph_sheet   = &s_glyph_sheet,
+      .glyph_sheet   = s_glyph_sheet,
       .glyph_margins = glyph_margins,
       .glyph_spacing = s_glyph_spacing,
       .glyph_width   = s_glyph_width,
@@ -79,10 +75,10 @@ load_fixed_fonts (FixedFont* fixed_font, FixedFont* fixed_font_inverted,
       .glyph_count   = s_glyph_count,
    };
 
-   s_glyph_sheet_inverted = clone_image (&s_glyph_sheet);
-   Color* inverted_pixels = s_glyph_sheet_inverted.data;
+   s_glyph_sheet_inverted = clone_image (s_glyph_sheet);
+   Color* inverted_pixels = s_glyph_sheet_inverted->data;
 
-   for (int i = 0; i < s_glyph_sheet.width * s_glyph_sheet.height; ++i)
+   for (int i = 0; i < s_glyph_sheet->width * s_glyph_sheet->height; ++i)
    {
       inverted_pixels[i].r = 255 - inverted_pixels[i].r;
       inverted_pixels[i].g = 255 - inverted_pixels[i].g;
@@ -90,23 +86,27 @@ load_fixed_fonts (FixedFont* fixed_font, FixedFont* fixed_font_inverted,
    }
 
    *fixed_font_inverted = (FixedFont){
-      .glyph_sheet   = &s_glyph_sheet_inverted,
+      .glyph_sheet   = s_glyph_sheet_inverted,
       .glyph_margins = glyph_margins,
       .glyph_spacing = s_glyph_spacing,
       .glyph_width   = s_glyph_width,
       .glyph_height  = s_glyph_height,
       .glyph_count   = s_glyph_count,
    };
+
+   return true;
 }
 
 void
-unload_fixed_font_images ()
+unload_fixed_font_images (void)
 {
-   UnloadImage (s_glyph_sheet_inverted);
-   UnloadImage (s_glyph_sheet);
+   UnloadImage (*s_glyph_sheet_inverted);
+   UnloadImage (*s_glyph_sheet);
+   free (s_glyph_sheet_inverted);
+   free (s_glyph_sheet);
 }
 
-void
+bool
 read_all_font_tokens (FILE* fp, char* buf, const char* filename)
 {
    char id[16];
@@ -117,72 +117,75 @@ read_all_font_tokens (FILE* fp, char* buf, const char* filename)
    {
       if (ch == COMMENT)
       {
-         read_next_line (fp, buf, filename, &s_line_count);
+         if (read_next_line (fp, buf, filename, &s_line_count) == NULL)
+            ERROR_RETURN (false, "read next line");
       }
       else
       {
-         ungetc (ch, fp);
+         if (ungetc (ch, fp) == EOF)
+            ERROR_RETURN (false, "ungetc");
       }
 
       s_line_count++;
       long prev_pos = ftell (fp);
-      int  res      = fscanf (fp, "%s %d", id, &val);
+      if (prev_pos == -1)
+         ERRNO_RETURN (false, "ftell");
+
+      int res = fscanf (fp, "%s %d", id, &val);
+      if (res == EOF && ferror (fp) != 0)
+         ERRNO_RETURN (false, "string digit fscanf");
+
       switch (res)
       {
-      case 2:
-         if (strcmp (id, GLYPH_WIDTH) == 0)
+         case 2:
          {
-            s_glyph_width = val;
-         }
-         else if (strcmp (id, GLYPH_HEIGHT) == 0)
-         {
-            s_glyph_height = val;
-         }
-         else if (strcmp (id, GLYPH_MARGIN) == 0)
-         {
-            s_glyph_margin = val;
-         }
-         else if (strcmp (id, GLYPH_SPACING) == 0)
-         {
-            s_glyph_spacing = val;
-         }
-         else if (strcmp (id, GLYPH_COUNT) == 0)
-         {
-            s_glyph_count = val;
-         }
-         else if (strcmp (id, FILENAME) == 0)
-         {
-            // TODO: this might need some rethinking
-            // since filenames can begin with numbers
-            goto filename;
-         }
-         else
-         {
-            printf (
-               "ERROR on line %d in %s: %s is not a valid token identifier\n",
-               s_line_count, filename, id);
-            exit (1);
-         }
+            if (strcmp (id, GLYPH_WIDTH) == 0)
+               s_glyph_width = val;
+            else if (strcmp (id, GLYPH_HEIGHT) == 0)
+               s_glyph_height = val;
+            else if (strcmp (id, GLYPH_MARGIN) == 0)
+               s_glyph_margin = val;
+            else if (strcmp (id, GLYPH_SPACING) == 0)
+               s_glyph_spacing = val;
+            else if (strcmp (id, GLYPH_COUNT) == 0)
+               s_glyph_count = val;
+            else if (strcmp (id, FILENAME) == 0)
+               // TODO: this might need some rethinking
+               // since filenames can begin with numbers
+               goto filename;
+            else
+               ERROR_RETURN (
+                  false,
+                  "line %d in file '%s': %s is not a valid token identifier",
+                  s_line_count, filename, id);
 
-         continue;
-      case 1:
-         if (strcmp (id, FILENAME) == 0)
-         {
-         filename:
-            s_line_count--;
-            fseek (fp, prev_pos, SEEK_SET);
-            fscanf (fp, "%s %s", id, s_font_filename);
+            continue;
          }
-         else
+         case 1:
          {
-            printf (
-               "ERROR on line %d in %s: %s is not a valid token identifier\n",
-               s_line_count, filename, id);
-            exit (1);
-         }
+            if (strcmp (id, FILENAME) == 0)
+            {
+            filename:
+               s_line_count--;
+               if (fseek (fp, prev_pos, SEEK_SET) == -1)
+                  ERRNO_RETURN (false, "fseek");
 
-         continue;
-      default: return;
+               if (fscanf (fp, "%s %s", id, s_font_filename) == EOF &&
+                   ferror (fp) != 0)
+                  ERRNO_RETURN (false, "string string fscanf");
+            }
+            else
+               ERROR_RETURN (
+                  false,
+                  "line %d in file '%s': %s is not a valid token identifier",
+                  s_line_count, filename, id);
+
+            continue;
+         }
+         default: return true;
       }
    }
+
+   assert (0 == "Unreachable");
+   return false;
 }

@@ -6,15 +6,17 @@
 #include <raylib.h>
 #include <raymath.h>
 
-void
+bool
 osd_overlay_init (UILayer* self, Context* c)
 {
+   return true;
 }
 
-void
+bool
 osd_overlay_deinit (UILayer* self)
 {
    self->is_visible = false;
+   return true;
 }
 
 void
@@ -32,6 +34,6 @@ osd_overlay_draw (UILayer* self, Context* c, Image* buf)
    if (!self->is_visible)
       return;
 
-   bool is_inverted = c->state->should_show_log;
+   // bool is_inverted = c->state->should_show_log;
    // draw_osd (c, buf, is_inverted);
 }

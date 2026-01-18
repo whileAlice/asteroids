@@ -1,5 +1,6 @@
 #include "draw_utils.h"
 
+#include "error.h"
 #include "font.h"
 #include "math_utils.h"
 #include "raylib.h"
@@ -56,18 +57,18 @@ blend_rgba_pixel_on_rgb_buffer (Image* buf, int x, int y, Color pixel,
 
    switch (pixel.a)
    {
-   case 0: return;
-   case 255:
-      pixels_buf[index].r = pixel.r;
-      pixels_buf[index].g = pixel.g;
-      pixels_buf[index].b = pixel.b;
-      return;
-   default: blend_rgba_pixel_on_rgb_pixel (&pixels_buf[index], &pixel);
+      case 0: return;
+      case 255:
+         pixels_buf[index].r = pixel.r;
+         pixels_buf[index].g = pixel.g;
+         pixels_buf[index].b = pixel.b;
+         return;
+      default: blend_rgba_pixel_on_rgb_pixel (&pixels_buf[index], &pixel);
    }
 }
 
 void
-draw_rgb_image_i (Image* buf, Image* img, int origin_x, int origin_y)
+draw_rgb_image_i (Image* buf, const Image* img, int origin_x, int origin_y)
 {
    assert (img->format == PIXELFORMAT_UNCOMPRESSED_R8G8B8);
 
@@ -99,7 +100,7 @@ draw_rgb_image_i (Image* buf, Image* img, int origin_x, int origin_y)
 }
 
 void
-draw_rgba_image_i (Image* buf, Image* img, int origin_x, int origin_y)
+draw_rgba_image_i (Image* buf, const Image* img, int origin_x, int origin_y)
 {
    assert (img->format == PIXELFORMAT_UNCOMPRESSED_R8G8B8A8);
 
@@ -132,19 +133,19 @@ draw_rgba_image_i (Image* buf, Image* img, int origin_x, int origin_y)
 }
 
 void
-draw_rgb_image (Image* buf, Image* img, Vector2 origin)
+draw_rgb_image (Image* buf, const Image* img, Vector2 origin)
 {
    draw_rgb_image_i (buf, img, (int)roundf (origin.x), (int)roundf (origin.y));
 }
 
 void
-draw_rgba_image (Image* buf, Image* img, Vector2 origin)
+draw_rgba_image (Image* buf, const Image* img, Vector2 origin)
 {
    draw_rgba_image_i (buf, img, (int)roundf (origin.x), (int)roundf (origin.y));
 }
 
 void
-draw_glyph (Image* buf, FixedFont* font, int origin_x, int origin_y,
+draw_glyph (Image* buf, const FixedFont* font, int origin_x, int origin_y,
             size_t glyph_index)
 {
    const int total_glyph_width =
@@ -198,7 +199,7 @@ draw_glyph (Image* buf, FixedFont* font, int origin_x, int origin_y,
 }
 
 void
-draw_text_i (Image* buf, FixedFont* font, int origin_x, int origin_y,
+draw_text_i (Image* buf, const FixedFont* font, int origin_x, int origin_y,
              const char* text)
 {
    assert (font->glyph_count > 0);
@@ -216,11 +217,11 @@ draw_text_i (Image* buf, FixedFont* font, int origin_x, int origin_y,
 
       switch (text[i])
       {
-      case ' ': current_origin_x += stride_x; continue;
-      case '\n':
-         current_origin_x  = origin_x;
-         current_origin_y += stride_y;
-         continue;
+         case ' ': current_origin_x += stride_x; continue;
+         case '\n':
+            current_origin_x  = origin_x;
+            current_origin_y += stride_y;
+            continue;
       }
 
       const int glyph_index = text[i] - 33;
@@ -237,7 +238,7 @@ draw_text_i (Image* buf, FixedFont* font, int origin_x, int origin_y,
 }
 
 void
-draw_text (Image* buf, FixedFont* font, Vector2 origin, const char* text)
+draw_text (Image* buf, const FixedFont* font, Vector2 origin, const char* text)
 {
    draw_text_i (buf, font, (int)roundf (origin.x), (int)roundf (origin.y),
                 text);
@@ -245,7 +246,8 @@ draw_text (Image* buf, FixedFont* font, Vector2 origin, const char* text)
 
 // TODO: this could be prolly integrated somehow with osd_printf
 void
-draw_textf (Image* buf, FixedFont* font, Vector2 origin, const char* fmt, ...)
+draw_textf (Image* buf, const FixedFont* font, Vector2 origin, const char* fmt,
+            ...)
 {
    char text_buf[1024];
 
@@ -259,7 +261,8 @@ draw_textf (Image* buf, FixedFont* font, Vector2 origin, const char* fmt, ...)
 }
 
 Vector2
-draw_text_center (Image* buf, FixedFont* font, Vector2 origin, const char* text)
+draw_text_center (Image* buf, const FixedFont* font, Vector2 origin,
+                  const char* text)
 {
    int     text_width = get_text_width (font, text);
    Vector2 origin_centered =
@@ -271,7 +274,7 @@ draw_text_center (Image* buf, FixedFont* font, Vector2 origin, const char* text)
 }
 
 int
-get_text_width (FixedFont* font, const char* text)
+get_text_width (const FixedFont* font, const char* text)
 {
    size_t text_len = strlen (text);
    if (text_len == 0)
@@ -501,7 +504,7 @@ draw_quad_wi (Image* buf, int a_x, int a_y, int b_x, int b_y, int c_x, int c_y,
 }
 
 void
-box_blur (Image* dst, Image* src, size_t iterations)
+box_blur (Image* dst, const Image* src, size_t iterations)
 {
    assert (iterations >= 1);
 
@@ -571,7 +574,7 @@ box_blur (Image* dst, Image* src, size_t iterations)
 }
 
 void
-brighten_image_by_amount (Image* dst, Image* src, int amount)
+brighten_image_by_amount (Image* dst, const Image* src, int amount)
 {
    assert (dst->width == src->width && dst->height == src->height);
    assert (dst->format == src->format);
@@ -605,7 +608,7 @@ brighten_image_by_amount (Image* dst, Image* src, int amount)
 
 // TODO: both brightens share almost everything, it can be reused
 void
-brighten_image_by_percentage (Image* dst, Image* src, int percentage)
+brighten_image_by_percentage (Image* dst, const Image* src, int percentage)
 {
    assert (dst->width == src->width && dst->height == src->height);
    assert (dst->format == src->format);
@@ -653,9 +656,13 @@ clear_rgb_image (Image* img, Color3 pixel)
       *addr++ = pixel;
 }
 
-Image
-clone_image (Image* src)
+Image*
+clone_image (const Image* src)
 {
+   Image* image = malloc (sizeof (Image));
+   if (image == NULL)
+      ERRNO_RETURN (NULL, "malloc");
+
    size_t type_size = src->format == PIXELFORMAT_UNCOMPRESSED_R8G8B8
                        ? sizeof (Color3)
                        : sizeof (Color);
@@ -664,17 +671,19 @@ clone_image (Image* src)
 
    memcpy (pixels, src->data, size);
 
-   return (Image){
+   *image = (Image){
       .data    = pixels,
       .width   = src->width,
       .height  = src->height,
       .mipmaps = src->mipmaps,
       .format  = src->format,
    };
+
+   return image;
 }
 
 int
-index_from_xy (Image* img, int x, int y)
+index_from_xy (const Image* img, int x, int y)
 {
    const int index     = img->width * y + x;
    const int max_index = img->width * img->height - 1;
@@ -684,7 +693,7 @@ index_from_xy (Image* img, int x, int y)
 }
 
 size_t
-index_from_xy_unsafe (Image* img, int x, int y)
+index_from_xy_unsafe (const Image* img, int x, int y)
 {
    return img->width * y + x;
 }

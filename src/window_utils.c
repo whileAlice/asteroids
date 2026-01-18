@@ -7,7 +7,7 @@
 #include <raylib.h>
 
 int
-get_integer_scale ()
+get_integer_scale (void)
 {
    const int scale_x = GetScreenWidth () / PIXEL_BUFFER_WIDTH;
    const int scale_y = GetScreenHeight () / PIXEL_BUFFER_HEIGHT;
@@ -16,13 +16,13 @@ get_integer_scale ()
 }
 
 int
-get_texture_origin_x ()
+get_texture_origin_x (void)
 {
    return GetScreenWidth () % PIXEL_BUFFER_WIDTH / 2;
 }
 
 int
-get_texture_origin_y ()
+get_texture_origin_y (void)
 {
    return GetScreenHeight () % PIXEL_BUFFER_HEIGHT / 2;
 }

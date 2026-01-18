@@ -5,14 +5,16 @@
 
 #include <raylib.h>
 
-void
+bool
 main_menu_bg_scene_init (Context* c)
 {
+   return true;
 }
 
-void
+bool
 main_menu_bg_scene_deinit ()
 {
+   return true;
 }
 
 void

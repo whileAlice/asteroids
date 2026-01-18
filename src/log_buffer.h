@@ -26,4 +26,4 @@ LogView    log_buffer_view         (LogBuffer* lb);
 void       log_buffer_print        (LogBuffer* lb);
 char*      log_buffer_copy         (LogBuffer* lb);
 void       log_buffer_clear        (LogBuffer* lb);
-void       log_buffer_free       (LogBuffer* lb);
+void       log_buffer_free         (LogBuffer* lb);

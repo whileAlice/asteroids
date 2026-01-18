@@ -21,10 +21,6 @@
    log_to_file (stream_contexts[STDERR_EVENT].stream_file_copy, \
                 DEBUG_LOG_LEVEL, fmt, ##__VA_ARGS__)
 
-#define LOG_ERROR_DUP(fmt, ...)                                 \
-   log_to_file (stream_contexts[STDERR_EVENT].stream_file_copy, \
-                ERROR_LOG_LEVEL, fmt, ##__VA_ARGS__)
-
 #define BUFFER_SIZE 4096
 
 void*
@@ -69,19 +65,19 @@ std_streamer_thread (void* arg)
    {
       err = pipe (stream_contexts[i].pipe);
       if (err == -1)
-         ERROR_GOTO (exit, "%s pipe", stream_contexts[i].name);
+         ERRNO_GOTO (exit, "%s pipe", stream_contexts[i].name);
 
       for (size_t j = 0; j <= WRITE_END; ++j)
       {
          int flags = fcntl (stream_contexts[i].pipe[j], F_GETFL);
          if (flags == -1)
-            ERROR_GOTO (exit, "%s pipe[%zu] F_GETFL", stream_contexts[i].name,
+            ERRNO_GOTO (exit, "%s pipe[%zu] F_GETFL", stream_contexts[i].name,
                         i);
 
          err = fcntl (stream_contexts[i].pipe[j], F_SETFL, flags | O_NONBLOCK);
          if (err == -1)
          {
-            ERROR_GOTO (exit, "%s pipe[%zu] O_NONBLOCK",
+            ERRNO_GOTO (exit, "%s pipe[%zu] O_NONBLOCK",
                         stream_contexts[i].name, j);
          }
       }
@@ -93,7 +89,7 @@ std_streamer_thread (void* arg)
       stream_contexts[i].stream_fd_copy =
          dup (stream_contexts[i].stream_fd_original);
       if (stream_contexts[i].stream_fd_copy == -1)
-         ERROR_GOTO (exit, "%s stream fd copy dup", stream_contexts[i].name);
+         ERRNO_GOTO (exit, "%s stream fd copy dup", stream_contexts[i].name);
    }
 
    // open backups for writing
@@ -102,7 +98,7 @@ std_streamer_thread (void* arg)
       stream_contexts[i].stream_file_copy =
          fdopen (stream_contexts[i].stream_fd_copy, "w");
       if (stream_contexts[i].stream_file_copy == NULL)
-         ERROR_GOTO (exit, "%s stream file copy fdopen",
+         ERRNO_GOTO (exit, "%s stream file copy fdopen",
                      stream_contexts[i].name);
    }
 
@@ -112,17 +108,17 @@ std_streamer_thread (void* arg)
       err = dup2 (stream_contexts[i].pipe[WRITE_END],
                   stream_contexts[i].stream_fd_original);
       if (err == -1)
-         ERROR_GOTO (restore_streams, "%s pipe write end dup2");
+         ERRNO_GOTO (restore_streams, "%s pipe write end dup2");
    }
 
 #ifdef __APPLE__
    kq = kqueue ();
    if (kq == -1)
-      ERROR_GOTO (restore_streams, "kqueue");
+      ERRNO_GOTO (restore_streams, "kqueue");
 #else
    epoll_fd = epoll_create1 (0);
    if (epoll_fd == -1)
-      ERROR_GOTO (restore_streams, "epoll create");
+      ERRNO_GOTO (restore_streams, "epoll create");
 #endif
 
    // prepare all pipe read ends for polling
@@ -136,7 +132,7 @@ std_streamer_thread (void* arg)
 
       err = kevent64 (kq, &event, 1, NULL, 0, 0, NULL);
       if (err == -1)
-         ERROR_GOTO (restore_streams, "kevent64 add %s",
+         ERRNO_GOTO (restore_streams, "kevent64 add %s",
                      stream_contexts[i].name);
 #else
       EpollEvent event = { .events = EPOLLIN, .data.ptr = &stream_contexts[i] };
@@ -144,7 +140,7 @@ std_streamer_thread (void* arg)
       err = epoll_ctl (epoll_fd, EPOLL_CTL_ADD,
                        stream_contexts[i].pipe[READ_END], &event);
       if (err == -1)
-         ERROR_GOTO (restore_streams, "epoll ctl add %s",
+         ERRNO_GOTO (restore_streams, "epoll ctl add %s",
                      stream_contexts[i].name);
 #endif
    }
@@ -166,11 +162,11 @@ std_streamer_thread (void* arg)
 #ifdef __APPLE__
       ready_count = kevent64 (kq, NULL, 0, ready_events, EVENT_COUNT, 0, NULL);
       if (ready_count == -1)
-         ERROR_GOTO (restore_streams, "kevent64 wait");
+         ERRNO_GOTO (restore_streams, "kevent64 wait");
 #else
       ready_count = epoll_wait (epoll_fd, ready_events, EVENT_COUNT, -1);
       if (ready_count == -1)
-         ERROR_GOTO (restore_streams, "epoll wait");
+         ERRNO_GOTO (restore_streams, "epoll wait");
 #endif
 
       for (int i = 0; i < ready_count; ++i)
@@ -198,15 +194,13 @@ std_streamer_thread (void* arg)
          length = read (c->pipe[READ_END], buf, sizeof (buf) - 1);
          switch (length)
          {
-         case -1:
-            if (errno == EAGAIN)
-            {
-               errno = 0;
-               continue;
-            }
-            ERROR_GOTO (restore_streams, "%s read", c->name);
-         case 0 : ERROR_GOTO (restore_streams, "%s EOF", c->name);
-         default: buf[length] = '\0';
+            case -1:
+               if (errno == EAGAIN)
+                  continue;
+
+               ERRNO_GOTO (restore_streams, "%s read", c->name);
+            case 0 : ERROR_GOTO (restore_streams, "%s EOF", c->name);
+            default: buf[length] = '\0';
          }
 
          // write forwarded std streams to buffer
@@ -236,7 +230,9 @@ restore_streams:
                   stream_contexts[i].stream_fd_original);
       if (err == -1)
       {
-         LOG_ERROR_DUP ("%s fd copy dup2", stream_contexts[i].name);
+         log_to_file (stream_contexts[STDERR_EVENT].stream_file_copy,
+                      ERROR_LOG_LEVEL, "%s fd copy dup2 (" ERRNO_FORMAT ")",
+                      stream_contexts[i].name, errno, strerror (errno));
          goto exit;
       }
    }
@@ -248,15 +244,13 @@ restore_streams:
       length = read (stream_contexts[i].pipe[READ_END], buf, sizeof (buf) - 1);
       switch (length)
       {
-      case -1:
-         if (errno == EAGAIN)
-         {
-            errno = 0;
-            continue;
-         }
-         ERROR_GOTO (exit, "%s read", stream_contexts[i].name);
-      case 0 : ERROR_GOTO (exit, "%s EOF", stream_contexts[i].name);
-      default: buf[length] = '\0';
+         case -1:
+            if (errno == EAGAIN)
+               continue;
+
+            ERRNO_GOTO (exit, "%s read", stream_contexts[i].name);
+         case 0 : ERROR_GOTO (exit, "%s EOF", stream_contexts[i].name);
+         default: buf[length] = '\0';
       }
 
       IN_LOCK(&l->mutex,
@@ -270,7 +264,7 @@ restore_streams:
    {
       err = close (stream_contexts[i].stream_fd_copy);
       if (err == -1)
-         ERROR_GOTO (exit, "%s stream fd copy close", stream_contexts[i].name);
+         ERRNO_GOTO (exit, "%s stream fd copy close", stream_contexts[i].name);
    }
 
 exit:

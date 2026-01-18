@@ -9,19 +9,19 @@ context_create (void)
 {
    Context* c = malloc (sizeof (Context));
    if (c == NULL)
-      ERROR_RETURN (NULL, "malloc");
+      ERRNO_RETURN (NULL, "malloc");
 
    c->app = calloc (1, sizeof (App));
    if (c->app == NULL)
-      ERROR_RETURN (NULL, "app calloc");
+      ERRNO_RETURN (NULL, "app calloc");
 
    c->fonts = calloc (1, sizeof (Fonts));
    if (c->fonts == NULL)
-      ERROR_RETURN (NULL, "fonts calloc");
+      ERRNO_RETURN (NULL, "fonts calloc");
 
    c->input = calloc (1, sizeof (Input));
    if (c->input == NULL)
-      ERROR_RETURN (NULL, "input calloc");
+      ERRNO_RETURN (NULL, "input calloc");
 
    c->log = log_create ();
    if (c->log == NULL)
@@ -29,11 +29,11 @@ context_create (void)
 
    c->pixel_buffer = calloc (1, sizeof (PixelBuffer));
    if (c->pixel_buffer == NULL)
-      ERROR_RETURN (NULL, "pixel buffer calloc");
+      ERRNO_RETURN (NULL, "pixel buffer calloc");
 
    c->state = calloc (1, sizeof (State));
    if (c->state == NULL)
-      ERROR_RETURN (NULL, "state calloc");
+      ERRNO_RETURN (NULL, "state calloc");
 
    return c;
 }

@@ -24,9 +24,9 @@ window_loop (Context* c)
 
       float dt = GetFrameTime ();
       game_update (c, dt);
-      game_draw (c, &c->pixel_buffer->image);
+      game_draw (c, c->pixel_buffer->image);
 
-      UpdateTexture (c->pixel_buffer->texture, c->pixel_buffer->image.data);
+      UpdateTexture (c->pixel_buffer->texture, c->pixel_buffer->image->data);
 
       BeginDrawing ();
 

@@ -24,11 +24,11 @@ sb_create (const char* initial_string)
 
    StringBuilder* sb = malloc (sizeof (StringBuilder));
    if (sb == NULL)
-      ERROR_RETURN (NULL, "sb malloc");
+      ERRNO_RETURN (NULL, "sb malloc");
 
    char* data = malloc (capacity * sizeof (char));
    if (data == NULL)
-      ERROR_RETURN (NULL, "data calloc");
+      ERRNO_RETURN (NULL, "data calloc");
 
    if (initial_string != NULL)
       strcpy (data, initial_string);
@@ -40,6 +40,37 @@ sb_create (const char* initial_string)
       .size     = size,
       .capacity = capacity,
    };
+
+   return sb;
+}
+
+StringBuilder*
+sb_vcreatef (const char* initial_fmt, va_list args)
+{
+   char* str = vstrdupf (initial_fmt, args);
+   if (str == NULL)
+      ERROR_RETURN (NULL, "vstrdupf");
+
+   StringBuilder* sb = sb_create (str);
+   if (sb == NULL)
+      ERROR_RETURN (NULL, "sb create");
+
+   free (str);
+
+   return sb;
+}
+
+StringBuilder*
+sb_createf (const char* initial_fmt, ...)
+{
+   va_list args;
+   va_start (args, initial_fmt);
+
+   StringBuilder* sb = sb_vcreatef (initial_fmt, args);
+   if (sb == NULL)
+      ERROR_RETURN (NULL, "sb vcreatef");
+
+   va_end (args);
 
    return sb;
 }
@@ -69,7 +100,7 @@ sb_append (StringBuilder* sb, const char* string)
 
       sb->data = realloc (sb->data, new_capacity * sizeof (char));
       if (sb->data == NULL)
-         ERROR_RETURN (false, "realloc");
+         ERRNO_RETURN (false, "realloc");
 
       sb->capacity = new_capacity;
    }
@@ -78,6 +109,37 @@ sb_append (StringBuilder* sb, const char* string)
    strcpy (start_ptr, string);
 
    sb->size += len;
+
+   return true;
+}
+
+bool
+sb_vappendf (StringBuilder* sb, const char* fmt, va_list args)
+{
+   char* str = vstrdupf (fmt, args);
+   if (str == NULL)
+      ERROR_RETURN (NULL, "vstrdupf");
+
+   bool success = sb_append (sb, str);
+   if (!success)
+      ERROR_RETURN (false, "sb append");
+
+   free (str);
+
+   return true;
+}
+
+bool
+sb_appendf (StringBuilder* sb, const char* fmt, ...)
+{
+   va_list args;
+   va_start (args, fmt);
+
+   bool success = sb_vappendf (sb, fmt, args);
+   if (!success)
+      ERROR_RETURN (false, "sb vappendf");
+
+   va_end (args);
 
    return true;
 }

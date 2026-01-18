@@ -10,8 +10,8 @@ typedef enum scene_id {
 } SceneID;
 
 typedef struct scene {
-   void (*init) (Context* c);
-   void (*deinit) ();
+   bool (*init) (Context* c);
+   bool (*deinit) (void);
    void (*update) (Context* c, float dt);
    void (*draw) (Context* c, Image* buf);
 } Scene;

@@ -4,6 +4,15 @@
 #include "std_streamer_thread.h"
 
 #include <assert.h>
+#include <errno.h>
+
+#define ERRNO_SET_RETURN(retval, err, fmt, ...)  \
+   do                                            \
+   {                                             \
+      errno = err;                               \
+      ERRNO_RETURN (retval, fmt, ##__VA_ARGS__); \
+   }                                             \
+   while (0)
 
 static pthread_t s_thread_ids[THREAD_COUNT];
 
@@ -12,7 +21,7 @@ static const char* thread_names[THREAD_COUNT] = {
    [STREAMER_THREAD] = "streamer",
 };
 
-int
+bool
 threads_init (Context* c)
 {
    // this assumes threads_init is run by the main thread
@@ -25,40 +34,38 @@ threads_init (Context* c)
 
    int err = pthread_create (&s_thread_ids[STREAMER_THREAD], NULL,
                              std_streamer_thread, (void*)c);
-
-   // TODO: maybe handle this a bit more here
    if (err != 0)
-      ERROR_RETURN (-1, "pthread create");
+      ERRNO_SET_RETURN (false, err, "pthread create");
 
-   return 0;
+   return true;
 }
 
-int
+bool
 threads_deinit (Context* c)
 {
    int err;
 
    err = pthread_join (s_thread_ids[STREAMER_THREAD], NULL);
    if (err != 0)
-      ERROR_RETURN (err, "pthread join");
+      ERRNO_SET_RETURN (false, err, "pthread join");
 
    err = pthread_mutex_destroy (&c->log->mutex);
    if (err != 0)
-      ERROR_RETURN (err, "pthread mutex destroy log");
+      ERRNO_SET_RETURN (false, err, "pthread mutex destroy log");
 
    err = pthread_mutex_destroy (&c->app->mutex);
    if (err != 0)
-      ERROR_RETURN (err, "pthread mutex destroy app");
+      ERRNO_SET_RETURN (false, err, "pthread mutex destroy app");
 
    err = pthread_cond_destroy (&c->log->cond);
    if (err != 0)
-      ERROR_RETURN (err, "pthread cond destroy log");
+      ERRNO_SET_RETURN (false, err, "pthread cond destroy log");
 
    err = pthread_cond_destroy (&c->app->cond);
    if (err != 0)
-      ERROR_RETURN (err, "pthread cond destroy app");
+      ERRNO_SET_RETURN (false, err, "pthread cond destroy app");
 
-   return 0;
+   return true;
 }
 
 ThreadIdx

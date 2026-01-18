@@ -7,9 +7,9 @@
 #include <raylib.h>
 #include <raymath.h>
 
-static Image s_overlay;
+static Image* s_overlay;
 
-void
+bool
 log_overlay_init (UILayer* self, Context* c)
 {
    // log_printf ("loaded fixed font with %d glyphs",
@@ -17,14 +17,21 @@ log_overlay_init (UILayer* self, Context* c)
    // log_printf ("loaded inverted fixed font with %d glyphs",
    //             c->fonts->inverted_fixed_font.glyph_count);
 
-   s_overlay = clone_image (&c->pixel_buffer->image);
+   s_overlay = clone_image (c->pixel_buffer->image);
+   if (s_overlay == NULL)
+      ERROR_RETURN (false, "clone image");
+
+   return true;
 }
 
-void
+bool
 log_overlay_deinit (UILayer* self)
 {
    self->is_visible = false;
-   UnloadImage (s_overlay);
+   UnloadImage (*s_overlay);
+   free (s_overlay);
+
+   return true;
 }
 
 void
@@ -56,8 +63,8 @@ log_overlay_draw (UILayer* self, Context* c, Image* buf)
    if (!self->is_visible)
       return;
 
-   box_blur (&s_overlay, buf, 1);
-   brighten_image_by_percentage (&s_overlay, &s_overlay, 20);
-   draw_rgb_image (buf, &s_overlay, Vector2Zero ());
+   box_blur (s_overlay, buf, 1);
+   brighten_image_by_percentage (s_overlay, s_overlay, 20);
+   draw_rgb_image (buf, s_overlay, Vector2Zero ());
    // draw_log (c, buf, true);
 }

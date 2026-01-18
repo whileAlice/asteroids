@@ -30,7 +30,7 @@ static Scene s_scenes[] = {
 };
 static Scene* s_current_scene;
 
-void
+bool
 set_current_scene (Context* c, SceneID scene_id)
 {
    assert (sizeof (s_scenes) / sizeof (s_scenes[0]) == SCENE_COUNT);
@@ -38,18 +38,20 @@ set_current_scene (Context* c, SceneID scene_id)
    assert (scene_id < SCENE_COUNT);
 
    if (s_current_scene != NULL)
-   {
-      s_current_scene->deinit ();
-   }
+      if (!s_current_scene->deinit ())
+         ERROR_RETURN (false, "deinit");
 
    s_current_scene = &s_scenes[scene_id];
-   s_current_scene->init (c);
+   if (!s_current_scene->init (c))
+      ERROR_RETURN (false, "init");
+
+   return true;
 }
 
-void
-deinit_current_scene ()
+bool
+deinit_current_scene (void)
 {
-   s_current_scene->deinit ();
+   return s_current_scene->deinit ();
 }
 
 void

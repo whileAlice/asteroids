@@ -17,8 +17,8 @@ typedef struct app {
 } App;
 
 typedef struct fonts {
-   const FixedFont fixed_font;
-   const FixedFont inverted_fixed_font;
+   FixedFont fixed_font;
+   FixedFont inverted_fixed_font;
 } Fonts;
 
 typedef struct input {
@@ -39,7 +39,7 @@ typedef struct log {
 } Log;
 
 typedef struct pixel_buffer {
-   Image     image;
+   Image*    image;
    Texture2D texture;
    int       texture_origin_x;
    int       texture_origin_y;

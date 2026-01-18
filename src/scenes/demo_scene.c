@@ -7,22 +7,29 @@
 #include <raylib.h>
 #include <raymath.h>
 
-static Image   s_hornet_image;
+static Image*  s_hornet_image;
 static Vector2 s_pos, s_vel;
 
-void
+bool
 demo_scene_init (Context* c)
 {
    s_pos = (Vector2){ .x = 0.f, .y = 0.f };
    s_vel = (Vector2){ .x = 20.f, .y = 20.f };
 
    s_hornet_image = image_from_pam ("assets/semihornet.pam");
+   if (s_hornet_image == NULL)
+      ERROR_RETURN (false, "image from pam");
+
+   return true;
 }
 
-void
+bool
 demo_scene_deinit ()
 {
-   UnloadImage (s_hornet_image);
+   UnloadImage (*s_hornet_image);
+   free (s_hornet_image);
+
+   return true;
 }
 
 void
@@ -30,13 +37,15 @@ demo_scene_update (Context* c, float dt)
 {
    s_pos = Vector2Add (s_pos, Vector2Scale (s_vel, dt));
 
-   float right_limit = (float)(c->pixel_buffer->image.width - s_hornet_image.width);
+   float right_limit =
+      (float)(c->pixel_buffer->image->width - s_hornet_image->width);
    if (s_pos.x >= right_limit)
    {
       s_pos.x = right_limit - 1;
       s_vel.x = -s_vel.x;
    }
-   float bottom_limit = (float)(c->pixel_buffer->image.height - s_hornet_image.height);
+   float bottom_limit =
+      (float)(c->pixel_buffer->image->height - s_hornet_image->height);
    if (s_pos.y >= bottom_limit)
    {
       s_pos.y = bottom_limit - 1;
@@ -66,5 +75,5 @@ demo_scene_draw (Context* c, Image* buf)
                   (Vector2){ .x = 200.0f, .y = 180.0f }, MAROON, DARKPURPLE);
    draw_line (buf, (Vector2){ .x = 310.f, .y = 20.f },
               (Vector2){ .x = 200.f, .y = 180.f }, RED);
-   draw_rgba_image (buf, &s_hornet_image, s_pos);
+   draw_rgba_image (buf, s_hornet_image, s_pos);
 }

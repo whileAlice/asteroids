@@ -12,6 +12,14 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+#define PRINT_GOTO(label, msg)  \
+   do                           \
+   {                            \
+      fputs (msg "\n", stderr); \
+      goto label;               \
+   }                            \
+   while (0)
+
 #define PERROR_GOTO(label, msg) \
    do                           \
    {                            \
@@ -20,11 +28,11 @@
    }                            \
    while (0)
 
-#define INFO_PREFIX  "INFO:"
-#define DEBUG_PREFIX "DEBUG:"
-#define ERROR_PREFIX "ERROR:"
-
-#define RAYLIB_PREFIX "[raylib]"
+#define INFO_PREFIX    "INFO:"
+#define WARNING_PREFIX "WARNING:"
+#define ERROR_PREFIX   "ERROR:"
+#define DEBUG_PREFIX   "DEBUG:"
+#define RAYLIB_PREFIX  "[raylib]"
 
 static const char* s_log_names[LOG_COUNT] = {
    [STOUT_LOG]    = "stdout",
@@ -37,7 +45,7 @@ log_create (void)
 {
    Log* log = calloc (1, sizeof (Log));
    if (log == NULL)
-      ERROR_RETURN (NULL, "calloc");
+      ERRNO_RETURN (NULL, "calloc");
 
    log->buffers = calloc (LOG_COUNT, sizeof (LogBuffer*));
 
@@ -77,38 +85,40 @@ vlog_to_file (FILE* output, LogLevel log_level, const char* fmt, va_list args)
 
    switch (log_level)
    {
-   case DEBUG_LOG_LEVEL:
-      prefix_color = TERM_MAGENTA;
-      prefix       = DEBUG_PREFIX;
-      break;
-   case INFO_LOG_LEVEL:
-      prefix_color = TERM_BLUE;
-      prefix       = INFO_PREFIX;
-      break;
-   case ERROR_LOG_LEVEL:
-      prefix_color = TERM_RED;
-      prefix       = ERROR_PREFIX;
-      break;
-   default: assert (0 == "Unreachable");
+      case INFO_LOG_LEVEL:
+         prefix_color = TERM_BLUE;
+         prefix       = INFO_PREFIX;
+         break;
+      case WARNING_LOG_LEVEL:
+         prefix_color = TERM_YELLOW;
+         prefix       = WARNING_PREFIX;
+      case ERROR_LOG_LEVEL:
+         prefix_color = TERM_RED;
+         prefix       = ERROR_PREFIX;
+         break;
+      case DEBUG_LOG_LEVEL:
+         prefix_color = TERM_MAGENTA;
+         prefix       = DEBUG_PREFIX;
+         break;
+      default: assert (0 == "Unreachable");
    }
 
    char* thread_prefix = strdupf ("[%s]", get_thread_name (pthread_self ()));
    if (thread_prefix == NULL)
-      PERROR_GOTO (fail, "strdupf");
+      PRINT_GOTO (fail, "strdupf");
 
    char* formatted_thread_prefix = get_term_formatted_string (
       TERM_GREEN, TERM_DEFAULT, false, thread_prefix);
    if (formatted_thread_prefix == NULL)
-      PERROR_GOTO (fail, "get term formatted thread prefix");
+      PRINT_GOTO (fail, "get term formatted thread prefix");
 
    // TODO: assemble all these strings in a single temp buffer
    char* formatted_prefix =
       get_term_formatted_string (prefix_color, TERM_DEFAULT, true, prefix);
    if (formatted_prefix == NULL)
-      PERROR_GOTO (fail, "get term formatted prefix");
+      PRINT_GOTO (fail, "get term formatted prefix");
 
    int length = vsnprintf (NULL, 0, fmt, args);
-   // TODO: propagate
    if (length < 0)
       PERROR_GOTO (fail, "null vsnprintf");
 
@@ -178,12 +188,12 @@ log_info (const char* fmt, ...)
 }
 
 void
-log_debug (const char* fmt, ...)
+log_warning (const char* fmt, ...)
 {
    va_list args;
    va_start (args, fmt);
 
-   vlog_to_file (stderr, DEBUG_LOG_LEVEL, fmt, args);
+   vlog_to_file (stderr, WARNING_LOG_LEVEL, fmt, args);
 
    va_end (args);
 }
@@ -200,6 +210,17 @@ log_error (const char* fmt, ...)
 }
 
 void
+log_debug (const char* fmt, ...)
+{
+   va_list args;
+   va_start (args, fmt);
+
+   vlog_to_file (stderr, DEBUG_LOG_LEVEL, fmt, args);
+
+   va_end (args);
+}
+
+void
 raylib_tracelog_callback (int log_level, const char* fmt, va_list args)
 {
    va_list args_copy, args_fail;
@@ -210,6 +231,8 @@ raylib_tracelog_callback (int log_level, const char* fmt, va_list args)
    // integrate it with the assembly in log_to_file
    char* formatted_prefix =
       get_term_formatted_string (TERM_CYAN, TERM_DEFAULT, false, RAYLIB_PREFIX);
+   if (formatted_prefix == NULL)
+      PRINT_GOTO (fail, "get term formatted string");
 
    int length = vsnprintf (NULL, 0, fmt, args);
    // TODO: maybe these shouldn't be as immediately fatal as in our logs?
@@ -241,19 +264,21 @@ raylib_tracelog_callback (int log_level, const char* fmt, va_list args)
 
    switch (log_level)
    {
-   case LOG_TRACE:
-   case LOG_DEBUG:
-      log_to_file (stderr, DEBUG_LOG_LEVEL, message_with_prefix);
-      break;
-   case LOG_INFO:
-      log_to_file (stderr, INFO_LOG_LEVEL, message_with_prefix);
-      break;
-   case LOG_WARNING:
-   case LOG_ERROR:
-   case LOG_FATAL:
-      log_to_file (stderr, ERROR_LOG_LEVEL, message_with_prefix);
-      break;
-   default: assert (0 == "Unreachable");
+      case LOG_TRACE:
+      case LOG_DEBUG:
+         log_to_file (stderr, DEBUG_LOG_LEVEL, message_with_prefix);
+         break;
+      case LOG_INFO:
+         log_to_file (stderr, INFO_LOG_LEVEL, message_with_prefix);
+         break;
+      case LOG_WARNING:
+         log_to_file (stderr, WARNING_LOG_LEVEL, message_with_prefix);
+         break;
+      case LOG_ERROR:
+      case LOG_FATAL:
+         log_to_file (stderr, ERROR_LOG_LEVEL, message_with_prefix);
+         break;
+      default: assert (0 == "Unreachable");
    }
 
    free (message);

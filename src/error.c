@@ -66,6 +66,46 @@ fail:
    va_start (args_copy, fmt);
 
    vlog_to_file (stderr, ERROR_LOG_LEVEL, fmt, args_copy);
+   log_to_file (stderr, ERROR_LOG_LEVEL, ERRNO_FORMAT, errno, strerror (errno));
+
+   va_end (args_copy);
+
+   abort ();
+}
+
+void
+error_set_with_errno (const char* fmt, ...)
+{
+   va_list args;
+   va_start (args, fmt);
+
+   StringBuilder* sb_err = sb_vcreatef (fmt, args);
+   if (sb_err == NULL)
+   {
+      log_error ("error set with errno sb vcreatef");
+      goto fail;
+   }
+
+   va_end (args);
+
+   if (!sb_appendf (sb_err, " (" ERRNO_FORMAT ")", errno, strerror (errno)))
+   {
+      log_error ("error set with errno sb appendf");
+      goto fail;
+   }
+
+   error_set (sb_err->data);
+
+   sb_free (sb_err);
+   return;
+
+fail:
+   va_list args_copy;
+   va_start (args_copy, fmt);
+
+   vlog_to_file (stderr, ERROR_LOG_LEVEL, fmt, args_copy);
+   log_to_file (stderr, ERROR_LOG_LEVEL, ERRNO_FORMAT, errno,
+                strerror (errno));
 
    va_end (args_copy);
 
@@ -87,14 +127,6 @@ error_print (Error* err)
          sb_append (sb, ": ");
 
       err = err->next;
-   }
-
-   if (errno != 0)
-   {
-      // TODO: sb_appendf
-      sb_append (sb, " (errno: ");
-      sb_append (sb, strerror (errno));
-      sb_append (sb, ")");
    }
 
    log_error (sb->data);

@@ -5,7 +5,8 @@
 
 #include <raylib.h>
 
-void osd_overlay_init (UILayer* self, Context* c);
-void osd_overlay_deinit (UILayer* self);
+// clang-format off
+bool osd_overlay_init   (UILayer* self, Context* c);
+bool osd_overlay_deinit (UILayer* self);
 void osd_overlay_update (UILayer* self, Context* c, float dt);
-void osd_overlay_draw (UILayer* self, Context* c, Image* buf);
+void osd_overlay_draw   (UILayer* self, Context* c, Image* buf);

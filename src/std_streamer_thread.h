@@ -21,4 +21,4 @@ typedef struct stream_context {
    FILE*       stream_file_original;
 } StreamContext;
 
-void*      std_streamer_thread           (void* arg);
+void* std_streamer_thread (void* arg);

@@ -9,7 +9,6 @@
 #include <assert.h>
 #include <raylib.h>
 #include <raymath.h>
-#include <stdlib.h>
 
 #define TITLE_TEXT           "Asteroids (WIP)"
 #define DEMO_TEXT            "Graphics demonstration"
@@ -25,6 +24,7 @@ typedef enum menu_option {
 
 static bool       s_should_show_menu;
 static MenuOption s_menu_option;
+static SceneID    s_new_scene;
 static Vector2    s_selector_offset = { .x = -10.f, .y = 0.f };
 
 void
@@ -32,31 +32,16 @@ select_option (Context* c)
 {
    switch (s_menu_option)
    {
-   case DEMO_OPTION:
-      if (!is_current_scene (DEMO_SCENE))
-      {
-         set_current_scene (c, DEMO_SCENE);
-         s_should_show_menu = false;
-      }
-
-      break;
-   case VECTOR_PRODUCTS_OPTION:
-      if (!is_current_scene (VECTOR_PRODUCTS_SCENE))
-      {
-         set_current_scene (c, VECTOR_PRODUCTS_SCENE);
-         s_should_show_menu = false;
-      }
-
-      break;
-   case EXIT_OPTION:
-      IN_LOCK(&c->app->mutex,
-         c->app->should_quit = true;
-      );
-      break;
-   default:
-      // TODO: implement unreachable
-      assert (1 == 0);
-      exit (1);
+      case DEMO_OPTION           : s_new_scene = DEMO_SCENE; break;
+      case VECTOR_PRODUCTS_OPTION: s_new_scene = VECTOR_PRODUCTS_SCENE; break;
+      case EXIT_OPTION:
+         IN_LOCK(&c->app->mutex,
+            c->app->should_quit = true;
+         );
+         break;
+      default:
+         // TODO: implement unreachable
+         assert (0 == "Unreachable");
    }
 }
 
@@ -64,30 +49,29 @@ void
 next_option ()
 {
    if (s_menu_option < OPTION_COUNT - 1)
-   {
       s_menu_option++;
-   }
 }
 
 void
 prev_option ()
 {
    if (s_menu_option > 0)
-   {
       s_menu_option--;
-   }
 }
 
-void
+bool
 main_menu_modal_init (UILayer* self, Context* c)
 {
    s_should_show_menu = true;
    s_menu_option      = DEMO_OPTION;
+
+   return true;
 }
 
-void
+bool
 main_menu_modal_deinit (UILayer* self)
 {
+   return true;
 }
 
 void
@@ -96,25 +80,19 @@ main_menu_modal_update (UILayer* self, Context* c, float dt)
    if (s_should_show_menu)
    {
       if (IsKeyPressed (KEY_DOWN))
-      {
          next_option ();
-      }
+
       if (IsKeyPressed (KEY_UP))
-      {
          prev_option ();
-      }
+
       if (IsKeyPressed (KEY_ENTER))
-      {
          select_option (c);
-      }
    }
 
    if (IsKeyPressed (KEY_ESCAPE))
    {
       if (!is_current_scene (MAIN_MENU_BG_SCENE))
-      {
          s_should_show_menu = !s_should_show_menu;
-      }
    }
 }
 

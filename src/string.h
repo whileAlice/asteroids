@@ -19,11 +19,15 @@ typedef struct string_builder {
 } StringBuilder;
 
 // clang-format off
-StringBuilder* sb_create (const char* initial_string);
-StringView     sb_view   (StringBuilder* sb);
-bool           sb_append (StringBuilder* sb, const char* string);
-void           sb_clear  (StringBuilder* sb);
-void           sb_free (StringBuilder* sb);
+StringBuilder* sb_create   (const char* initial_string);
+StringBuilder* sb_vcreatef (const char* initial_fmt, va_list args);
+StringBuilder* sb_createf  (const char* initial_fmt, ...);
+StringView     sb_view     (StringBuilder* sb);
+bool           sb_append   (StringBuilder* sb, const char* string);
+bool           sb_vappendf (StringBuilder* sb, const char* fmt, va_list args);
+bool           sb_appendf  (StringBuilder* sb, const char* fmt, ...);
+void           sb_clear    (StringBuilder* sb);
+void           sb_free     (StringBuilder* sb);
 // clang-format on
 
 // duplicate a string with formatting - va_list version
@@ -37,16 +41,16 @@ vstrdupf (const char* fmt, va_list args)
 
    int length = vsnprintf (NULL, 0, fmt, args);
    if (length == -1)
-      ERROR_RETURN ("null vsnprintf", NULL);
+      ERRNO_RETURN ("null vsnprintf", NULL);
 
    dup_size = length * sizeof (char) + 1;
    dup      = malloc (dup_size);
    if (dup == NULL)
-      ERROR_RETURN ("malloc", NULL);
+      ERRNO_RETURN ("malloc", NULL);
 
    length = vsnprintf (dup, dup_size, fmt, src_args_copy);
    if (length == -1)
-      ERROR_RETURN ("dup vsnprintf", NULL);
+      ERRNO_RETURN ("dup vsnprintf", NULL);
 
    return dup;
 }

@@ -2,6 +2,7 @@
 
 #include "config.h"
 #include "context.h"
+#include "error.h"
 #include "scene_manager.h"
 #include "ui_layer_manager.h"
 #include "update_input.h"
@@ -9,31 +10,47 @@
 
 #include <raylib.h>
 
-void
+bool
 game_init (Context* c)
 {
-   load_fixed_fonts (&c->fonts->fixed_font, &c->fonts->inverted_fixed_font,
-                     FIXED_FONT_PATH);
-   set_current_scene (c, MAIN_MENU_BG_SCENE);
+   if (!load_fixed_fonts (&c->fonts->fixed_font, &c->fonts->inverted_fixed_font,
+                          FIXED_FONT_PATH))
+      ERRNO_RETURN (false, "load fixed fonts");
 
-   init_active_modals ();
-   init_active_overlays ();
+   if (!set_current_scene (c, MAIN_MENU_BG_SCENE))
+      ERROR_RETURN (false, "set current scene");
+
+   if (!init_active_modals ())
+      ERROR_RETURN (false, "init active modals");
+
+   if (!init_active_overlays ())
+      ERROR_RETURN (false, "init active overlays");
 
    add_modal (c, MAIN_MENU_MODAL);
    add_overlay (c, LOG_OVERLAY);
    add_overlay (c, OSD_OVERLAY);
 
-   get_overlay (OSD_OVERLAY)->is_visible = true;
+   UILayer* overlay = get_overlay (OSD_OVERLAY);
+   overlay->is_visible = true;
+
+   return true;
 }
 
-void
+bool
 game_deinit (Context* c)
 {
-   deinit_active_overlays ();
-   deinit_active_modals ();
-   deinit_current_scene ();
+   if (!deinit_active_overlays ())
+      ERROR_RETURN (false, "deinit active overlays");
+
+   if (!deinit_active_modals ())
+      ERROR_RETURN (false, "deinit active modals");
+
+   if (!deinit_current_scene ())
+      ERROR_RETURN (false, "deinit current scene");
 
    unload_fixed_font_images ();
+
+   return true;
 }
 
 void

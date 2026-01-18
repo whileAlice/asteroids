@@ -5,7 +5,8 @@
 
 #include <raylib.h>
 
-void main_menu_modal_init (UILayer* self, Context* c);
-void main_menu_modal_deinit (UILayer* self);
+// clang-format off
+bool main_menu_modal_init   (UILayer* self, Context* c);
+bool main_menu_modal_deinit (UILayer* self);
 void main_menu_modal_update (UILayer* self, Context* c, float dt);
-void main_menu_modal_draw (UILayer* self, Context* c, Image* buf);
+void main_menu_modal_draw   (UILayer* self, Context* c, Image* buf);

@@ -1,5 +1,6 @@
 #include "ui_layer_manager.h"
 
+#include "log.h"
 #include "modals/main_menu_modal.h"
 #include "overlays/log_overlay.h"
 #include "overlays/osd_overlay.h"
@@ -41,55 +42,64 @@ static UILayer s_overlays[] = {
 static ActiveUILayers s_active_modals;
 static ActiveUILayers s_active_overlays;
 
-void
+bool
 init_active_ui_layers (ActiveUILayers* active_ui_layers, size_t layer_count)
 {
+   UILayer** ui_layers = calloc (layer_count, sizeof (UILayer*));
+   if (ui_layers == NULL)
+      ERRNO_RETURN (false, "calloc");
+
    *active_ui_layers = (ActiveUILayers){
-      .array    = malloc (layer_count * sizeof (UILayer*)),
+      .array    = ui_layers,
       .size     = 0,
       .capacity = layer_count,
    };
+
+   return true;
 }
 
-void
-init_active_modals ()
+bool
+init_active_modals (void)
 {
    assert (sizeof (s_modals) / sizeof (s_modals[0]) == MODAL_COUNT);
 
-   init_active_ui_layers (&s_active_modals, MODAL_COUNT);
+   return init_active_ui_layers (&s_active_modals, MODAL_COUNT);
 }
 
-void
-init_active_overlays ()
+bool
+init_active_overlays (void)
 {
    assert (sizeof (s_overlays) / sizeof (s_overlays[0]) == OVERLAY_COUNT);
 
-   init_active_ui_layers (&s_active_overlays, OVERLAY_COUNT);
+   return init_active_ui_layers (&s_active_overlays, OVERLAY_COUNT);
 }
 
-void
+bool
 deinit_active_ui_layers (ActiveUILayers* active_ui_layers)
 {
    for (size_t i = 0; i < active_ui_layers->size; ++i)
    {
-      auto* layer = active_ui_layers->array[i];
-      layer->deinit (layer);
+      UILayer* layer = active_ui_layers->array[i];
+      if (!layer->deinit (layer))
+         ERROR_RETURN (false, "deinit");
    }
 
    free (active_ui_layers->array);
    active_ui_layers->size = 0;
+
+   return true;
 }
 
-void
-deinit_active_modals ()
+bool
+deinit_active_modals (void)
 {
-   deinit_active_ui_layers (&s_active_modals);
+   return deinit_active_ui_layers (&s_active_modals);
 }
 
-void
-deinit_active_overlays ()
+bool
+deinit_active_overlays (void)
 {
-   deinit_active_ui_layers (&s_active_overlays);
+   return deinit_active_ui_layers (&s_active_overlays);
 }
 
 void
@@ -105,8 +115,8 @@ add_active_ui_layer (Context* c, ActiveUILayers* active_ui_layers,
       if (ui_layer == active_ui_layers->array[i])
       {
          // TODO: implement enum -> string conversion
-         printf ("WARNING: UI layer '%s' is already added at position %d\n",
-                 ui_layer->name, (int)i);
+         log_warning ("UI layer '%s' is already added at position %d",
+                      ui_layer->name, (int)i);
 
          return;
       }
@@ -142,10 +152,9 @@ remove_active_ui_layer (ActiveUILayers* active_ui_layers, UILayer* ui_layer)
 
    if (active_ui_layers->size == 0)
    {
-      printf ("WARNING: trying to remove UI layer '%s', "
-              "but there are no active UI layers to remove\n",
-              ui_layer->name);
-
+      log_warning ("trying to remove UI layer '%s', "
+                   "but there are no active UI layers to remove\n",
+                   ui_layer->name);
       return;
    }
 
@@ -153,7 +162,7 @@ remove_active_ui_layer (ActiveUILayers* active_ui_layers, UILayer* ui_layer)
 
    for (size_t i = 0; i < active_ui_layers->size; ++i)
    {
-      auto* layer = active_ui_layers->array[i];
+      UILayer* layer = active_ui_layers->array[i];
 
       if (layer == ui_layer)
       {
@@ -166,8 +175,7 @@ remove_active_ui_layer (ActiveUILayers* active_ui_layers, UILayer* ui_layer)
 
    if (found_at < 0)
    {
-      printf ("WARNING: UI layer '%s' not found in active layers\n",
-              ui_layer->name);
+      log_warning ("UI layer '%s' not found in active layers", ui_layer->name);
 
       return;
    }
@@ -206,7 +214,7 @@ update_active_ui_layers (Context* c, ActiveUILayers* active_ui_layers, float dt)
 
    for (size_t i = 0; i < active_ui_layers->size; ++i)
    {
-      auto* layer = active_ui_layers->array[i];
+      UILayer* layer = active_ui_layers->array[i];
       layer->update (layer, c, dt);
    }
 }
@@ -230,7 +238,7 @@ draw_active_ui_layers (Context* c, ActiveUILayers* active_ui_layers, Image* buf)
 
    for (size_t i = 0; i < active_ui_layers->size; ++i)
    {
-      auto* layer = active_ui_layers->array[i];
+      UILayer* layer = active_ui_layers->array[i];
       layer->draw (layer, c, buf);
    }
 }

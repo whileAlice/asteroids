@@ -2,4 +2,6 @@
 
 #include <raylib.h>
 
-Image generate_buffer_image ();
+// clang-format off
+Image* buffer_image_create (void);
+void   buffer_image_free   (Image* image);

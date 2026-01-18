@@ -29,41 +29,44 @@ static void blend_rgba_pixel_on_rgb_buffer (Image* buf, int x, int y,
                                             Color pixel, size_t index);
 
 /* draws a non-alpha-blended image (int) */
-void draw_rgb_image_i (Image* buf, Image* img, int origin_x, int origin_y);
+void draw_rgb_image_i (Image* buf, const Image* img, int origin_x,
+                       int origin_y);
 
 /* draws an alpha-blended image (int) */
-void draw_rgba_image_i (Image* buf, Image* img, int origin_x, int origin_y);
+void draw_rgba_image_i (Image* buf, const Image* img, int origin_x,
+                        int origin_y);
 
 /* draws a non-alpha-blended image */
-void draw_rgb_image (Image* buf, Image* img, Vector2 origin);
+void draw_rgb_image (Image* buf, const Image* img, Vector2 origin);
 
 /* draws an alpha-blended image */
-void draw_rgba_image (Image* buf, Image* img, Vector2 origin);
+void draw_rgba_image (Image* buf, const Image* img, Vector2 origin);
 
 /* draws a glyph using the given font */
-void draw_glyph (Image* buf, FixedFont* font, int origin_x, int origin_y,
+void draw_glyph (Image* buf, const FixedFont* font, int origin_x, int origin_y,
                  size_t index);
 
 /* draws text using the given font (int) */
-void draw_text_i (Image* buf, FixedFont* font, int origin_x, int origin_y,
+void draw_text_i (Image* buf, const FixedFont* font, int origin_x, int origin_y,
                   const char* text);
 
 /* draws text using the given font */
-void draw_text (Image* buf, FixedFont* font, Vector2 origin, const char* text);
+void draw_text (Image* buf, const FixedFont* font, Vector2 origin,
+                const char* text);
 
 /* draws formatted text using the given font */
-void draw_textf (Image* buf, FixedFont* font, Vector2 origin, const char* fmt,
-                 ...);
+void draw_textf (Image* buf, const FixedFont* font, Vector2 origin,
+                 const char* fmt, ...);
 
 /* draws centered text using the given font; returns new origin */
-Vector2 draw_text_center (Image* buf, FixedFont* font, Vector2 origin,
+Vector2 draw_text_center (Image* buf, const FixedFont* font, Vector2 origin,
                           const char* text);
 
-Vector2 draw_text_multiline (Image* buf, FixedFont* font, Vector2 origin,
+Vector2 draw_text_multiline (Image* buf, const FixedFont* font, Vector2 origin,
                              const char* text, ...);
 
 /* gets text width */
-int get_text_width (FixedFont* font, const char* text);
+int get_text_width (const FixedFont* font, const char* text);
 
 /* draws a filled circle (int) */
 void draw_circle_fi (Image* buf, int center_x, int center_y, int radius,
@@ -119,25 +122,26 @@ void draw_quad_wi (Image* buf, int a_x, int a_y, int b_x, int b_y, int c_x,
                    int c_y, int d_x, int d_y, Color pixel);
 
 /* blurs an image using box blur */
-void box_blur (Image* dst, Image* src, size_t iterations);
+void box_blur (Image* dst, const Image* src, size_t iterations);
 
 /* brightens or darkens an image by specified amount (0-255) */
-void brighten_image_by_amount (Image* dst, Image* src, int amount);
+void brighten_image_by_amount (Image* dst, const Image* src, int amount);
 
 /* brightens or darkens an image by relative percentage */
-void brighten_image_by_percentage (Image* dst, Image* src, int percentage);
+void brighten_image_by_percentage (Image* dst, const Image* src,
+                                   int percentage);
 
 /* clears the image with supplied RGB pixel */
 void clear_rgb_image (Image* img, Color3 pixel);
 
 /* makes a clone of the given image */
-Image clone_image (Image* src);
+Image* clone_image (const Image* src);
 
 /* calculates index from xy coordinates */
-int index_from_xy (Image* img, int x, int y);
+int index_from_xy (const Image* img, int x, int y);
 
 /* calculates index from xy coordinates without bounds checking */
-size_t index_from_xy_unsafe (Image* img, int x, int y);
+size_t index_from_xy_unsafe (const Image* img, int x, int y);
 
 /* converts rgba to rgb */
 Color3 rgb_from_rgba (Color pixel);

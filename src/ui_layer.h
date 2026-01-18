@@ -8,8 +8,8 @@ typedef struct ui_layer {
    const char* name;
    bool        is_visible;
 
-   void (*init) (struct ui_layer* self, Context* c);
-   void (*deinit) (struct ui_layer* self);
+   bool (*init) (struct ui_layer* self, Context* c);
+   bool (*deinit) (struct ui_layer* self);
    void (*update) (struct ui_layer* self, Context* c, float dt);
    void (*draw) (struct ui_layer* self, Context* c, Image* buf);
 } UILayer;

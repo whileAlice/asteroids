@@ -4,8 +4,10 @@
 
 #include <stdlib.h>
 
-#define TERM_FORMAT_START "\033["
-#define TERM_FORMAT_RESET TERM_FORMAT_START "0m"
+#define TERM_FORMAT_START        "\033["
+#define TERM_FORMAT_RESET        TERM_FORMAT_START "0m"
+#define TERM_FORMAT_WITH_BOLD    "%s%s;%s;1m%s%s"
+#define TERM_FORMAT_WITHOUT_BOLD "%s%s;%sm%s%s"
 
 static const char* s_fg_codes[] = {
    [TERM_BLACK] = "30",        [TERM_RED] = "31",
@@ -37,13 +39,14 @@ char*
 get_term_formatted_string (TermColor fg_color, TermColor bg_color, bool is_bold,
                            const char* str)
 {
-   const char* format = is_bold ? "%s%s;%s;1m%s%s" : "%s%s;%sm%s%s";
+   const char* format =
+      is_bold ? TERM_FORMAT_WITH_BOLD : TERM_FORMAT_WITHOUT_BOLD;
 
    int length =
       snprintf (NULL, 0, format, TERM_FORMAT_START, s_fg_codes[fg_color],
                 s_bg_codes[bg_color], str, TERM_FORMAT_RESET);
    if (length < 0)
-      ERROR_RETURN (NULL, "null snprintf");
+      ERRNO_RETURN (NULL, "null snprintf");
 
    size_t formatted_str_size = length * sizeof (char) + 1;
    char*  formatted_str      = malloc (formatted_str_size);
@@ -51,7 +54,7 @@ get_term_formatted_string (TermColor fg_color, TermColor bg_color, bool is_bold,
                       TERM_FORMAT_START, s_fg_codes[fg_color],
                       s_bg_codes[bg_color], str, TERM_FORMAT_RESET);
    if (length < 0)
-      ERROR_RETURN (NULL, "formatted str snprintf");
+      ERRNO_RETURN (NULL, "formatted str snprintf");
 
    return formatted_str;
 }
