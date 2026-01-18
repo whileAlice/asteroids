@@ -66,7 +66,7 @@ demo_scene_update (Context* c, float dt)
 void
 demo_scene_draw (Context* c)
 {
-   clear_rgb_image (c->pixel_buffer->image, rgb_from_rgba (PINK));
+   clear_buffer (rgb_from_rgba (PINK));
 
    draw_rectangle ((Vector2){ 20, 20 }, (Vector2){ 100, 100 }, BLUE, DARKBLUE);
    draw_triangle ((Vector2){ 50, 100 }, (Vector2){ 100, 40 },

@@ -15,6 +15,8 @@
 #define VECTOR_PRODUCTS_TEXT "Vector products showcase"
 #define EXIT_TEXT            "Exit"
 
+#define SELECTOR_OFFSET 10
+
 typedef enum menu_option {
    DEMO_OPTION = 0,
    VECTOR_PRODUCTS_OPTION,
@@ -25,7 +27,6 @@ typedef enum menu_option {
 static bool       s_should_show_menu;
 static MenuOption s_menu_option;
 static SceneID    s_new_scene;
-static Vector2    s_selector_offset = { .x = -10.f, .y = 0.f };
 
 bool
 main_menu_modal_init (Context* c)
@@ -71,40 +72,30 @@ main_menu_modal_update (Context* c, float dt)
 void
 main_menu_modal_draw (Context* c)
 {
-   if (s_should_show_menu)
-   {
-      draw_text_center ((Vector2){ 0, 40 }, TITLE_TEXT);
+   if (!s_should_show_menu)
+      return;
 
-      Vector2 demo_option_origin =
-         draw_text_center ((Vector2){ 0, 60 }, DEMO_TEXT);
+   const int buffer_width = c->pixel_buffer->image->width;
 
-      if (s_menu_option == DEMO_OPTION)
-      {
-         Vector2 demo_selector_origin =
-            Vector2Add (demo_option_origin, s_selector_offset);
-         draw_text (demo_selector_origin, "*");
-      }
+   draw_text_center_i (0, 40, buffer_width, TITLE_TEXT);
 
-      Vector2 vector_products_option_origin =
-         draw_text_center ((Vector2){ 0, 70 }, VECTOR_PRODUCTS_TEXT);
+   int demo_option_origin_x =
+      draw_text_center_i (0, 60, buffer_width, DEMO_TEXT);
 
-      if (s_menu_option == VECTOR_PRODUCTS_OPTION)
-      {
-         Vector2 vector_products_selector_origin =
-            Vector2Add (vector_products_option_origin, s_selector_offset);
-         draw_text (vector_products_selector_origin, "*");
-      }
+   if (s_menu_option == DEMO_OPTION)
+      draw_text_i (demo_option_origin_x - SELECTOR_OFFSET, 60, "*");
 
-      Vector2 exit_option_origin =
-         draw_text_center ((Vector2){ 0, 80 }, EXIT_TEXT);
+   int vector_products_option_origin_x =
+      draw_text_center_i (0, 70, buffer_width, VECTOR_PRODUCTS_TEXT);
 
-      if (s_menu_option == EXIT_OPTION)
-      {
-         Vector2 exit_selector_origin =
-            Vector2Add (exit_option_origin, s_selector_offset);
-         draw_text (exit_selector_origin, "*");
-      }
-   }
+   if (s_menu_option == VECTOR_PRODUCTS_OPTION)
+      draw_text_i (vector_products_option_origin_x - SELECTOR_OFFSET, 70, "*");
+
+   int exit_option_origin_x =
+      draw_text_center_i (0, 80, buffer_width, EXIT_TEXT);
+
+   if (s_menu_option == EXIT_OPTION)
+      draw_text_i (exit_option_origin_x - SELECTOR_OFFSET, 80, "*");
 }
 
 void

@@ -290,16 +290,57 @@ draw_textf (Vector2 origin, const char* fmt, ...)
    free (str);
 }
 
-Vector2
-draw_text_center (Vector2 origin, const char* text)
+int
+draw_text_center_i (int origin_x, int origin_y, int max_width, const char* text)
 {
-   int     text_width = get_text_width (text);
-   Vector2 origin_centered =
-      center_horizontally (origin, text_width, s_buffer->width);
+   int text_width = get_text_width (text);
 
+   int origin_x_centered =
+      center_horizontally_i (origin_x, text_width, max_width);
+   draw_text_i (origin_x_centered, origin_y, text);
+
+   return origin_x_centered;
+}
+
+Vector2
+draw_text_center (Vector2 origin, int max_width, const char* text)
+{
+   int text_width = get_text_width (text);
+
+   Vector2 origin_centered =
+      center_horizontally (origin, text_width, max_width);
    draw_text (origin_centered, text);
 
    return origin_centered;
+}
+
+int
+draw_textf_center_i (int origin_x, int origin_y, int max_width, const char* fmt,
+                     ...)
+{
+   va_list args;
+   va_start (args, fmt);
+
+   char* str = vstrdupf (fmt, args);
+
+   int new_origin_x = draw_text_center_i (origin_x, origin_y, max_width, str);
+   free (str);
+
+   return new_origin_x;
+}
+
+Vector2
+draw_textf_center (Vector2 origin, int max_width, const char* fmt, ...)
+{
+   va_list args;
+   va_start (args, fmt);
+
+   char* str = vstrdupf (fmt, args);
+
+   Vector2 new_origin = draw_text_center (origin, max_width, str);
+   free (str);
+
+   return new_origin;
 }
 
 int
@@ -670,6 +711,12 @@ brighten_image_by_percentage (Image* dst, const Image* src, int percentage)
             (uint8_t)CLAMP ((int)pixels[i].b * percentage / 100, 0, 255);
       }
    }
+}
+
+void
+clear_buffer (Color3 pixel)
+{
+   clear_rgb_image (s_buffer, pixel);
 }
 
 void

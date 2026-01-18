@@ -53,17 +53,26 @@ void draw_glyph (int origin_x, int origin_y, size_t index);
 /* draws text using the statically set font (int) */
 void draw_text_i (int origin_x, int origin_y, const char* text);
 
-/* draws text using the given font */
+/* draws text using the statically set font */
 void draw_text (Vector2 origin, const char* text);
 
-/* draws formatted text using the given font (int) */
+/* draws formatted text using the statically set font (int) */
 void draw_textf_i (int origin_x, int origin_y, const char* fmt, ...);
 
-/* draws formatted text using the given font */
+/* draws formatted text using the statically set font */
 void draw_textf (Vector2 origin, const char* fmt, ...);
 
-/* draws centered text using the given font; returns new origin */
-Vector2 draw_text_center (Vector2 origin, const char* text);
+/* draws centered text using the statically set font; returns new origin x (int) */
+int draw_text_center_i (int origin_x, int origin_y, int max_width, const char* text);
+
+/* draws centered text using the statically set font; returns new origin */
+Vector2 draw_text_center (Vector2 origin, int max_width, const char* text);
+
+/* draws formatted, centered text using the statically set font; returns new origin x (int) */
+int draw_textf_center_i (int origin_x, int origin_y, int max_width, const char* fmt, ...);
+
+/* draws formatted, centered text using the statically set font; returns new origin */
+Vector2 draw_textf_center (Vector2 origin, int max_width, const char* fmt, ...);
 
 /* gets text width */
 int get_text_width (const char* text);
@@ -118,6 +127,9 @@ void brighten_image_by_amount (Image* dst, const Image* src, int amount);
 
 /* brightens or darkens an image by relative percentage */
 void brighten_image_by_percentage (Image* dst, const Image* src, int percentage);
+
+/* clears the current buffer with supplied RGB pixel */
+void clear_buffer (Color3 pixel);
 
 /* clears the image with supplied RGB pixel */
 void clear_rgb_image (Image* img, Color3 pixel);

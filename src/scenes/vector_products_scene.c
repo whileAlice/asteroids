@@ -17,7 +17,9 @@ typedef enum selected_point { A, B, C } SelectedPoint;
 static Vector2       s_point_a, s_point_b, s_point_c;
 static Color         s_color_a, s_color_b, s_color_c;
 static SelectedPoint s_current_point, s_previous_point;
-static float         s_cross_product_magnitude;
+static float         s_cross_product_magnitude, s_dot_product;
+static float         s_abc_angle_signed, s_abc_angle_360;
+static bool          s_should_show_angle;
 
 bool
 vector_products_scene_init (Context* c)
@@ -145,9 +147,8 @@ vector_products_scene_update (Context* c, float dt)
          (s_point_a.x - s_point_b.x);
 
    // NOTE: it's the same regardless of Y inversion
-   // float dot_product =
-   //    (s_point_c.x - s_point_b.x) * (s_point_a.x - s_point_b.x) +
-   //    (s_point_c.y - s_point_b.y) * (s_point_a.y - s_point_b.y);
+   s_dot_product = (s_point_c.x - s_point_b.x) * (s_point_a.x - s_point_b.x) +
+                   (s_point_c.y - s_point_b.y) * (s_point_a.y - s_point_b.y);
 
    // NOTE: this way, one can get an unsigned angle
    float ab_length = sqrtf (powf (s_point_b.x - s_point_a.x, 2.) +
@@ -155,6 +156,7 @@ vector_products_scene_update (Context* c, float dt)
    float bc_length = sqrtf (powf (s_point_c.x - s_point_b.x, 2.) +
                             powf (s_point_c.y - s_point_b.y, 2.));
 
+   // NOTE: this is an alternative angle acquirement method
    // float dot_product_norm =
    //   (s_point_b.x - s_point_a.x) / ab_length *
    //   (s_point_c.x - s_point_a.x) / ac_length -
@@ -165,28 +167,10 @@ vector_products_scene_update (Context* c, float dt)
    // float abc_angle = acosf(cos_abc_norm);
 
    // NOTE: flips ABC <-> CBA depending on Y inversion
-   // float abc_angle_signed = atan2f (s_cross_product_magnitude, dot_product);
-   // float abc_angle_360 =
-   //    abc_angle_signed <= 0 ? 2 * PI + abc_angle_signed : abc_angle_signed;
-
-   // osd_print (8, 31, "dot product");
-   // osd_print (9, 22, "(C1-B1)(A1-B1)+(C2-B2)(A2-B2)");
-   // osd_printf (10, 26, "(%*.f)(%*.f)+(%*.f)(%*.f) ", 3,
-   //             (double)s_point_c.x - (double)s_point_b.x, 3,
-   //             (double)s_point_a.x - (double)s_point_b.x, 3,
-   //             (double)INVERT_Y (s_point_c.y) - (double)INVERT_Y
-   //             (s_point_b.y), 3, (double)INVERT_Y (s_point_a.y) -
-   //             (double)INVERT_Y (s_point_b.y));
-   // osd_printf (12, 33, "%*.f", 6, (double)dot_product);
-
-   // osd_print (14, 32, "ABC angle");
-   if (ab_length != 0.f && bc_length != 0.f)
-   {
-      // osd_printf (16, 32, "%*.f deg", 4,
-      //             (double)abc_angle_signed * 180 / (double)PI);
-      // osd_printf (17, 33, "%*.f deg", 3,
-      //             (double)abc_angle_360 * 180 / (double)PI);
-   }
+   s_should_show_angle = ab_length != 0.f && bc_length != 0.f;
+   s_abc_angle_signed  = atan2f (s_cross_product_magnitude, s_dot_product);
+   s_abc_angle_360     = s_abc_angle_signed <= 0 ? 2 * PI + s_abc_angle_signed
+                                                 : s_abc_angle_signed;
 }
 
 void
@@ -194,7 +178,7 @@ vector_products_scene_draw (Context* c)
 {
    set_draw_font (&c->fonts->fixed_font);
 
-   clear_rgb_image (c->pixel_buffer->image, rgb_from_rgba (LIGHTGRAY));
+   clear_buffer (rgb_from_rgba (LIGHTGRAY));
 
    draw_line (s_point_a, s_point_b, BLACK);
    draw_line (s_point_b, s_point_c, BLACK);
@@ -209,15 +193,35 @@ vector_products_scene_draw (Context* c)
    draw_textf (get_origin (c, s_point_c), "C1: %.f, C2: %.f",
                (double)s_point_c.x, (double)INVERT_Y (s_point_c.y));
 
-   // draw_text (buf, f, 2, 25, "cross-product magnitude");
-   // osd_print (3, 22, "(C1-B1)(A2-B2)-(C2-B2)(A1-B1)");
-   // osd_printf (4, 26, "(%*.f)(%*.f)-(%*.f)(%*.f) ", 3,
-   //             (double)s_point_c.x - (double)s_point_b.x, 3,
-   //             (double)INVERT_Y (s_point_a.y) - (double)INVERT_Y
-   //             (s_point_b.y), 3, (double)INVERT_Y (s_point_c.y) -
-   //             (double)INVERT_Y (s_point_b.y), 3, (double)s_point_a.x -
-   //             (double)s_point_b.x);
-   // osd_printf (6, 33, "%*.f", 6, (double)s_cross_product_magnitude);
+   draw_text_center_i (120, 20, 200, "cross-product magnitude");
+   draw_text_center_i (120, 30, 200, "(C1-B1)(A2-B2)-(C2-B2)(A1-B1)");
+   draw_textf_center_i (
+      120, 40, 200, "(%*.f)(%*.f)-(%*.f)(%*.f) ", 3,
+      (double)s_point_c.x - (double)s_point_b.x, 3,
+      (double)INVERT_Y (s_point_a.y) - (double)INVERT_Y (s_point_b.y), 3,
+      (double)INVERT_Y (s_point_c.y) - (double)INVERT_Y (s_point_b.y), 3,
+      (double)s_point_a.x - (double)s_point_b.x);
+   draw_textf_center_i (120, 50, 200, "%*.f", 6,
+                        (double)s_cross_product_magnitude);
+
+   draw_text_center_i (120, 70, 200, "dot product");
+   draw_text_center_i (120, 80, 200, "(C1-B1)(A1-B1)+(C2-B2)(A2-B2)");
+   draw_textf_center_i (
+      120, 90, 200, "(%*.f)(%*.f)+(%*.f)(%*.f) ", 3,
+      (double)s_point_c.x - (double)s_point_b.x, 3,
+      (double)s_point_a.x - (double)s_point_b.x, 3,
+      (double)INVERT_Y (s_point_c.y) - (double)INVERT_Y (s_point_b.y), 3,
+      (double)INVERT_Y (s_point_a.y) - (double)INVERT_Y (s_point_b.y));
+   draw_textf_center_i (120, 100, 200, "%*.f", 6, (double)s_dot_product);
+
+   draw_text_center_i (120, 120, 200, "ABC angle");
+   if (s_should_show_angle)
+   {
+      draw_textf_center_i (120, 130, 200, "%*.f deg", 4,
+                           (double)s_abc_angle_signed * 180 / (double)PI);
+      draw_textf_center_i (120, 140, 200, "%*.f deg", 3,
+                           (double)s_abc_angle_360 * 180 / (double)PI);
+   }
 }
 
 Vector2
