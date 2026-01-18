@@ -1,7 +1,5 @@
 #pragma once
 
-#include "context.h"
-
 #include <pthread.h>
 
 // clang-format off
@@ -37,17 +35,22 @@
    }                                                                \
    while (0);
 
+typedef struct context Context;
+
 typedef enum thread_idx {
    MAIN_THREAD = 0,
    STREAMER_THREAD,
    THREAD_COUNT,
 } ThreadIdx;
 
+#define UNKNOWN_THREAD THREAD_COUNT
+
 // main + streamer
 #define STREAMER_THREAD_COUNT 2
 
 // clang-format off
-bool        threads_init    (Context* c);
-bool        threads_deinit  (Context* c);
-ThreadIdx   get_thread_idx  (pthread_t thread_id);
-const char* get_thread_name (pthread_t thread_id);
+bool        threads_init       (Context* c);
+bool        threads_deinit     (Context* c);
+ThreadIdx   get_thread_idx     (pthread_t thread_id);
+const char* thread_id_to_name  (pthread_t thread_id);
+const char* thread_idx_to_name (ThreadIdx thread_idx);

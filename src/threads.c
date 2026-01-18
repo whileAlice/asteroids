@@ -79,12 +79,18 @@ get_thread_idx (pthread_t thread_id)
 }
 
 const char*
-get_thread_name (pthread_t thread_id)
+thread_id_to_name (pthread_t thread_id)
 {
    ThreadIdx idx = get_thread_idx (thread_id);
 
-   if (idx >= 0 && idx < THREAD_COUNT)
-      return thread_names[idx];
+   return thread_idx_to_name (idx);
+}
+
+const char*
+thread_idx_to_name (ThreadIdx thread_idx)
+{
+   if (thread_idx >= 0 && thread_idx < THREAD_COUNT)
+      return thread_names[thread_idx];
 
    return "unknown";
 }

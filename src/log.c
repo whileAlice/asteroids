@@ -103,7 +103,7 @@ vlog_to_file (FILE* output, LogLevel log_level, const char* fmt, va_list args)
       default: assert (0 == "Unreachable");
    }
 
-   char* thread_prefix = strdupf ("[%s]", get_thread_name (pthread_self ()));
+   char* thread_prefix = strdupf ("[%s]", thread_id_to_name (pthread_self ()));
    if (thread_prefix == NULL)
       PRINT_GOTO (fail, "strdupf");
 

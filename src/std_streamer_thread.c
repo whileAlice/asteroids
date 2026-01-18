@@ -66,19 +66,19 @@ std_streamer_thread (void* arg)
    {
       err = pipe (stream_contexts[i].pipe);
       if (err == -1)
-         ERRNO_GOTO (exit, "%s pipe", stream_contexts[i].name);
+         ERRNO_GOTO (end, "%s pipe", stream_contexts[i].name);
 
       for (size_t j = 0; j <= WRITE_END; ++j)
       {
          int flags = fcntl (stream_contexts[i].pipe[j], F_GETFL);
          if (flags == -1)
-            ERRNO_GOTO (exit, "%s pipe[%zu] F_GETFL", stream_contexts[i].name,
+            ERRNO_GOTO (end, "%s pipe[%zu] F_GETFL", stream_contexts[i].name,
                         i);
 
          err = fcntl (stream_contexts[i].pipe[j], F_SETFL, flags | O_NONBLOCK);
          if (err == -1)
          {
-            ERRNO_GOTO (exit, "%s pipe[%zu] O_NONBLOCK",
+            ERRNO_GOTO (end, "%s pipe[%zu] O_NONBLOCK",
                         stream_contexts[i].name, j);
          }
       }
@@ -90,7 +90,7 @@ std_streamer_thread (void* arg)
       stream_contexts[i].stream_fd_copy =
          dup (stream_contexts[i].stream_fd_original);
       if (stream_contexts[i].stream_fd_copy == -1)
-         ERRNO_GOTO (exit, "%s stream fd copy dup", stream_contexts[i].name);
+         ERRNO_GOTO (end, "%s stream fd copy dup", stream_contexts[i].name);
    }
 
    // open backups for writing
@@ -99,7 +99,7 @@ std_streamer_thread (void* arg)
       stream_contexts[i].stream_file_copy =
          fdopen (stream_contexts[i].stream_fd_copy, "w");
       if (stream_contexts[i].stream_file_copy == NULL)
-         ERRNO_GOTO (exit, "%s stream file copy fdopen",
+         ERRNO_GOTO (end, "%s stream file copy fdopen",
                      stream_contexts[i].name);
    }
 
@@ -234,7 +234,7 @@ restore_streams:
          log_to_file (stream_contexts[STDERR_EVENT].stream_file_copy,
                       ERROR_LOG_LEVEL, "%s fd copy dup2 (" ERRNO_FORMAT ")",
                       stream_contexts[i].name, errno, strerror (errno));
-         goto exit;
+         goto end;
       }
    }
 
@@ -249,8 +249,8 @@ restore_streams:
             if (errno == EAGAIN)
                continue;
 
-            ERRNO_GOTO (exit, "%s read", stream_contexts[i].name);
-         case 0 : ERROR_GOTO (exit, "%s EOF", stream_contexts[i].name);
+            ERRNO_GOTO (end, "%s read", stream_contexts[i].name);
+         case 0 : ERROR_GOTO (end, "%s EOF", stream_contexts[i].name);
          default: buf[length] = '\0';
       }
 
@@ -265,14 +265,23 @@ restore_streams:
    {
       err = close (stream_contexts[i].stream_fd_copy);
       if (err == -1)
-         ERRNO_GOTO (exit, "%s stream fd copy close", stream_contexts[i].name);
+         ERRNO_GOTO (end, "%s stream fd copy close", stream_contexts[i].name);
    }
 
-exit:
+end:
    log_debug ("returning...");
 
-   // if exiting due to own error, bring down the rest of the app as well
-   app_quit_initiate (c);
+   ThreadIdx thread_idx = get_thread_idx (pthread_self ());
+   if (has_error (thread_idx))
+   {
+      error_print (thread_idx);
+
+      IN_LOCK (&l->mutex,
+         l->should_abort_init = true;
+         pthread_cond_signal (&l->cond);
+      );
+      app_quit_initiate (c);
+   }
 
    return NULL;
 }

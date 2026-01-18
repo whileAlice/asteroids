@@ -12,9 +12,9 @@
 
 // adding one more entry to account for the possibility of a thread
 // erroring before its ID is obtained and stored by the main thread
-#define UNKNOWN_THREAD THREAD_COUNT
+#define ERROR_COUNT THREAD_COUNT + 1
 
-static Error* s_errors[THREAD_COUNT + 1] = {
+static Error* s_errors[ERROR_COUNT] = {
    [MAIN_THREAD]     = NULL,
    [STREAMER_THREAD] = NULL,
    [UNKNOWN_THREAD]  = NULL,
@@ -104,8 +104,7 @@ fail:
    va_start (args_copy, fmt);
 
    vlog_to_file (stderr, ERROR_LOG_LEVEL, fmt, args_copy);
-   log_to_file (stderr, ERROR_LOG_LEVEL, ERRNO_FORMAT, errno,
-                strerror (errno));
+   log_to_file (stderr, ERROR_LOG_LEVEL, ERRNO_FORMAT, errno, strerror (errno));
 
    va_end (args_copy);
 
@@ -113,8 +112,13 @@ fail:
 }
 
 void
-error_print (Error* err)
+error_print (ThreadIdx thread_idx)
 {
+   assert (thread_idx >= 0);
+   assert (thread_idx <= UNKNOWN_THREAD);
+
+   Error* err = s_errors[thread_idx];
+
    if (err == NULL)
       return;
 
@@ -135,19 +139,9 @@ error_print (Error* err)
 }
 
 void
-errors_print (void)
-{
-   size_t errors_len = sizeof (s_errors) / sizeof (s_errors[0]);
-   for (size_t i = 0; i < errors_len; ++i)
-   {
-      error_print (s_errors[i]);
-   }
-}
-
-void
 errors_free (void)
 {
-   for (size_t i = 0; i < THREAD_COUNT; ++i)
+   for (size_t i = 0; i < ERROR_COUNT; ++i)
    {
       Error* current = s_errors[i];
       Error* next;
@@ -162,4 +156,16 @@ errors_free (void)
 
       s_errors[i] = NULL;
    }
+}
+
+bool
+has_error (ThreadIdx thread_idx)
+{
+   assert (thread_idx >= 0);
+   assert (thread_idx <= UNKNOWN_THREAD);
+
+   if (s_errors[thread_idx] != NULL)
+      return true;
+
+   return false;
 }

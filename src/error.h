@@ -1,5 +1,7 @@
 #pragma once
 
+#include "threads.h"
+
 #include <pthread.h>
 
 #define ERROR_RETURN(retval, fmt, ...) \
@@ -45,6 +47,6 @@ typedef struct error {
 // clang-format off
 void error_set            (const char* fmt, ...);
 void error_set_with_errno (const char* fmt, ...);
-void error_print          (Error* error);
-void errors_print         (void);
+void error_print          (ThreadIdx thread_idx);
 void errors_free          (void);
+bool has_error            (ThreadIdx thread_idx);
