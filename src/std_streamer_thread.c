@@ -2,6 +2,7 @@
 
 #include "context.h"
 #include "error.h"
+#include "event.h"
 #include "log.h"
 #include "threads.h"
 
@@ -155,7 +156,7 @@ std_streamer_thread (void* arg)
    int ready_count;
    while (true)
    {
-      if (c->app->should_quit)
+      if (c->event->should_quit_app)
          goto restore_streams;
 
       // poll all pipe read ends
@@ -271,11 +272,7 @@ exit:
    log_debug ("returning...");
 
    // if exiting due to own error, bring down the rest of the app as well
-   IN_LOCK(&c->app->mutex,
-   {
-      c->app->should_quit = true;
-      pthread_cond_broadcast (&c->app->cond);
-   });
+   app_quit_initiate (c);
 
    return NULL;
 }

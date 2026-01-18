@@ -1,6 +1,5 @@
 #include "game_loop.h"
 
-#include "config.h"
 #include "context.h"
 #include "error.h"
 #include "scene_manager.h"
@@ -13,10 +12,6 @@
 bool
 game_init (Context* c)
 {
-   if (!load_fixed_fonts (&c->fonts->fixed_font, &c->fonts->inverted_fixed_font,
-                          FIXED_FONT_PATH))
-      ERRNO_RETURN (false, "load fixed fonts");
-
    if (!set_current_scene (c, MAIN_MENU_BG_SCENE))
       ERROR_RETURN (false, "set current scene");
 
@@ -30,7 +25,7 @@ game_init (Context* c)
    add_overlay (c, LOG_OVERLAY);
    add_overlay (c, OSD_OVERLAY);
 
-   UILayer* overlay = get_overlay (OSD_OVERLAY);
+   UILayer* overlay    = get_overlay (OSD_OVERLAY);
    overlay->is_visible = true;
 
    return true;
@@ -47,8 +42,6 @@ game_deinit (Context* c)
 
    if (!deinit_current_scene ())
       ERROR_RETURN (false, "deinit current scene");
-
-   unload_fixed_font_images ();
 
    return true;
 }

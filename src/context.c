@@ -11,8 +11,8 @@ context_create (void)
    if (c == NULL)
       ERRNO_RETURN (NULL, "malloc");
 
-   c->app = calloc (1, sizeof (App));
-   if (c->app == NULL)
+   c->event = calloc (1, sizeof (Event));
+   if (c->event == NULL)
       ERRNO_RETURN (NULL, "app calloc");
 
    c->fonts = calloc (1, sizeof (Fonts));
@@ -44,7 +44,7 @@ context_free (Context* c)
    if (c == NULL)
       return;
 
-   free (c->app);
+   free (c->event);
    free (c->fonts);
    free (c->input);
    log_free (c->log);

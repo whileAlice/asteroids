@@ -27,6 +27,14 @@ get_texture_origin_y (void)
    return GetScreenHeight () % PIXEL_BUFFER_HEIGHT / 2;
 }
 
+void
+set_buffer_scale_and_texture_origin (Context* c)
+{
+   c->pixel_buffer->integer_scale    = get_integer_scale ();
+   c->pixel_buffer->texture_origin_x = get_texture_origin_x ();
+   c->pixel_buffer->texture_origin_y = get_texture_origin_y ();
+}
+
 int
 get_mouse_x (Context* c)
 {

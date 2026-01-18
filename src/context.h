@@ -2,6 +2,7 @@
 
 #include "font.h"
 #include "log_buffer.h"
+#include "scene.h"
 
 #include <pthread.h>
 #include <raylib.h>
@@ -10,11 +11,15 @@
 #define READ_END  0
 #define WRITE_END 1
 
-typedef struct app {
+typedef struct event {
    pthread_mutex_t mutex;
    pthread_cond_t  cond;
-   bool            should_quit;
-} App;
+   bool            should_quit_app;
+   bool            should_deinit_game;
+   bool            should_change_scene;
+   SceneID         new_scene;
+   bool            has_event;
+} Event;
 
 typedef struct fonts {
    FixedFont fixed_font;
@@ -53,7 +58,7 @@ typedef struct state {
 } State;
 
 typedef struct context {
-   App*         app;
+   Event*       event;
    Fonts*       fonts;
    Input*       input;
    Log*         log;

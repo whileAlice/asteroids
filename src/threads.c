@@ -28,9 +28,9 @@ threads_init (Context* c)
    s_thread_ids[MAIN_THREAD] = pthread_self ();
 
    pthread_mutex_init (&c->log->mutex, NULL);
-   pthread_mutex_init (&c->app->mutex, NULL);
+   pthread_mutex_init (&c->event->mutex, NULL);
    pthread_cond_init (&c->log->cond, NULL);
-   pthread_cond_init (&c->app->cond, NULL);
+   pthread_cond_init (&c->event->cond, NULL);
 
    int err = pthread_create (&s_thread_ids[STREAMER_THREAD], NULL,
                              std_streamer_thread, (void*)c);
@@ -53,7 +53,7 @@ threads_deinit (Context* c)
    if (err != 0)
       ERRNO_SET_RETURN (false, err, "pthread mutex destroy log");
 
-   err = pthread_mutex_destroy (&c->app->mutex);
+   err = pthread_mutex_destroy (&c->event->mutex);
    if (err != 0)
       ERRNO_SET_RETURN (false, err, "pthread mutex destroy app");
 
@@ -61,7 +61,7 @@ threads_deinit (Context* c)
    if (err != 0)
       ERRNO_SET_RETURN (false, err, "pthread cond destroy log");
 
-   err = pthread_cond_destroy (&c->app->cond);
+   err = pthread_cond_destroy (&c->event->cond);
    if (err != 0)
       ERRNO_SET_RETURN (false, err, "pthread cond destroy app");
 

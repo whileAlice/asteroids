@@ -2,10 +2,11 @@
 #include "config.h"
 #include "context.h"
 #include "error.h"
+#include "event.h"
 #include "game_loop.h"
 #include "log.h"
 #include "threads.h"
-#include "window_loop.h"
+#include "window_utils.h"
 
 #include <fcntl.h>
 #include <pthread.h>
@@ -58,23 +59,58 @@ main (void)
 
    c->pixel_buffer->image   = image;
    c->pixel_buffer->texture = LoadTextureFromImage (*c->pixel_buffer->image);
+   if (!load_fixed_fonts (&c->fonts->fixed_font, &c->fonts->inverted_fixed_font,
+                          FIXED_FONT_PATH))
+      ERROR_RETURN (EXIT_FAILURE, "load fixed fonts");
 
-   if (!game_init (c))
-      ERROR_RETURN (EXIT_FAILURE, "game init");
+   set_buffer_scale_and_texture_origin (c);
 
-   window_loop (c);
+   while (!should_quit_app (c))
+   {
 
-   if (!game_deinit (c))
-      ERROR_RETURN (EXIT_FAILURE, "game deinit");
+      if (!game_init (c))
+         ERROR_RETURN (EXIT_FAILURE, "game init");
 
+      while (!c->event->should_deinit_game)
+      {
+         while (!c->event->has_event)
+         {
+            if (IsWindowResized ())
+               set_buffer_scale_and_texture_origin (c);
+
+            float dt = GetFrameTime ();
+
+            game_update (c, dt);
+            game_draw (c, c->pixel_buffer->image);
+
+            UpdateTexture (c->pixel_buffer->texture,
+                           c->pixel_buffer->image->data);
+
+            BeginDrawing ();
+
+            ClearBackground (BLACK);
+            DrawTextureEx (
+               c->pixel_buffer->texture,
+               (Vector2){ .x = (float)c->pixel_buffer->texture_origin_x,
+                          .y = (float)c->pixel_buffer->texture_origin_y },
+               .0, (float)c->pixel_buffer->integer_scale, WHITE);
+
+            EndDrawing ();
+         }
+
+         if (!event_handle (c))
+            ERROR_RETURN (EXIT_FAILURE, "event handle");
+      }
+
+      if (!game_deinit (c))
+         ERROR_RETURN (EXIT_FAILURE, "game deinit");
+   }
+
+   unload_fixed_font_images ();
    UnloadTexture (c->pixel_buffer->texture);
    buffer_image_free (image);
 
    CloseWindow ();
-
-   IN_LOCK(&c->app->mutex,
-      c->app->should_quit = true;
-   );
 
    const char wakeup = '\0';
    length = write (c->log->wakeup_pipe[WRITE_END], &wakeup, sizeof (char));

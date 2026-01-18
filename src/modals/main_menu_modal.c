@@ -2,9 +2,9 @@
 
 #include "../context.h"
 #include "../draw_utils.h"
+#include "../event.h"
 #include "../scene.h"
 #include "../scene_manager.h"
-#include "../threads.h"
 
 #include <assert.h>
 #include <raylib.h>
@@ -26,38 +26,6 @@ static bool       s_should_show_menu;
 static MenuOption s_menu_option;
 static SceneID    s_new_scene;
 static Vector2    s_selector_offset = { .x = -10.f, .y = 0.f };
-
-void
-select_option (Context* c)
-{
-   switch (s_menu_option)
-   {
-      case DEMO_OPTION           : s_new_scene = DEMO_SCENE; break;
-      case VECTOR_PRODUCTS_OPTION: s_new_scene = VECTOR_PRODUCTS_SCENE; break;
-      case EXIT_OPTION:
-         IN_LOCK(&c->app->mutex,
-            c->app->should_quit = true;
-         );
-         break;
-      default:
-         // TODO: implement unreachable
-         assert (0 == "Unreachable");
-   }
-}
-
-void
-next_option ()
-{
-   if (s_menu_option < OPTION_COUNT - 1)
-      s_menu_option++;
-}
-
-void
-prev_option ()
-{
-   if (s_menu_option > 0)
-      s_menu_option--;
-}
 
 bool
 main_menu_modal_init (UILayer* self, Context* c)
@@ -86,7 +54,11 @@ main_menu_modal_update (UILayer* self, Context* c, float dt)
          prev_option ();
 
       if (IsKeyPressed (KEY_ENTER))
+      {
          select_option (c);
+         if (!is_current_scene (s_new_scene))
+            change_scene (c, s_new_scene);
+      }
    }
 
    if (IsKeyPressed (KEY_ESCAPE))
@@ -136,4 +108,34 @@ main_menu_modal_draw (UILayer* self, Context* c, Image* buf)
          draw_text (buf, &c->fonts->fixed_font, exit_selector_origin, "*");
       }
    }
+}
+
+void
+select_option (Context* c)
+{
+   switch (s_menu_option)
+   {
+      case DEMO_OPTION           : s_new_scene = DEMO_SCENE; break;
+      case VECTOR_PRODUCTS_OPTION: s_new_scene = VECTOR_PRODUCTS_SCENE; break;
+      case EXIT_OPTION           : app_quit_initiate (c); break;
+      default:
+         // TODO: implement unreachable
+         assert (0 == "Unreachable");
+   }
+
+   s_should_show_menu = false;
+}
+
+void
+next_option ()
+{
+   if (s_menu_option < OPTION_COUNT - 1)
+      s_menu_option++;
+}
+
+void
+prev_option ()
+{
+   if (s_menu_option > 0)
+      s_menu_option--;
 }
