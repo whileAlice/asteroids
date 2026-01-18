@@ -29,9 +29,9 @@
    while (0)
 
 #define INFO_PREFIX    "INFO:"
-#define WARNING_PREFIX "WARNING:"
-#define ERROR_PREFIX   "ERROR:"
-#define DEBUG_PREFIX   "DEBUG:"
+#define WARNING_PREFIX "WARN:"
+#define ERROR_PREFIX   "!ERR:"
+#define DEBUG_PREFIX   "~DBG:"
 #define RAYLIB_PREFIX  "[raylib]"
 
 static const char* s_log_names[LOG_COUNT] = {

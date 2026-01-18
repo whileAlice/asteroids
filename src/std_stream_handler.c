@@ -1,4 +1,4 @@
-#include "std_streamer_thread.h"
+#include "std_stream_handler.h"
 
 #include "context.h"
 #include "error.h"
@@ -25,7 +25,7 @@
 #define BUFFER_SIZE 4096
 
 void*
-std_streamer_thread (void* arg)
+std_stream_handler (void* arg)
 {
    Context* c = (Context*)arg;
    Log*     l = c->log;
@@ -78,8 +78,8 @@ std_streamer_thread (void* arg)
          err = fcntl (stream_contexts[i].pipe[j], F_SETFL, flags | O_NONBLOCK);
          if (err == -1)
          {
-            ERRNO_GOTO (end, "%s pipe[%zu] O_NONBLOCK",
-                        stream_contexts[i].name, j);
+            ERRNO_GOTO (end, "%s pipe[%zu] O_NONBLOCK", stream_contexts[i].name,
+                        j);
          }
       }
    }
@@ -147,11 +147,11 @@ std_streamer_thread (void* arg)
    }
 
    // wait for main
-   LOG_DEBUG_DUP ("syncing...");
-   SYNC_THREAD (&l->mutex, &l->cond, l->thread_ready_count,
-                STREAMER_THREAD_COUNT, l->should_abort_init, restore_streams);
+   LOG_DEBUG_DUP ("Syncing with the main thread...");
+   SYNC_THREAD (&l->mutex, &l->cond, l->thread_ready_count, LOG_THREAD_COUNT,
+                l->should_abort_init, restore_streams);
 
-   LOG_DEBUG_DUP ("ready!");
+   LOG_DEBUG_DUP ("Ready!");
 
    int ready_count;
    while (true)
@@ -216,12 +216,13 @@ std_streamer_thread (void* arg)
             );
          }
          else
-            LOG_DEBUG_DUP ("received data from %s pipe: %s", c->name, buf);
+            LOG_DEBUG_DUP ("Received data from the %s pipe: '%s'", c->name,
+                           buf);
       }
    }
 
 restore_streams:
-   LOG_DEBUG_DUP ("restoring streams...");
+   LOG_DEBUG_DUP ("Restoring streams...");
 
    // restore std stream fds from backups
    for (size_t i = 0; i <= STDERR_EVENT; ++i)
@@ -269,7 +270,7 @@ restore_streams:
    }
 
 end:
-   log_debug ("returning...");
+   log_debug ("Returning...");
 
    ThreadIdx thread_idx = get_thread_idx (pthread_self ());
    if (has_error (thread_idx))

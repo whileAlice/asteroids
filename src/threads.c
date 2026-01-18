@@ -1,7 +1,7 @@
 #include "threads.h"
 
 #include "context.h"
-#include "std_streamer_thread.h"
+#include "std_stream_handler.h"
 
 #include <assert.h>
 #include <errno.h>
@@ -17,8 +17,8 @@
 static pthread_t s_thread_ids[THREAD_COUNT];
 
 static const char* thread_names[THREAD_COUNT] = {
-   [MAIN_THREAD]     = "main",
-   [STREAMER_THREAD] = "streamer",
+   [MAIN_THREAD]           = "main",
+   [STREAM_HANDLER_THREAD] = "stream handler",
 };
 
 bool
@@ -32,8 +32,8 @@ threads_init (Context* c)
    pthread_cond_init (&c->log->cond, NULL);
    pthread_cond_init (&c->event->cond, NULL);
 
-   int err = pthread_create (&s_thread_ids[STREAMER_THREAD], NULL,
-                             std_streamer_thread, (void*)c);
+   int err = pthread_create (&s_thread_ids[STREAM_HANDLER_THREAD], NULL,
+                             std_stream_handler, (void*)c);
    if (err != 0)
       ERRNO_SET_RETURN (false, err, "pthread create");
 
@@ -45,7 +45,7 @@ threads_deinit (Context* c)
 {
    int err;
 
-   err = pthread_join (s_thread_ids[STREAMER_THREAD], NULL);
+   err = pthread_join (s_thread_ids[STREAM_HANDLER_THREAD], NULL);
    if (err != 0)
       ERRNO_SET_RETURN (false, err, "pthread join");
 

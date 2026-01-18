@@ -39,14 +39,14 @@ typedef struct context Context;
 
 typedef enum thread_idx {
    MAIN_THREAD = 0,
-   STREAMER_THREAD,
+   STREAM_HANDLER_THREAD,
    THREAD_COUNT,
 } ThreadIdx;
 
 #define UNKNOWN_THREAD THREAD_COUNT
 
-// main + streamer
-#define STREAMER_THREAD_COUNT 2
+// main + stream handler
+#define LOG_THREAD_COUNT 2
 
 // clang-format off
 bool        threads_init       (Context* c);

@@ -43,10 +43,12 @@ main (void)
    if (!threads_init (c))
       ERROR_GOTO (end, "threads init");
 
-   log_debug ("syncing...");
+   log_info ("Initializing game...");
+
+   log_debug ("Syncing with the standard stream handler thread...");
    SYNC_THREAD (&l->mutex, &l->cond, l->thread_ready_count,
-                STREAMER_THREAD_COUNT, l->should_abort_init, end);
-   log_debug ("ready!");
+                LOG_THREAD_COUNT, l->should_abort_init, end);
+   log_debug ("Ready!");
 
    SetTraceLogCallback (&raylib_tracelog_callback);
 
@@ -124,7 +126,7 @@ main (void)
    context_free (c);
 
 end:
-   log_debug ("returning...");
+   log_debug ("Returning...");
 
    if (has_error (UNKNOWN_THREAD))
    {
