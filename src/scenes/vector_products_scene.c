@@ -41,7 +41,7 @@ vector_products_scene_init (Context* c)
 }
 
 bool
-vector_products_scene_deinit ()
+vector_products_scene_deinit (Context* c)
 {
    return true;
 }

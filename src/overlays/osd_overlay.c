@@ -15,7 +15,7 @@ osd_overlay_init (Context* c)
 }
 
 bool
-osd_overlay_deinit (void)
+osd_overlay_deinit (Context* c)
 {
    return true;
 }
@@ -35,9 +35,9 @@ osd_overlay_draw (Context* c)
    if (!c->state->should_show_osd)
       return;
 
-   FixedFont* font = c->state->should_show_log ? &c->fonts->inverted_fixed_font
-                                               : &c->fonts->fixed_font;
-   set_draw_font(font);
+   FixedFont* font = c->state->has_overlay ? &c->fonts->fixed_font_inverted
+                                           : &c->fonts->fixed_font;
+   set_draw_font (font);
 
    draw_textf_i (10, 10, "fps: %*.1f", 4, s_fps);
 }

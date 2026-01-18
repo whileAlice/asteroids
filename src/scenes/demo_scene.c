@@ -24,7 +24,7 @@ demo_scene_init (Context* c)
 }
 
 bool
-demo_scene_deinit ()
+demo_scene_deinit (Context* c)
 {
    UnloadImage (*s_hornet_image);
    free (s_hornet_image);

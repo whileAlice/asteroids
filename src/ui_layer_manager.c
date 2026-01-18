@@ -46,7 +46,7 @@ static ActiveUILayers s_active_modals;
 static ActiveUILayers s_active_overlays;
 
 bool
-init_active_ui_layers (ActiveUILayers* active_ui_layers, size_t layer_count)
+active_ui_layers_init (ActiveUILayers* active_ui_layers, size_t layer_count)
 {
    UILayer** ui_layers = calloc (layer_count, sizeof (UILayer*));
    if (ui_layers == NULL)
@@ -62,28 +62,34 @@ init_active_ui_layers (ActiveUILayers* active_ui_layers, size_t layer_count)
 }
 
 bool
-init_active_modals (void)
+active_modals_init (void)
 {
    assert (sizeof (s_modals) / sizeof (s_modals[0]) == MODAL_COUNT);
 
-   return init_active_ui_layers (&s_active_modals, MODAL_COUNT);
+   if (!active_ui_layers_init (&s_active_modals, MODAL_COUNT))
+      ERROR_RETURN (false, "active ui layers init");
+
+   return true;
 }
 
 bool
-init_active_overlays (void)
+active_overlays_init (void)
 {
    assert (sizeof (s_overlays) / sizeof (s_overlays[0]) == OVERLAY_COUNT);
 
-   return init_active_ui_layers (&s_active_overlays, OVERLAY_COUNT);
+   if (!active_ui_layers_init (&s_active_overlays, OVERLAY_COUNT))
+      ERROR_RETURN (false, "active ui layers init");
+
+   return true;
 }
 
 bool
-deinit_active_ui_layers (ActiveUILayers* active_ui_layers)
+deinit_active_ui_layers (Context* c, ActiveUILayers* active_ui_layers)
 {
    for (size_t i = 0; i < active_ui_layers->size; ++i)
    {
       UILayer* layer = active_ui_layers->array[i];
-      if (!layer->deinit ())
+      if (!layer->deinit (c))
          ERROR_RETURN (false, "deinit");
    }
 
@@ -94,15 +100,21 @@ deinit_active_ui_layers (ActiveUILayers* active_ui_layers)
 }
 
 bool
-deinit_active_modals (void)
+deinit_active_modals (Context* c)
 {
-   return deinit_active_ui_layers (&s_active_modals);
+   if (!deinit_active_ui_layers (c, &s_active_modals))
+      ERROR_RETURN (false, "deinit active ui layers");
+
+   return true;
 }
 
 bool
-deinit_active_overlays (void)
+deinit_active_overlays (Context* c)
 {
-   return deinit_active_ui_layers (&s_active_overlays);
+   if (!deinit_active_ui_layers (c, &s_active_overlays))
+      ERROR_RETURN (false, "deinit active ui layers");
+
+   return true;
 }
 
 bool
@@ -121,7 +133,10 @@ add_active_ui_layer (Context* c, ActiveUILayers* active_ui_layers,
    active_ui_layers->array[active_ui_layers->size] = ui_layer;
    active_ui_layers->size++;
 
-   return ui_layer->init (c);
+   if (!ui_layer->init (c))
+      ERROR_RETURN (false, "init");
+
+   return true;
 }
 
 bool
@@ -130,7 +145,10 @@ add_modal (Context* c, ModalID modal_id)
    assert (modal_id >= 0);
    assert (modal_id < MODAL_COUNT);
 
-   return add_active_ui_layer (c, &s_active_modals, &s_modals[modal_id]);
+   if (!add_active_ui_layer (c, &s_active_modals, &s_modals[modal_id]))
+      ERROR_RETURN (false, "add active ui layer");
+
+   return true;
 }
 
 bool
@@ -139,11 +157,14 @@ add_overlay (Context* c, OverlayID overlay_id)
    assert (overlay_id >= 0);
    assert (overlay_id < OVERLAY_COUNT);
 
-   return add_active_ui_layer (c, &s_active_overlays, &s_overlays[overlay_id]);
+   if (!add_active_ui_layer (c, &s_active_overlays, &s_overlays[overlay_id]))
+      ERROR_RETURN (false, "add active ui layer");
+
+   return true;
 }
 
 bool
-remove_active_ui_layer (ActiveUILayers* active_ui_layers, UILayer* ui_layer)
+remove_active_ui_layer (Context* c, ActiveUILayers* active_ui_layers, UILayer* ui_layer)
 {
 
    if (active_ui_layers->size == 0)
@@ -162,7 +183,7 @@ remove_active_ui_layer (ActiveUILayers* active_ui_layers, UILayer* ui_layer)
       {
          found_at = (int)i;
 
-         if (!layer->deinit ())
+         if (!layer->deinit (c))
             ERROR_RETURN (false, "deinit");
 
          break;
@@ -182,21 +203,27 @@ remove_active_ui_layer (ActiveUILayers* active_ui_layers, UILayer* ui_layer)
 }
 
 bool
-remove_modal (ModalID modal_id)
+remove_modal (Context* c, ModalID modal_id)
 {
    assert (modal_id >= 0);
    assert (modal_id < MODAL_COUNT);
 
-   return remove_active_ui_layer (&s_active_modals, &s_modals[modal_id]);
+   if (!remove_active_ui_layer (c, &s_active_modals, &s_modals[modal_id]))
+      ERROR_RETURN (false, "remove active ui layer");
+
+   return true;
 }
 
 bool
-remove_overlay (OverlayID overlay_id)
+remove_overlay (Context* c, OverlayID overlay_id)
 {
    assert (overlay_id >= 0);
    assert (overlay_id < OVERLAY_COUNT);
 
-   return remove_active_ui_layer (&s_active_overlays, &s_overlays[overlay_id]);
+   if (!remove_active_ui_layer (c, &s_active_overlays, &s_overlays[overlay_id]))
+      ERROR_RETURN (false, "remove active ui layer");
+
+   return true;
 }
 
 void
@@ -259,4 +286,24 @@ get_ui_layer_name (UILayer* ui_layer)
          return s_overlay_names[i];
 
    return "unknown UI layer";
+}
+
+ModalID
+get_modal_id (UILayer* ui_layer)
+{
+   for (size_t i = 0; i < MODAL_COUNT; ++i)
+      if (s_modals[i].init == ui_layer->init)
+         return (ModalID)i;
+
+   return -1;
+}
+
+bool
+is_modal_open (ModalID modal_id)
+{
+   for (size_t i = 0; i < s_active_modals.size; ++i)
+      if (get_modal_id (s_active_modals.array[i]) == modal_id)
+         return true;
+
+   return false;
 }

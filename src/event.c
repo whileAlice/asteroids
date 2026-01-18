@@ -4,7 +4,9 @@
 #include "error.h"
 #include "scene_manager.h"
 #include "threads.h"
+#include "ui_layer_manager.h"
 
+// TODO: this can be simplified
 bool
 event_handle (Context* c)
 {
@@ -17,6 +19,23 @@ event_handle (Context* c)
          ERROR_RETURN (false, "set current scene");
 
       c->event->should_change_scene = false;
+   }
+
+   // TODO: isn't this split a bit too much?
+   if (c->event->should_open_main_menu)
+   {
+      if (!add_modal (c, MAIN_MENU_MODAL))
+         ERROR_RETURN (false, "add modal");
+
+      c->event->should_open_main_menu = false;
+   }
+
+   if (c->event->should_close_main_menu)
+   {
+      if (!remove_modal (c, MAIN_MENU_MODAL))
+         ERROR_RETURN (false, "remove modal");
+
+      c->event->should_close_main_menu = false;
    }
 
    c->event->has_event = false;
@@ -53,4 +72,21 @@ should_quit_app (Context* c)
    );
 
    return should_quit;
+}
+
+void
+toggle_main_menu (Context* c)
+{
+   if (is_modal_open (MAIN_MENU_MODAL))
+   {
+      c->event->should_close_main_menu = true;
+      c->state->is_paused              = false;
+   }
+   else
+   {
+      c->event->should_open_main_menu = true;
+      c->state->is_paused             = true;
+   }
+
+   c->event->has_event = true;
 }

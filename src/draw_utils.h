@@ -47,6 +47,9 @@ void draw_rgb_image (Vector2 origin, const Image* img);
 /* draws an alpha-blended image */
 void draw_rgba_image (Vector2 origin, const Image* img);
 
+/* draw buffer-sized RGB overlay */
+void draw_rgb_overlay (const Image* img);
+
 /* draws a glyph using the statically set font */
 void draw_glyph (int origin_x, int origin_y, size_t index);
 
@@ -136,6 +139,9 @@ void clear_rgb_image (Image* img, Color3 pixel);
 
 /* makes a clone of the given image */
 Image* clone_image (const Image* src);
+
+/* frees pixel data and the image struct */
+void image_free (Image* img);
 
 /* calculates index from xy coordinates */
 int index_from_xy (const Image* img, int x, int y);

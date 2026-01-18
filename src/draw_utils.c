@@ -160,6 +160,20 @@ draw_rgba_image (Vector2 origin, const Image* img)
 }
 
 void
+draw_rgb_overlay (const Image* img)
+{
+   assert (img->width == s_buffer->width);
+   assert (img->height == s_buffer->height);
+
+   Color3* dst_addr = s_buffer->data;
+   Color3* src_addr = img->data;
+   size_t  count    = img->width * img->height;
+
+   while (count--)
+      *dst_addr++ = *src_addr++;
+}
+
+void
 draw_glyph (int origin_x, int origin_y, size_t glyph_index)
 {
    const int total_glyph_width = s_font->glyph_width +
@@ -753,6 +767,13 @@ clone_image (const Image* src)
    };
 
    return image;
+}
+
+void
+image_free (Image* image)
+{
+   free (image->data);
+   free (image);
 }
 
 int

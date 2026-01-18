@@ -16,6 +16,8 @@ typedef struct event {
    pthread_cond_t  cond;
    bool            should_quit_app;
    bool            should_deinit_game;
+   bool            should_open_main_menu;
+   bool            should_close_main_menu;
    bool            should_change_scene;
    SceneID         new_scene;
    bool            has_event;
@@ -23,12 +25,13 @@ typedef struct event {
 
 typedef struct fonts {
    FixedFont fixed_font;
-   FixedFont inverted_fixed_font;
+   FixedFont fixed_font_inverted;
 } Fonts;
 
 typedef struct input {
    bool toggle_osd;
    bool toggle_log;
+   bool toggle_main_menu;
    bool log_page_up;
    bool log_page_down;
    bool switch_fullscreen;
@@ -54,6 +57,8 @@ typedef struct pixel_buffer {
 typedef struct state {
    bool   should_show_osd;
    bool   should_show_log;
+   bool   has_overlay;
+   bool   is_paused;
    size_t current_log_page;
 } State;
 

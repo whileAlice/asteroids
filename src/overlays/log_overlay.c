@@ -14,7 +14,7 @@ log_overlay_init (Context* c)
    // log_printf ("loaded fixed font with %d glyphs",
    //             c->fonts->fixed_font.glyph_count);
    // log_printf ("loaded inverted fixed font with %d glyphs",
-   //             c->fonts->inverted_fixed_font.glyph_count);
+   //             c->fonts->fixed_font_inverted.glyph_count);
 
    s_overlay = clone_image (c->pixel_buffer->image);
    if (s_overlay == NULL)
@@ -24,7 +24,7 @@ log_overlay_init (Context* c)
 }
 
 bool
-log_overlay_deinit (void)
+log_overlay_deinit (Context* c)
 {
    UnloadImage (*s_overlay);
    free (s_overlay);
@@ -56,6 +56,6 @@ log_overlay_draw (Context* c)
 
    box_blur (s_overlay, c->pixel_buffer->image, 1);
    brighten_image_by_percentage (s_overlay, s_overlay, 20);
-   draw_rgb_image (Vector2Zero (), s_overlay);
+   draw_rgb_overlay (s_overlay);
    // draw_log (c, buf, true);
 }

@@ -12,23 +12,17 @@
 bool
 game_init (Context* c)
 {
-   if (!set_current_scene (c, MAIN_MENU_BG_SCENE))
-      ERROR_RETURN (false, "set current scene");
-
-   if (!init_active_modals ())
-      ERROR_RETURN (false, "init active modals");
-
-   if (!init_active_overlays ())
-      ERROR_RETURN (false, "init active overlays");
+   if (!set_current_scene (c, EMPTY_SCENE))
+      ERROR_RETURN (false, "set empty scene");
 
    if (!add_modal (c, MAIN_MENU_MODAL))
-      ERROR_RETURN (false, "add modal");
+      ERROR_RETURN (false, "add main menu modal");
 
    if (!add_overlay (c, LOG_OVERLAY))
-      ERROR_RETURN (false, "log overlay");
+      ERROR_RETURN (false, "add log overlay");
 
    if (!add_overlay (c, OSD_OVERLAY))
-      ERROR_RETURN (false, "osd overlay");
+      ERROR_RETURN (false, "add osd overlay");
 
    c->state->should_show_osd = true;
 
@@ -38,13 +32,13 @@ game_init (Context* c)
 bool
 game_deinit (Context* c)
 {
-   if (!deinit_active_overlays ())
+   if (!deinit_active_overlays (c))
       ERROR_RETURN (false, "deinit active overlays");
 
-   if (!deinit_active_modals ())
+   if (!deinit_active_modals (c))
       ERROR_RETURN (false, "deinit active modals");
 
-   if (!deinit_current_scene ())
+   if (!deinit_current_scene (c))
       ERROR_RETURN (false, "deinit current scene");
 
    return true;
@@ -56,7 +50,9 @@ game_update (Context* c, float dt)
    update_input (c);
    update_state (c);
 
-   update_current_scene (c, dt);
+   if (!c->state->is_paused)
+      update_current_scene (c, dt);
+
    update_active_modals (c, dt);
    update_active_overlays (c, dt);
 }

@@ -17,11 +17,9 @@ buffer_image_create (void)
    if (image == NULL)
       ERRNO_RETURN (NULL, "image malloc");
 
-   Color3* pixels = (Color3*)malloc (PIXEL_COUNT * sizeof (Color3));
+   Color3* pixels = calloc (PIXEL_COUNT, sizeof (Color3));
    if (pixels == NULL)
-      ERRNO_RETURN (NULL, "pixels malloc");
-
-   memset (pixels, 0, sizeof (Color3));
+      ERRNO_RETURN (NULL, "pixels calloc");
 
    *image = (Image){
       .data    = pixels,
@@ -32,11 +30,4 @@ buffer_image_create (void)
    };
 
    return image;
-}
-
-void
-buffer_image_free (Image* image)
-{
-   free (image->data);
-   free (image);
 }

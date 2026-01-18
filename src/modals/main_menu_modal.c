@@ -24,58 +24,62 @@ typedef enum menu_option {
    OPTION_COUNT,
 } MenuOption;
 
-static bool       s_should_show_menu;
-static MenuOption s_menu_option;
+static MenuOption s_menu_option = DEMO_OPTION;
 static SceneID    s_new_scene;
+static Image*     s_overlay;
 
 bool
 main_menu_modal_init (Context* c)
 {
-   s_should_show_menu = true;
-   s_menu_option      = DEMO_OPTION;
+   s_overlay = clone_image (c->pixel_buffer->image);
+   if (s_overlay == NULL)
+      ERROR_RETURN (false, "clone image");
+
+   box_blur (s_overlay, c->pixel_buffer->image, 1);
+   brighten_image_by_percentage (s_overlay, s_overlay, 20);
+
+   c->state->has_overlay = true;
 
    return true;
 }
 
 bool
-main_menu_modal_deinit (void)
+main_menu_modal_deinit (Context* c)
 {
+   image_free (s_overlay);
+
+   c->state->has_overlay = false;
+
    return true;
 }
 
 void
 main_menu_modal_update (Context* c, float dt)
 {
-   if (s_should_show_menu)
+   if (IsKeyPressed (KEY_DOWN))
+      next_option ();
+
+   if (IsKeyPressed (KEY_UP))
+      prev_option ();
+
+   if (IsKeyPressed (KEY_ENTER))
    {
-      if (IsKeyPressed (KEY_DOWN))
-         next_option ();
-
-      if (IsKeyPressed (KEY_UP))
-         prev_option ();
-
-      if (IsKeyPressed (KEY_ENTER))
+      select_option (c);
+      if (!is_current_scene (s_new_scene))
       {
-         select_option (c);
-         if (!is_current_scene (s_new_scene))
-            change_scene (c, s_new_scene);
+         change_scene (c, s_new_scene);
+         toggle_main_menu (c);
       }
-   }
-
-   if (IsKeyPressed (KEY_ESCAPE))
-   {
-      if (!is_current_scene (MAIN_MENU_BG_SCENE))
-         s_should_show_menu = !s_should_show_menu;
    }
 }
 
 void
 main_menu_modal_draw (Context* c)
 {
-   if (!s_should_show_menu)
-      return;
-
+   set_draw_font (&c->fonts->fixed_font_inverted);
    const int buffer_width = c->pixel_buffer->image->width;
+
+   draw_rgb_overlay (s_overlay);
 
    draw_text_center_i (0, 40, buffer_width, TITLE_TEXT);
 
@@ -110,8 +114,6 @@ select_option (Context* c)
          // TODO: implement unreachable
          assert (0 == "Unreachable");
    }
-
-   s_should_show_menu = false;
 }
 
 void

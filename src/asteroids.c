@@ -7,6 +7,7 @@
 #include "game_loop.h"
 #include "log.h"
 #include "threads.h"
+#include "ui_layer_manager.h"
 #include "window_utils.h"
 
 #include <fcntl.h>
@@ -65,13 +66,19 @@ main (void)
 
    pb->image   = image;
    pb->texture = LoadTextureFromImage (*pb->image);
-   if (!load_fixed_fonts (&f->fixed_font, &f->inverted_fixed_font,
+   if (!load_fixed_fonts (&f->fixed_font, &f->fixed_font_inverted,
                           FIXED_FONT_PATH))
       ERROR_GOTO (end, "load fixed fonts");
 
    set_draw_font (&f->fixed_font);
    set_draw_buffer (pb->image);
    set_buffer_scale_and_texture_origin (c);
+
+   if (!active_modals_init ())
+      ERROR_GOTO (end, "active modals init");
+
+   if (!active_overlays_init ())
+      ERROR_GOTO (end, "active overlays init");
 
    while (!should_quit_app (c))
    {
@@ -114,7 +121,7 @@ main (void)
 
    unload_fixed_font_images ();
    UnloadTexture (pb->texture);
-   buffer_image_free (image);
+   image_free (image);
 
    CloseWindow ();
 

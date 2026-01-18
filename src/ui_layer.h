@@ -6,7 +6,7 @@
 
 typedef struct ui_layer {
    bool (*init) (Context* c);
-   bool (*deinit) (void);
+   bool (*deinit) (Context* c);
    void (*update) (Context* c, float dt);
    void (*draw) (Context* c);
 } UILayer;
