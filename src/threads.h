@@ -39,7 +39,7 @@ typedef struct context Context;
 
 typedef enum thread_idx {
    MAIN_THREAD = 0,
-   STREAM_HANDLER_THREAD,
+   PHYSICS_THREAD,
    THREAD_COUNT,
 } ThreadIdx;
 

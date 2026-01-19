@@ -10,47 +10,23 @@
 #include "ui_layer_manager.h"
 #include "window_utils.h"
 
-#include <fcntl.h>
-#include <pthread.h>
 #include <raylib.h>
-#include <stdlib.h>
-#include <unistd.h>
 
 int
 main (void)
 {
-   int          err;
-   ssize_t      length;
    Context*     c  = context_create ();
-   Log*         l  = c->log;
+   if (c == NULL)
+      ERROR_GOTO (end, "context create");
+
    PixelBuffer* pb = c->pixel_buffer;
    Fonts*       f  = c->fonts;
    Event*       e  = c->event;
-
-   err = pipe (l->wakeup_pipe);
-   if (err == -1)
-      ERRNO_GOTO (end, "wakeup pipe");
-
-   for (size_t i = 0; i <= WRITE_END; ++i)
-   {
-      int flags = fcntl (l->wakeup_pipe[i], F_GETFL);
-      if (flags == -1)
-         ERRNO_GOTO (end, "wakeup pipe[%zu] F_GETFL", i);
-
-      err = fcntl (l->wakeup_pipe[i], F_SETFL, flags | O_NONBLOCK);
-      if (err == -1)
-         ERRNO_GOTO (end, "wakeup pipe[%zu] O_NONBLOCK", i);
-   }
 
    if (!threads_init (c))
       ERROR_GOTO (end, "threads init");
 
    log_info ("Initializing game...");
-
-   log_debug ("Syncing with the standard stream handler thread...");
-   SYNC_TWO_THREADS (&l->mutex, &l->cond, l->thread_ready_count,
-                     l->should_abort_init, end);
-   log_debug ("Ready!");
 
    SetTraceLogCallback (&raylib_tracelog_callback);
 
@@ -82,7 +58,6 @@ main (void)
 
    while (!should_quit_app (c))
    {
-
       if (!game_init (c))
          ERROR_GOTO (end, "game init");
 
@@ -124,11 +99,6 @@ main (void)
    image_free (image);
 
    CloseWindow ();
-
-   const char wakeup = '\0';
-   length = write (l->wakeup_pipe[WRITE_END], &wakeup, sizeof (char));
-   if (length == -1)
-      ERRNO_GOTO (end, "wakeup pipe write");
 
    if (!threads_deinit (c))
       ERROR_GOTO (end, "threads deinit");

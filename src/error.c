@@ -16,7 +16,7 @@
 
 static Error* s_errors[ERROR_COUNT] = {
    [MAIN_THREAD]     = NULL,
-   [STREAM_HANDLER_THREAD] = NULL,
+   [PHYSICS_THREAD] = NULL,
    [UNKNOWN_THREAD]  = NULL,
 };
 
