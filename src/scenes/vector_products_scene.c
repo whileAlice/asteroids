@@ -186,11 +186,11 @@ vector_products_scene_draw (Context* c)
    draw_circle_f (s_point_b, 3.f, s_color_b);
    draw_circle_f (s_point_c, 3.f, s_color_c);
 
-   draw_textf (get_origin (c, s_point_a), "A1: %.f, A2: %.f",
+   draw_textf (get_origin (c, s_point_a), 0, "A1: %.f, A2: %.f",
                (double)s_point_a.x, (double)INVERT_Y (s_point_a.y));
-   draw_textf (get_origin (c, s_point_b), "B1: %.f, B2: %.f",
+   draw_textf (get_origin (c, s_point_b), 0, "B1: %.f, B2: %.f",
                (double)s_point_b.x, (double)INVERT_Y (s_point_b.y));
-   draw_textf (get_origin (c, s_point_c), "C1: %.f, C2: %.f",
+   draw_textf (get_origin (c, s_point_c), 0, "C1: %.f, C2: %.f",
                (double)s_point_c.x, (double)INVERT_Y (s_point_c.y));
 
    draw_text_center_i (120, 20, 200, "cross-product magnitude");

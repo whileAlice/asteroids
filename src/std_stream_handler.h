@@ -1,5 +1,6 @@
 #pragma once
 
+#include "log.h"
 #include <stdio.h>
 
 typedef struct kevent64_s  Kevent64_s;
@@ -19,6 +20,7 @@ typedef struct stream_context {
    int         stream_fd_original;
    FILE*       stream_file_copy;
    FILE*       stream_file_original;
+   LogIdx      target_log;
 } StreamContext;
 
 void* std_stream_handler (void* arg);

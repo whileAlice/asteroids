@@ -35,7 +35,7 @@
 #define RAYLIB_PREFIX  "[raylib]"
 
 static const char* s_log_names[LOG_COUNT] = {
-   [STOUT_LOG]    = "stdout",
+   [STDOUT_LOG]   = "stdout",
    [STDERR_LOG]   = "stderr",
    [INTERNAL_LOG] = "internal",
 };

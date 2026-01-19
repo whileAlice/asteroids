@@ -54,16 +54,16 @@ void draw_rgb_overlay (const Image* img);
 void draw_glyph (int origin_x, int origin_y, size_t index);
 
 /* draws text using the statically set font (int) */
-void draw_text_i (int origin_x, int origin_y, const char* text);
+void draw_text_i (int origin_x, int origin_y, int max_width, const char* text);
 
 /* draws text using the statically set font */
-void draw_text (Vector2 origin, const char* text);
+void draw_text (Vector2 origin, int max_width, const char* text);
 
 /* draws formatted text using the statically set font (int) */
-void draw_textf_i (int origin_x, int origin_y, const char* fmt, ...);
+void draw_textf_i (int origin_x, int origin_y, int max_width, const char* fmt, ...);
 
 /* draws formatted text using the statically set font */
-void draw_textf (Vector2 origin, const char* fmt, ...);
+void draw_textf (Vector2 origin, int max_width, const char* fmt, ...);
 
 /* draws centered text using the statically set font; returns new origin x (int) */
 int draw_text_center_i (int origin_x, int origin_y, int max_width, const char* text);

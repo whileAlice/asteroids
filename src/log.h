@@ -13,7 +13,7 @@
    while (0)
 
 typedef enum log_idx {
-   STOUT_LOG = 0,
+   STDOUT_LOG = 0,
    STDERR_LOG,
    INTERNAL_LOG,
    LOG_COUNT,

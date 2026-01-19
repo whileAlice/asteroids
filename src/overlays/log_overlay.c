@@ -2,20 +2,17 @@
 
 #include "../context.h"
 #include "../draw_utils.h"
+#include "../log.h"
 
 #include <raylib.h>
 #include <raymath.h>
 
 static Image* s_overlay;
+static char*  s_logs[LOG_COUNT];
 
 bool
 log_overlay_init (Context* c)
 {
-   // log_printf ("loaded fixed font with %d glyphs",
-   //             c->fonts->fixed_font.glyph_count);
-   // log_printf ("loaded inverted fixed font with %d glyphs",
-   //             c->fonts->fixed_font_inverted.glyph_count);
-
    s_overlay = clone_image (c->pixel_buffer->image);
    if (s_overlay == NULL)
       ERROR_RETURN (false, "clone image");
@@ -38,6 +35,10 @@ log_overlay_update (Context* c, float dt)
    if (!c->state->should_show_log)
       return;
 
+   // TODO: switch to LogViews
+   for (size_t i = 0; i < LOG_COUNT; ++i)
+      s_logs[i] = log_buffer_copy (c->log->buffers[i]);
+
    if (c->input->log_page_up)
    {
       // previous_log_page (c);
@@ -54,8 +55,14 @@ log_overlay_draw (Context* c)
    if (!c->state->should_show_log)
       return;
 
+   set_draw_font (&c->fonts->fixed_font_inverted);
+
    box_blur (s_overlay, c->pixel_buffer->image, 1);
    brighten_image_by_percentage (s_overlay, s_overlay, 20);
    draw_rgb_overlay (s_overlay);
-   // draw_log (c, buf, true);
+
+   draw_text_i (0, 0, c->pixel_buffer->image->width, s_logs[STDERR_LOG]);
+
+   for (size_t i = 0; i < LOG_COUNT; ++i)
+      free (s_logs[i]);
 }

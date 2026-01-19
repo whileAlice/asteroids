@@ -8,7 +8,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define PIXEL_COUNT PIXEL_BUFFER_WIDTH* PIXEL_BUFFER_HEIGHT
+#define PIXEL_COUNT PIXEL_BUFFER_WIDTH * PIXEL_BUFFER_HEIGHT
 
 Image*
 buffer_image_create (void)

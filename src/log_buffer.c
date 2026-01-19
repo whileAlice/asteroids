@@ -13,9 +13,9 @@ log_buffer_create (const size_t size)
    if (lb == NULL)
       ERRNO_RETURN (NULL, "malloc");
 
-   lb->data = malloc (LOG_BUFFER_SIZE * sizeof (char));
+   lb->data = calloc (LOG_BUFFER_SIZE, sizeof (char));
    if (lb->data == NULL)
-      ERRNO_RETURN (NULL, "data malloc");
+      ERRNO_RETURN (NULL, "data calloc");
 
    lb->pos      = 0;
    lb->size     = 0;
@@ -96,7 +96,7 @@ log_buffer_print (LogBuffer* lb)
 char*
 log_buffer_copy (LogBuffer* lb)
 {
-   char* log = malloc (lb->size * sizeof (char));
+   char* log = malloc ((lb->size + 1) * sizeof (char));
    if (log == NULL)
       ERRNO_RETURN (NULL, "malloc");
 
@@ -105,6 +105,8 @@ log_buffer_copy (LogBuffer* lb)
    // TODO: rewrite using double memcpy
    for (size_t i = 0; i < lb->size; ++i)
       log[i] = lb->data[(i + first_char_pos) % lb->capacity];
+
+   log[lb->size] = '\0';
 
    return log;
 }

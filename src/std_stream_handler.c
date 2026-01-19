@@ -47,11 +47,13 @@ std_stream_handler (void* arg)
          .name                 = "stdout",
          .stream_fd_original   = STDOUT_FILENO,
          .stream_file_original = stdout,
+         .target_log           = STDOUT_LOG,
       },
       [STDERR_EVENT] = {
          .name                 = "stderr",
          .stream_fd_original   = STDERR_FILENO,
          .stream_file_original = stderr,
+         .target_log           = STDERR_LOG,
       },
       // wakeup pipe is managed by the main thread
       [WAKEUP_EVENT]  = {
@@ -207,11 +209,9 @@ std_stream_handler (void* arg)
          // and print them to the terminal
          if (c->stream_file_copy != NULL)
          {
-            assert (i < INTERNAL_LOG);
-
             fputs (buf, c->stream_file_copy);
             IN_LOCK(&l->mutex,
-               log_buffer_write_string (l->buffers[i], buf);
+               log_buffer_write_string (l->buffers[c->target_log], buf);
             );
          }
          else
@@ -254,8 +254,10 @@ restore_streams:
          default: buf[length] = '\0';
       }
 
+      LogIdx target_log = stream_contexts[i].target_log;
+
       IN_LOCK(&l->mutex,
-         log_buffer_write_string (l->buffers[i], buf);
+         log_buffer_write_string (l->buffers[target_log], buf);
       );
       fputs (buf, stream_contexts[i].stream_file_original);
    }

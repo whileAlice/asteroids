@@ -233,7 +233,7 @@ draw_glyph (int origin_x, int origin_y, size_t glyph_index)
 }
 
 void
-draw_text_i (int origin_x, int origin_y, const char* text)
+draw_text_i (int origin_x, int origin_y, int max_width, const char* text)
 {
    assert (s_font->glyph_count > 0);
 
@@ -245,8 +245,15 @@ draw_text_i (int origin_x, int origin_y, const char* text)
 
    for (int i = 0; i < text_len; ++i)
    {
-      if (current_origin_x >= s_buffer->width)
+      if (max_width == 0 && current_origin_x >= s_buffer->width)
          return;
+
+      if (max_width > 0 &&
+          current_origin_x > max_width - s_font->glyph_width + 1)
+      {
+         current_origin_x  = origin_x;
+         current_origin_y += stride_y;
+      }
 
       switch (text[i])
       {
@@ -271,13 +278,14 @@ draw_text_i (int origin_x, int origin_y, const char* text)
 }
 
 void
-draw_text (Vector2 origin, const char* text)
+draw_text (Vector2 origin, int max_width, const char* text)
 {
-   draw_text_i ((int)roundf (origin.x), (int)roundf (origin.y), text);
+   draw_text_i ((int)roundf (origin.x), (int)roundf (origin.y), max_width,
+                text);
 }
 
 void
-draw_textf_i (int origin_x, int origin_y, const char* fmt, ...)
+draw_textf_i (int origin_x, int origin_y, int max_width, const char* fmt, ...)
 {
    va_list args;
    va_start (args, fmt);
@@ -286,12 +294,12 @@ draw_textf_i (int origin_x, int origin_y, const char* fmt, ...)
 
    va_end (args);
 
-   draw_text_i (origin_x, origin_y, str);
+   draw_text_i (origin_x, origin_y, max_width, str);
    free (str);
 }
 
 void
-draw_textf (Vector2 origin, const char* fmt, ...)
+draw_textf (Vector2 origin, int max_width, const char* fmt, ...)
 {
    va_list args;
    va_start (args, fmt);
@@ -300,7 +308,7 @@ draw_textf (Vector2 origin, const char* fmt, ...)
 
    va_end (args);
 
-   draw_text (origin, str);
+   draw_text (origin, max_width, str);
    free (str);
 }
 
@@ -311,7 +319,7 @@ draw_text_center_i (int origin_x, int origin_y, int max_width, const char* text)
 
    int origin_x_centered =
       center_horizontally_i (origin_x, text_width, max_width);
-   draw_text_i (origin_x_centered, origin_y, text);
+   draw_text_i (origin_x_centered, origin_y, max_width * 2, text);
 
    return origin_x_centered;
 }
@@ -323,7 +331,7 @@ draw_text_center (Vector2 origin, int max_width, const char* text)
 
    Vector2 origin_centered =
       center_horizontally (origin, text_width, max_width);
-   draw_text (origin_centered, text);
+   draw_text (origin_centered, max_width * 2, text);
 
    return origin_centered;
 }
