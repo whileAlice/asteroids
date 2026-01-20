@@ -13,10 +13,11 @@ log_buffer_create (const size_t size)
    if (lb == NULL)
       ERRNO_RETURN (NULL, "malloc");
 
-   lb->data = calloc (LOG_BUFFER_SIZE, sizeof (char));
-   if (lb->data == NULL)
+   char* data = calloc (LOG_BUFFER_SIZE, sizeof (char));
+   if (data == NULL)
       ERRNO_RETURN (NULL, "data calloc");
 
+   lb->data     = data;
    lb->pos      = 0;
    lb->size     = 0;
    lb->capacity = size;

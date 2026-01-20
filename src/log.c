@@ -1,7 +1,7 @@
 #include "log.h"
 
 #include "config.h"
-#include "context.h"
+#include "raylib.h"
 #include "terminal.h"
 #include "threads.h"
 
@@ -32,45 +32,47 @@
 #define WARNING_PREFIX "WARN:"
 #define ERROR_PREFIX   "!ERR:"
 #define DEBUG_PREFIX   "~DBG:"
-#define RAYLIB_PREFIX  "[raylib]"
+#define RAYLIB_PREFIX  "RLIB:"
 
+static LogBuffer*  s_logs[LOG_COUNT];
 static const char* s_log_names[LOG_COUNT] = {
-   [STDOUT_LOG]   = "stdout",
-   [STDERR_LOG]   = "stderr",
+   [RAYLIB_LOG]   = "raylib",
    [INTERNAL_LOG] = "internal",
 };
 
-Log*
-log_create (void)
+bool
+log_init (void)
 {
-   Log* log = calloc (1, sizeof (Log));
-   if (log == NULL)
-      ERRNO_RETURN (NULL, "calloc");
-
-   log->buffers = calloc (LOG_COUNT, sizeof (LogBuffer*));
-
    for (size_t i = 0; i < LOG_COUNT; ++i)
    {
-      log->buffers[i] = log_buffer_create (LOG_BUFFER_SIZE);
-      if (log->buffers[i] == NULL)
-         ERROR_RETURN (NULL, "log buffer create %s", s_log_names[i]);
+      s_logs[i] = log_buffer_create (LOG_BUFFER_SIZE);
+      if (s_logs[i] == NULL)
+         ERROR_RETURN (false, "log buffer create %s", s_log_names[i]);
    }
 
-   return log;
+   return true;
 }
 
 void
-log_free (Log* log)
+log_deinit (void)
 {
-   if (log == NULL)
-      return;
-
    for (size_t i = 0; i < LOG_COUNT; ++i)
-      log_buffer_free (log->buffers[i]);
+   {
+      log_buffer_free (s_logs[i]);
+      s_logs[i] = NULL;
+   }
+}
 
-   free (log->buffers);
+char*
+get_log_copy (LogIdx log_idx)
+{
+   assert (log_idx >= 0);
+   assert (log_idx < LOG_COUNT);
 
-   free (log);
+   LogBuffer* lb  = s_logs[log_idx];
+   char*      log = log_buffer_copy (lb);
+
+   return log;
 }
 
 void
@@ -80,8 +82,9 @@ vlog_to_file (FILE* output, LogLevel log_level, const char* fmt, va_list args)
    va_copy (args_copy, args);
    va_copy (args_fail, args);
 
-   TermColor   prefix_color = TERM_DEFAULT;
-   const char* prefix       = INFO_PREFIX;
+   char*       term_message;
+   TermColor   prefix_color;
+   const char* prefix;
 
    switch (log_level)
    {
@@ -101,60 +104,66 @@ vlog_to_file (FILE* output, LogLevel log_level, const char* fmt, va_list args)
          prefix_color = TERM_MAGENTA;
          prefix       = DEBUG_PREFIX;
          break;
+      case RAYLIB_LOG_LEVEL:
+         prefix_color = TERM_GREEN;
+         prefix       = RAYLIB_PREFIX;
+         break;
       default: assert (0 == "Unreachable");
    }
 
-   char* thread_prefix = strdupf ("[%s]", thread_id_to_name (pthread_self ()));
-   if (thread_prefix == NULL)
-      PRINT_GOTO (fail, "strdupf");
-
-   char* formatted_thread_prefix = get_term_formatted_string (
-      TERM_GREEN, TERM_DEFAULT, false, thread_prefix);
-   if (formatted_thread_prefix == NULL)
-      PRINT_GOTO (fail, "get term formatted thread prefix");
-
-   // TODO: assemble all these strings in a single temp buffer
    char* formatted_prefix =
       get_term_formatted_string (prefix_color, TERM_DEFAULT, true, prefix);
    if (formatted_prefix == NULL)
       PRINT_GOTO (fail, "get term formatted prefix");
 
-   int length = vsnprintf (NULL, 0, fmt, args);
-   if (length < 0)
-      PERROR_GOTO (fail, "null vsnprintf");
-
-   size_t message_size = length * sizeof (char) + 1;
-   char*  message      = malloc (message_size);
+   char* message = vstrdupf (fmt, args);
    if (message == NULL)
-      PERROR_GOTO (fail, "message malloc");
+      PRINT_GOTO (fail, "message vstrdupf");
 
-   length = vsnprintf (message, message_size, fmt, args_copy);
-   if (length < 0)
-      PERROR_GOTO (fail, "message vsnprintf");
+   if (log_level != RAYLIB_LOG_LEVEL)
+   {
+      const char* thread_name = thread_id_to_name (pthread_self ());
 
-   length = snprintf (NULL, 0, "%s %s %s\n", formatted_prefix,
-                      formatted_thread_prefix, message);
-   if (length < 0)
-      PERROR_GOTO (fail, "null snprintf");
+      char* thread_prefix = strdupf ("[%s]", thread_name);
+      if (thread_prefix == NULL)
+         PRINT_GOTO (fail, "thread prefix strdupf");
 
-   size_t message_with_prefix_size = length * sizeof (char) + 1;
-   char*  message_with_prefix      = malloc (message_with_prefix_size);
-   if (message_with_prefix == NULL)
-      PERROR_GOTO (fail, "message with prefix malloc");
+      char* formatted_thread_prefix = get_term_formatted_string (
+         TERM_GREEN, TERM_DEFAULT, false, thread_prefix);
+      if (formatted_thread_prefix == NULL)
+         PRINT_GOTO (fail, "get term formatted thread prefix");
 
-   length =
-      snprintf (message_with_prefix, message_with_prefix_size, "%s %s %s\n",
-                formatted_prefix, formatted_thread_prefix, message);
-   if (length < 0)
-      PERROR_GOTO (fail, "message with prefix snprintf");
+      char* log_buffer_message =
+         strdupf ("%s %s %s\n", prefix, thread_prefix, message);
+      if (log_buffer_message == NULL)
+         PRINT_GOTO (fail, "buffer message with prefix strdupf");
 
-   fputs (message_with_prefix, output);
+      log_buffer_write_string (s_logs[INTERNAL_LOG], log_buffer_message);
+
+      term_message = strdupf ("%s %s %s\n", formatted_prefix,
+                              formatted_thread_prefix, message);
+      if (term_message == NULL)
+         PRINT_GOTO (fail, "term message strdupf");
+
+      free (thread_prefix);
+      free (log_buffer_message);
+      free (formatted_thread_prefix);
+   }
+   else
+   {
+      log_buffer_write_string (s_logs[RAYLIB_LOG], message);
+      log_buffer_write_char (s_logs[RAYLIB_LOG], '\n');
+
+      term_message = strdupf ("%s %s\n", formatted_prefix, message);
+      if (term_message == NULL)
+         PRINT_GOTO (fail, "term message strdupf");
+   }
+
+   fputs (term_message, output);
 
    free (message);
-   free (thread_prefix);
+   free (term_message);
    free (formatted_prefix);
-   free (message_with_prefix);
-   free (formatted_thread_prefix);
 
    return;
 
@@ -228,63 +237,34 @@ raylib_tracelog_callback (int log_level, const char* fmt, va_list args)
    va_copy (args_copy, args);
    va_copy (args_fail, args);
 
-   // TODO: assemble all these strings in a single temp buffer and preferably
-   // integrate it with the assembly in log_to_file
-   char* formatted_prefix =
-      get_term_formatted_string (TERM_CYAN, TERM_DEFAULT, false, RAYLIB_PREFIX);
-   if (formatted_prefix == NULL)
-      PRINT_GOTO (fail, "get term formatted string");
-
-   int length = vsnprintf (NULL, 0, fmt, args);
-   // TODO: maybe these shouldn't be as immediately fatal as in our logs?
-   if (length < 0)
-      PERROR_GOTO (fail, "null vsnprintf");
-
-   size_t message_size = length * sizeof (char) + 1;
-   char*  message      = malloc (message_size);
+   char* message = vstrdupf (fmt, args);
    if (message == NULL)
-      PERROR_GOTO (fail, "message malloc");
-
-   length = vsnprintf (message, message_size, fmt, args_copy);
-   if (length < 0)
-      PERROR_GOTO (fail, "message vsnprintf");
-
-   length = snprintf (NULL, 0, "%s %s", formatted_prefix, message);
-   if (length < 0)
-      PERROR_GOTO (fail, "null snprintf");
-
-   size_t message_with_prefix_size = length * sizeof (char) + 1;
-   char*  message_with_prefix      = malloc (message_with_prefix_size);
-   if (message_with_prefix == NULL)
-      PERROR_GOTO (fail, "message with prefix malloc");
-
-   length = snprintf (message_with_prefix, message_with_prefix_size, "%s %s",
-                      formatted_prefix, message);
-   if (length < 0)
-      PERROR_GOTO (fail, "message with prefix snprintf");
+      PRINT_GOTO (fail, "message vstrdupf");
 
    switch (log_level)
    {
       case LOG_TRACE:
+         log_to_file (stderr, RAYLIB_LOG_LEVEL, "%s %s", "TRACE:", message);
+         break;
       case LOG_DEBUG:
-         log_to_file (stderr, DEBUG_LOG_LEVEL, message_with_prefix);
+         log_to_file (stderr, RAYLIB_LOG_LEVEL, "%s %s", "DEBUG:", message);
          break;
       case LOG_INFO:
-         log_to_file (stderr, INFO_LOG_LEVEL, message_with_prefix);
+         log_to_file (stderr, RAYLIB_LOG_LEVEL, "%s %s", "INFO:", message);
          break;
       case LOG_WARNING:
-         log_to_file (stderr, WARNING_LOG_LEVEL, message_with_prefix);
+         log_to_file (stderr, RAYLIB_LOG_LEVEL, "%s %s", "WARNING:", message);
          break;
       case LOG_ERROR:
+         log_to_file (stderr, RAYLIB_LOG_LEVEL, "%s %s", "ERROR:", message);
+         break;
       case LOG_FATAL:
-         log_to_file (stderr, ERROR_LOG_LEVEL, message_with_prefix);
+         log_to_file (stderr, RAYLIB_LOG_LEVEL, "%s %s", "FATAL:", message);
          break;
       default: assert (0 == "Unreachable");
    }
 
    free (message);
-   free (formatted_prefix);
-   free (message_with_prefix);
 
    return;
 

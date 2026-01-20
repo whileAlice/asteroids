@@ -1,6 +1,7 @@
 #include "terminal.h"
 
 #include "error.h"
+#include "string.h"
 
 #include <stdlib.h>
 
@@ -33,8 +34,6 @@ static const char* s_bg_codes[] = {
    [TERM_DEFAULT] = "49",
 };
 
-// TODO: this should be also preferably integrated with
-// the various string assemblies in log.c
 char*
 get_term_formatted_string (TermColor fg_color, TermColor bg_color, bool is_bold,
                            const char* str)
@@ -42,21 +41,13 @@ get_term_formatted_string (TermColor fg_color, TermColor bg_color, bool is_bold,
    const char* format =
       is_bold ? TERM_FORMAT_WITH_BOLD : TERM_FORMAT_WITHOUT_BOLD;
 
-   int length =
-      snprintf (NULL, 0, format, TERM_FORMAT_START, s_fg_codes[fg_color],
-                s_bg_codes[bg_color], str, TERM_FORMAT_RESET);
-   if (length < 0)
-      ERRNO_RETURN (NULL, "null snprintf");
+   char* formatted_string =
+      strdupf (format, TERM_FORMAT_START, s_fg_codes[fg_color],
+               s_bg_codes[bg_color], str, TERM_FORMAT_RESET);
+   if (formatted_string == NULL)
+      ERROR_RETURN (NULL, "formatted string strdupf");
 
-   size_t formatted_str_size = length * sizeof (char) + 1;
-   char*  formatted_str      = malloc (formatted_str_size);
-   length = snprintf (formatted_str, formatted_str_size, format,
-                      TERM_FORMAT_START, s_fg_codes[fg_color],
-                      s_bg_codes[bg_color], str, TERM_FORMAT_RESET);
-   if (length < 0)
-      ERRNO_RETURN (NULL, "formatted str snprintf");
-
-   return formatted_str;
+   return formatted_string;
 }
 
 void

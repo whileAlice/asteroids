@@ -1,6 +1,7 @@
 #include "error.h"
 
 #include "log.h"
+#include "string.h"
 #include "threads.h"
 
 #include <assert.h>

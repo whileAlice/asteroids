@@ -15,7 +15,10 @@
 int
 main (void)
 {
-   Context*     c  = context_create ();
+   if (!log_init ())
+      ERROR_GOTO (end, "log init");
+
+   Context* c = context_create ();
    if (c == NULL)
       ERROR_GOTO (end, "context create");
 
@@ -120,6 +123,8 @@ end:
       error_print (thread_idx);
       return EXIT_FAILURE;
    }
+
+   log_deinit ();
 
    return EXIT_SUCCESS;
 }

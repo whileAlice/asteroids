@@ -1,7 +1,5 @@
 #include "context.h"
 
-#include "log.h"
-
 #include <stdlib.h>
 
 Context*
@@ -23,10 +21,6 @@ context_create (void)
    if (c->input == NULL)
       ERRNO_RETURN (NULL, "input calloc");
 
-   c->log = log_create ();
-   if (c->log == NULL)
-      ERROR_RETURN (NULL, "log create");
-
    c->pixel_buffer = calloc (1, sizeof (PixelBuffer));
    if (c->pixel_buffer == NULL)
       ERRNO_RETURN (NULL, "pixel buffer calloc");
@@ -47,7 +41,6 @@ context_free (Context* c)
    free (c->event);
    free (c->fonts);
    free (c->input);
-   log_free (c->log);
    free (c->pixel_buffer);
    free (c->state);
 

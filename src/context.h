@@ -37,15 +37,6 @@ typedef struct input {
    bool switch_fullscreen;
 } Input;
 
-typedef struct log {
-   LogBuffer**     buffers;
-   pthread_mutex_t mutex;
-   pthread_cond_t  cond;
-   size_t          thread_ready_count;
-   bool            should_abort_init;
-   int             wakeup_pipe[2];
-} Log;
-
 typedef struct pixel_buffer {
    Image*    image;
    Texture2D texture;
@@ -66,10 +57,10 @@ typedef struct context {
    Event*       event;
    Fonts*       fonts;
    Input*       input;
-   Log*         log;
    PixelBuffer* pixel_buffer;
    State*       state;
 } Context;
 
+// clang-format off
 Context* context_create (void);
-void     context_free (Context* c);
+void context_free (Context* c);

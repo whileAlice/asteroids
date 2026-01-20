@@ -18,7 +18,7 @@ static pthread_t s_thread_ids[THREAD_COUNT];
 
 static const char* thread_names[THREAD_COUNT] = {
    [MAIN_THREAD]    = "main",
-   [PHYSICS_THREAD] = "physics_thread",
+   [PHYSICS_THREAD] = "physics",
 };
 
 bool
@@ -27,9 +27,7 @@ threads_init (Context* c)
    // this assumes threads_init is run by the main thread
    s_thread_ids[MAIN_THREAD] = pthread_self ();
 
-   pthread_mutex_init (&c->log->mutex, NULL);
    pthread_mutex_init (&c->event->mutex, NULL);
-   pthread_cond_init (&c->log->cond, NULL);
    pthread_cond_init (&c->event->cond, NULL);
 
    int err = pthread_create (&s_thread_ids[PHYSICS_THREAD], NULL,
@@ -49,17 +47,9 @@ threads_deinit (Context* c)
    if (err != 0)
       ERRNO_SET_RETURN (false, err, "pthread join");
 
-   err = pthread_mutex_destroy (&c->log->mutex);
-   if (err != 0)
-      ERRNO_SET_RETURN (false, err, "pthread mutex destroy log");
-
    err = pthread_mutex_destroy (&c->event->mutex);
    if (err != 0)
       ERRNO_SET_RETURN (false, err, "pthread mutex destroy app");
-
-   err = pthread_cond_destroy (&c->log->cond);
-   if (err != 0)
-      ERRNO_SET_RETURN (false, err, "pthread cond destroy log");
 
    err = pthread_cond_destroy (&c->event->cond);
    if (err != 0)

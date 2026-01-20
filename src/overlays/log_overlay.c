@@ -37,7 +37,7 @@ log_overlay_update (Context* c, float dt)
 
    // TODO: switch to LogViews
    for (size_t i = 0; i < LOG_COUNT; ++i)
-      s_logs[i] = log_buffer_copy (c->log->buffers[i]);
+      s_logs[i] = get_log_copy ((LogIdx)i);
 
    if (c->input->log_page_up)
    {
@@ -49,6 +49,7 @@ log_overlay_update (Context* c, float dt)
    }
 }
 
+// TODO: colorful logs!
 void
 log_overlay_draw (Context* c)
 {
@@ -61,7 +62,7 @@ log_overlay_draw (Context* c)
    brighten_image_by_percentage (s_overlay, s_overlay, 20);
    draw_rgb_overlay (s_overlay);
 
-   draw_text_i (0, 0, c->pixel_buffer->image->width, s_logs[STDERR_LOG]);
+   draw_text_i (5, 5, c->pixel_buffer->image->width - 5, s_logs[0]);
 
    for (size_t i = 0; i < LOG_COUNT; ++i)
       free (s_logs[i]);

@@ -10,7 +10,6 @@ void*
 physics_thread (void* arg)
 {
    Context* c = (Context*)arg;
-   Log*     l = c->log;
 
    log_debug ("Returning...");
 
@@ -18,11 +17,6 @@ physics_thread (void* arg)
    if (has_error (thread_idx))
    {
       error_print (thread_idx);
-
-      IN_LOCK (&l->mutex,
-         l->should_abort_init = true;
-         pthread_cond_signal (&l->cond);
-      );
       app_quit_initiate (c);
    }
 
