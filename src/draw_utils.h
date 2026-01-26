@@ -63,10 +63,17 @@ size_t draw_text_i (int origin_x, int origin_y, int max_width, int max_height, c
 
 /* returns the index of the first character from the given text
    that does not fit the given dimensions or 0 if everything fits */
-size_t get_next_text_index_i (int origin_x, int origin_y, int max_width, int max_height, const char* text);
+size_t get_next_text_page_index_i (int origin_x, int origin_y, int max_width, int max_height, const char* text);
+
+/* returns the index of the first character from the given text
+   that does not fit the given width or 0 if everything fits */
+size_t get_next_text_line_index_i (int origin_x, int max_width, const char* text);
 
 /* returns all indices for first characters on each page of the given text */
 Indices get_text_page_indices_i (int origin_x, int origin_y, int max_width, int max_height, const char* text);
+
+/* returns all indices for first characters of each line of the given text */
+Indices get_text_line_indices_i (int origin_x, int max_width, const char* text);
 
 /* frees all indices */
 void indices_free (Indices indices);

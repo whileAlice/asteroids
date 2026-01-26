@@ -13,6 +13,7 @@
 #include <string.h>
 
 #define MAX_TEXT_PAGE_INDICES 256
+#define MAX_TEXT_LINE_INDICES 4096
 
 static Image*           s_buffer;
 static const FixedFont* s_font;
@@ -288,7 +289,7 @@ draw_text_i (int origin_x, int origin_y, int max_width, int max_height,
             continue;
       }
 
-      if (max_width > 0 && current_origin_x > max_x - s_font->glyph_width + 1)
+      if (max_width > 0 && current_origin_x > max_x - s_font->glyph_width)
       {
          current_origin_x  = origin_x;
          current_origin_y += stride_y;
@@ -314,8 +315,8 @@ draw_text_i (int origin_x, int origin_y, int max_width, int max_height,
 
 // TODO: this is exactly like draw_text_i - can it be combined?
 size_t
-get_next_text_index_i (int origin_x, int origin_y, int max_width,
-                       int max_height, const char* text)
+get_next_text_page_index_i (int origin_x, int origin_y, int max_width,
+                            int max_height, const char* text)
 {
    assert (text != NULL);
 
@@ -369,18 +370,67 @@ get_next_text_index_i (int origin_x, int origin_y, int max_width,
    return 0;
 }
 
+size_t
+get_next_text_line_index_i (int origin_x, int max_width, const char* text)
+{
+   assert (text != NULL);
+
+   const int stride_x = s_font->glyph_width + s_font->glyph_spacing;
+   const int max_x = max_width ? CLAMPR (origin_x + max_width, s_buffer->width)
+                               : s_buffer->width;
+
+   for (size_t i = 0; i < strlen (text); ++i)
+   {
+      if (text[i] == '\n')
+         return i + 1;
+
+      if (origin_x > max_x - s_font->glyph_width)
+         return i;
+
+      origin_x += stride_x;
+   }
+
+   return 0;
+}
+
 Indices
 get_text_page_indices_i (int origin_x, int origin_y, int max_width,
                          int max_height, const char* text)
 {
    size_t data_tmp[MAX_TEXT_PAGE_INDICES];
-   data_tmp[0] = 0;
 
    size_t i, next_index, total_index;
    i = next_index = total_index = 0;
-   while (
-      (next_index = get_next_text_index_i (origin_x, origin_y, max_width,
-                                           max_height, &text[total_index])) > 0)
+   data_tmp[0]                  = 0;
+   while ((next_index =
+              get_next_text_page_index_i (origin_x, origin_y, max_width,
+                                          max_height, &text[total_index])) > 0)
+   {
+      total_index   += next_index;
+      data_tmp[++i]  = total_index;
+   }
+
+   size_t  count     = i + 1;
+   size_t  data_size = sizeof (size_t) * count;
+   size_t* data      = malloc (data_size);
+   memcpy (data, data_tmp, data_size);
+
+   return (Indices){
+      .data  = data,
+      .count = count,
+   };
+}
+
+Indices
+get_text_line_indices_i (int origin_x, int max_width, const char* text)
+{
+   size_t data_tmp[MAX_TEXT_LINE_INDICES];
+
+   size_t i, next_index, total_index;
+   i = next_index = total_index = 0;
+   data_tmp[0]                  = 0;
+   while ((next_index = get_next_text_line_index_i (origin_x, max_width,
+                                                    &text[total_index])) > 0)
    {
       total_index   += next_index;
       data_tmp[++i]  = total_index;

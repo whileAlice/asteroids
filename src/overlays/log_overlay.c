@@ -7,9 +7,13 @@
 #include <raylib.h>
 #include <raymath.h>
 
-static Image* s_overlay;
-static char*  s_logs[LOG_COUNT];
-static size_t s_log_indices[LOG_COUNT];
+#define LINES_PER_PAGE 21
+
+static Image*  s_overlay;
+static char*   s_logs[LOG_COUNT];
+static Indices s_log_indices;
+static size_t  s_current_log_page;
+static size_t  s_last_log_page;
 
 bool
 log_overlay_init (Context* c)
@@ -17,6 +21,20 @@ log_overlay_init (Context* c)
    s_overlay = clone_image (c->pixel_buffer->image);
    if (s_overlay == NULL)
       ERROR_RETURN (false, "clone image");
+
+   // TODO: switch to LogViews or reuse memory
+   for (size_t i = 0; i < LOG_COUNT; ++i)
+      s_logs[i] = get_log_copy ((LogIdx)i);
+
+   s_log_indices =
+      get_text_line_indices_i (0, c->pixel_buffer->image->width, s_logs[0]);
+
+   s_last_log_page    = s_log_indices.count / LINES_PER_PAGE;
+   s_current_log_page = s_last_log_page;
+
+   indices_free (s_log_indices);
+   for (size_t i = 0; i < LOG_COUNT; ++i)
+      free (s_logs[i]);
 
    return true;
 }
@@ -36,17 +54,21 @@ log_overlay_update (Context* c, float dt)
    if (!c->state->should_show_log)
       return;
 
-   // TODO: switch to LogViews
    for (size_t i = 0; i < LOG_COUNT; ++i)
       s_logs[i] = get_log_copy ((LogIdx)i);
 
+   s_log_indices =
+      get_text_line_indices_i (0, c->pixel_buffer->image->width, s_logs[0]);
+
+   s_last_log_page = s_log_indices.count / LINES_PER_PAGE;
+
    if (c->input->log_page_up)
    {
-      // previous_log_page (c);
+      previous_log_page ();
    }
    if (c->input->log_page_down)
    {
-      // next_log_page (c);
+      next_log_page ();
    }
 }
 
@@ -63,14 +85,33 @@ log_overlay_draw (Context* c)
    brighten_image_by_percentage (s_overlay, s_overlay, 20);
    draw_rgb_overlay (s_overlay);
 
-   Indices page_indices = get_text_page_indices_i (
-      0, 0, c->pixel_buffer->image->width - 5, 100, s_logs[0]);
+   size_t text_index = s_current_log_page == s_last_log_page
+                        ? s_log_indices.count - LINES_PER_PAGE - 1
+                        : s_current_log_page * LINES_PER_PAGE;
 
-   draw_text_i (0, 0, c->pixel_buffer->image->width - 5, 100,
-                &s_logs[0][page_indices.data[page_indices.count - 1]]);
+   draw_text_i (5, 3, c->pixel_buffer->image->width,
+                c->pixel_buffer->image->height - 4,
+                &s_logs[0][s_log_indices.data[text_index]]);
 
-   indices_free (page_indices);
-
+   indices_free (s_log_indices);
    for (size_t i = 0; i < LOG_COUNT; ++i)
       free (s_logs[i]);
+}
+
+void
+previous_log_page (void)
+{
+   if (s_current_log_page == 0)
+      return;
+
+   s_current_log_page -= 1;
+}
+
+void
+next_log_page (void)
+{
+   if (s_current_log_page == s_last_log_page)
+      return;
+
+   s_current_log_page += 1;
 }
