@@ -94,22 +94,18 @@ log_buffer_print (LogBuffer* lb)
    fwrite (lv.bottom.data, sizeof (char), lv.bottom.length, stderr);
 }
 
-char*
-log_buffer_copy (LogBuffer* lb)
+void
+log_buffer_copy (char* dst, LogBuffer* lb)
 {
-   char* log = malloc ((lb->size + 1) * sizeof (char));
-   if (log == NULL)
-      ERRNO_RETURN (NULL, "malloc");
+   if (lb->size < lb->capacity)
+      memcpy (dst, lb->data, lb->size);
+   else
+   {
+      const size_t top_part_size = lb->capacity - lb->pos;
 
-   size_t first_char_pos = lb->size == lb->capacity ? lb->pos + 1 : 0;
-
-   // TODO: rewrite using double memcpy
-   for (size_t i = 0; i < lb->size; ++i)
-      log[i] = lb->data[(i + first_char_pos) % lb->capacity];
-
-   log[lb->size] = '\0';
-
-   return log;
+      memcpy (dst, &lb->data[lb->pos + 1], top_part_size);
+      memcpy (&dst[top_part_size], lb->data, lb->size - top_part_size);
+   }
 }
 
 void

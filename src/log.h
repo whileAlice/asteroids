@@ -1,7 +1,5 @@
 #pragma once
 
-#include "log_buffer.h"
-
 #include <stdarg.h>
 #include <stdio.h>
 
@@ -31,7 +29,7 @@ typedef enum log_level {
 // clang-format off
 bool log_init (void);
 void log_deinit (void);
-char* get_log_copy (LogIdx log_idx);
+void log_copy (char* dst, LogIdx log_idx);
 void vlog_to_file (FILE* output, LogLevel log_level, const char* fmt, va_list args);
 void log_to_file (FILE* output, LogLevel log_level, const char* fmt, ...);
 void log_info (const char* fmt, ...);

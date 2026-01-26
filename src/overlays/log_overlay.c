@@ -1,5 +1,6 @@
 #include "log_overlay.h"
 
+#include "../config.h"
 #include "../context.h"
 #include "../draw_utils.h"
 #include "../log.h"
@@ -24,7 +25,13 @@ log_overlay_init (Context* c)
 
    // TODO: switch to LogViews or reuse memory
    for (size_t i = 0; i < LOG_COUNT; ++i)
-      s_logs[i] = get_log_copy ((LogIdx)i);
+   {
+      s_logs[i] = calloc (LOG_BUFFER_SIZE, sizeof (char));
+      if (s_logs[i] == NULL)
+         ERROR_RETURN (false, "log %d calloc", i);
+
+      log_copy (s_logs[i], (LogIdx)i);
+   }
 
    s_log_indices =
       get_text_line_indices_i (0, c->pixel_buffer->image->width, s_logs[0]);
@@ -33,8 +40,6 @@ log_overlay_init (Context* c)
    s_current_log_page = s_last_log_page;
 
    indices_free (s_log_indices);
-   for (size_t i = 0; i < LOG_COUNT; ++i)
-      free (s_logs[i]);
 
    return true;
 }
@@ -42,6 +47,9 @@ log_overlay_init (Context* c)
 bool
 log_overlay_deinit (Context* c)
 {
+   for (size_t i = 0; i < LOG_COUNT; ++i)
+      free (s_logs[i]);
+
    UnloadImage (*s_overlay);
    free (s_overlay);
 
@@ -55,7 +63,7 @@ log_overlay_update (Context* c, float dt)
       return;
 
    for (size_t i = 0; i < LOG_COUNT; ++i)
-      s_logs[i] = get_log_copy ((LogIdx)i);
+      log_copy (s_logs[i], (LogIdx)i);
 
    s_log_indices =
       get_text_line_indices_i (0, c->pixel_buffer->image->width, s_logs[0]);
@@ -94,8 +102,6 @@ log_overlay_draw (Context* c)
                 &s_logs[0][s_log_indices.data[text_index]]);
 
    indices_free (s_log_indices);
-   for (size_t i = 0; i < LOG_COUNT; ++i)
-      free (s_logs[i]);
 }
 
 void

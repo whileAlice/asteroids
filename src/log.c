@@ -1,6 +1,7 @@
 #include "log.h"
 
 #include "config.h"
+#include "log_buffer.h"
 #include "raylib.h"
 #include "terminal.h"
 #include "threads.h"
@@ -54,18 +55,13 @@ log_deinit (void)
    }
 }
 
-
-
-char*
-get_log_copy (LogIdx log_idx)
+void
+log_copy (char* dst, LogIdx log_idx)
 {
    assert (log_idx >= 0);
    assert (log_idx < LOG_COUNT);
 
-   LogBuffer* lb  = s_logs[log_idx];
-   char*      log = log_buffer_copy (lb);
-
-   return log;
+   log_buffer_copy (dst, s_logs[log_idx]);
 }
 
 void
