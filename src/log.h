@@ -34,7 +34,6 @@ void log_deinit (void);
 char* get_log_copy (LogIdx log_idx);
 void vlog_to_file (FILE* output, LogLevel log_level, const char* fmt, va_list args);
 void log_to_file (FILE* output, LogLevel log_level, const char* fmt, ...);
-void log_to_buffer (LogBuffer* lb, LogLevel log_level, const char* str);
 void log_info (const char* fmt, ...);
 void log_warning (const char* fmt, ...);
 void log_error (const char* fmt, ...);

@@ -39,5 +39,5 @@ osd_overlay_draw (Context* c)
                                            : &c->fonts->fixed_font;
    set_draw_font (font);
 
-   draw_textf_i (10, 10, 0, "fps: %*.1f", 4, s_fps);
+   draw_textf_i (10, 10, 0, 0, "fps: %*.1f", 4, s_fps);
 }

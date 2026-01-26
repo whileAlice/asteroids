@@ -186,40 +186,40 @@ vector_products_scene_draw (Context* c)
    draw_circle_f (s_point_b, 3.f, s_color_b);
    draw_circle_f (s_point_c, 3.f, s_color_c);
 
-   draw_textf (get_origin (c, s_point_a), 0, "A1: %.f, A2: %.f",
+   draw_textf (get_origin (c, s_point_a), 0, 0, "A1: %.f, A2: %.f",
                (double)s_point_a.x, (double)INVERT_Y (s_point_a.y));
-   draw_textf (get_origin (c, s_point_b), 0, "B1: %.f, B2: %.f",
+   draw_textf (get_origin (c, s_point_b), 0, 0, "B1: %.f, B2: %.f",
                (double)s_point_b.x, (double)INVERT_Y (s_point_b.y));
-   draw_textf (get_origin (c, s_point_c), 0, "C1: %.f, C2: %.f",
+   draw_textf (get_origin (c, s_point_c), 0, 0, "C1: %.f, C2: %.f",
                (double)s_point_c.x, (double)INVERT_Y (s_point_c.y));
 
-   draw_text_center_i (120, 20, 200, "cross-product magnitude");
-   draw_text_center_i (120, 30, 200, "(C1-B1)(A2-B2)-(C2-B2)(A1-B1)");
+   draw_text_center_i (120, 20, 200, 0, "cross-product magnitude");
+   draw_text_center_i (120, 30, 200, 0, "(C1-B1)(A2-B2)-(C2-B2)(A1-B1)");
    draw_textf_center_i (
-      120, 40, 200, "(%*.f)(%*.f)-(%*.f)(%*.f) ", 3,
+      120, 40, 200, 0, "(%*.f)(%*.f)-(%*.f)(%*.f) ", 3,
       (double)s_point_c.x - (double)s_point_b.x, 3,
       (double)INVERT_Y (s_point_a.y) - (double)INVERT_Y (s_point_b.y), 3,
       (double)INVERT_Y (s_point_c.y) - (double)INVERT_Y (s_point_b.y), 3,
       (double)s_point_a.x - (double)s_point_b.x);
-   draw_textf_center_i (120, 50, 200, "%*.f", 6,
+   draw_textf_center_i (120, 50, 200, 0, "%*.f", 6,
                         (double)s_cross_product_magnitude);
 
-   draw_text_center_i (120, 70, 200, "dot product");
-   draw_text_center_i (120, 80, 200, "(C1-B1)(A1-B1)+(C2-B2)(A2-B2)");
+   draw_text_center_i (120, 70, 200, 0, "dot product");
+   draw_text_center_i (120, 80, 200, 0, "(C1-B1)(A1-B1)+(C2-B2)(A2-B2)");
    draw_textf_center_i (
-      120, 90, 200, "(%*.f)(%*.f)+(%*.f)(%*.f) ", 3,
+      120, 90, 200, 0, "(%*.f)(%*.f)+(%*.f)(%*.f) ", 3,
       (double)s_point_c.x - (double)s_point_b.x, 3,
       (double)s_point_a.x - (double)s_point_b.x, 3,
       (double)INVERT_Y (s_point_c.y) - (double)INVERT_Y (s_point_b.y), 3,
       (double)INVERT_Y (s_point_a.y) - (double)INVERT_Y (s_point_b.y));
-   draw_textf_center_i (120, 100, 200, "%*.f", 6, (double)s_dot_product);
+   draw_textf_center_i (120, 100, 200, 0, "%*.f", 6, (double)s_dot_product);
 
-   draw_text_center_i (120, 120, 200, "ABC angle");
+   draw_text_center_i (120, 120, 200, 0, "ABC angle");
    if (s_should_show_angle)
    {
-      draw_textf_center_i (120, 130, 200, "%*.f deg", 4,
+      draw_textf_center_i (120, 130, 200, 0, "%*.f deg", 4,
                            (double)s_abc_angle_signed * 180 / (double)PI);
-      draw_textf_center_i (120, 140, 200, "%*.f deg", 3,
+      draw_textf_center_i (120, 140, 200, 0, "%*.f deg", 3,
                            (double)s_abc_angle_360 * 180 / (double)PI);
    }
 }

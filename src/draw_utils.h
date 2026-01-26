@@ -54,28 +54,28 @@ void draw_rgb_overlay (const Image* img);
 void draw_glyph (int origin_x, int origin_y, size_t index);
 
 /* draws text using the statically set font (int) */
-void draw_text_i (int origin_x, int origin_y, int max_width, const char* text);
+size_t draw_text_i (int origin_x, int origin_y, int max_width, int max_height, const char* text);
 
 /* draws text using the statically set font */
-void draw_text (Vector2 origin, int max_width, const char* text);
+void draw_text (Vector2 origin, int max_width, int max_height, const char* text);
 
 /* draws formatted text using the statically set font (int) */
-void draw_textf_i (int origin_x, int origin_y, int max_width, const char* fmt, ...);
+void draw_textf_i (int origin_x, int origin_y, int max_width, int max_height, const char* fmt, ...);
 
 /* draws formatted text using the statically set font */
-void draw_textf (Vector2 origin, int max_width, const char* fmt, ...);
+void draw_textf (Vector2 origin, int max_width, int max_height, const char* fmt, ...);
 
 /* draws centered text using the statically set font; returns new origin x (int) */
-int draw_text_center_i (int origin_x, int origin_y, int max_width, const char* text);
+int draw_text_center_i (int origin_x, int origin_y, int max_width, int max_height, const char* text);
 
 /* draws centered text using the statically set font; returns new origin */
-Vector2 draw_text_center (Vector2 origin, int max_width, const char* text);
+Vector2 draw_text_center (Vector2 origin, int max_width, int max_height, const char* text);
 
 /* draws formatted, centered text using the statically set font; returns new origin x (int) */
-int draw_textf_center_i (int origin_x, int origin_y, int max_width, const char* fmt, ...);
+int draw_textf_center_i (int origin_x, int origin_y, int max_width, int max_height, const char* fmt, ...);
 
 /* draws formatted, centered text using the statically set font; returns new origin */
-Vector2 draw_textf_center (Vector2 origin, int max_width, const char* fmt, ...);
+Vector2 draw_textf_center (Vector2 origin, int max_width, int max_height, const char* fmt, ...);
 
 /* gets text width */
 int get_text_width (const char* text);

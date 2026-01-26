@@ -81,25 +81,26 @@ main_menu_modal_draw (Context* c)
 
    draw_rgb_overlay (s_overlay);
 
-   draw_text_center_i (0, 40, buffer_width, TITLE_TEXT);
+   draw_text_center_i (0, 40, buffer_width, 0, TITLE_TEXT);
 
    int demo_option_origin_x =
-      draw_text_center_i (0, 60, buffer_width, DEMO_TEXT);
+      draw_text_center_i (0, 60, buffer_width, 0, DEMO_TEXT);
 
    if (s_menu_option == DEMO_OPTION)
-      draw_text_i (demo_option_origin_x - SELECTOR_OFFSET, 60, 0, "*");
+      draw_text_i (demo_option_origin_x - SELECTOR_OFFSET, 60, 0, 0, "*");
 
    int vector_products_option_origin_x =
-      draw_text_center_i (0, 70, buffer_width, VECTOR_PRODUCTS_TEXT);
+      draw_text_center_i (0, 70, buffer_width, 0, VECTOR_PRODUCTS_TEXT);
 
    if (s_menu_option == VECTOR_PRODUCTS_OPTION)
-      draw_text_i (vector_products_option_origin_x - SELECTOR_OFFSET, 70, 0, "*");
+      draw_text_i (vector_products_option_origin_x - SELECTOR_OFFSET, 70, 0, 0,
+                   "*");
 
    int exit_option_origin_x =
-      draw_text_center_i (0, 80, buffer_width, EXIT_TEXT);
+      draw_text_center_i (0, 80, buffer_width, 0, EXIT_TEXT);
 
    if (s_menu_option == EXIT_OPTION)
-      draw_text_i (exit_option_origin_x - SELECTOR_OFFSET, 80, 0, "*");
+      draw_text_i (exit_option_origin_x - SELECTOR_OFFSET, 80, 0, 0, "*");
 }
 
 void

@@ -12,20 +12,12 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#define PRINT_GOTO(label, msg)  \
-   do                           \
-   {                            \
-      fputs (msg "\n", stderr); \
-      goto label;               \
-   }                            \
-   while (0)
-
-#define PERROR_GOTO(label, msg) \
-   do                           \
-   {                            \
-      perror (msg);             \
-      goto label;               \
-   }                            \
+#define STDERR_PRINT_GOTO(label, msg) \
+   do                                 \
+   {                                  \
+      fputs (msg "\n", stderr);       \
+      goto label;                     \
+   }                                  \
    while (0)
 
 #define INFO_PREFIX    "INFO:"
@@ -49,7 +41,6 @@ log_init (void)
       if (s_logs[i] == NULL)
          ERROR_RETURN (false, "log buffer create %s", s_log_names[i]);
    }
-
    return true;
 }
 
@@ -62,6 +53,8 @@ log_deinit (void)
       s_logs[i] = NULL;
    }
 }
+
+
 
 char*
 get_log_copy (LogIdx log_idx)
@@ -114,11 +107,11 @@ vlog_to_file (FILE* output, LogLevel log_level, const char* fmt, va_list args)
    char* formatted_prefix =
       get_term_formatted_string (prefix_color, TERM_DEFAULT, true, prefix);
    if (formatted_prefix == NULL)
-      PRINT_GOTO (fail, "get term formatted prefix");
+      STDERR_PRINT_GOTO (fail, "get term formatted prefix");
 
    char* message = vstrdupf (fmt, args);
    if (message == NULL)
-      PRINT_GOTO (fail, "message vstrdupf");
+      STDERR_PRINT_GOTO (fail, "message vstrdupf");
 
    if (log_level != RAYLIB_LOG_LEVEL)
    {
@@ -126,24 +119,24 @@ vlog_to_file (FILE* output, LogLevel log_level, const char* fmt, va_list args)
 
       char* thread_prefix = strdupf ("[%s]", thread_name);
       if (thread_prefix == NULL)
-         PRINT_GOTO (fail, "thread prefix strdupf");
+         STDERR_PRINT_GOTO (fail, "thread prefix strdupf");
 
       char* formatted_thread_prefix = get_term_formatted_string (
          TERM_GREEN, TERM_DEFAULT, false, thread_prefix);
       if (formatted_thread_prefix == NULL)
-         PRINT_GOTO (fail, "get term formatted thread prefix");
+         STDERR_PRINT_GOTO (fail, "get term formatted thread prefix");
 
       char* log_buffer_message =
          strdupf ("%s %s %s\n", prefix, thread_prefix, message);
       if (log_buffer_message == NULL)
-         PRINT_GOTO (fail, "buffer message with prefix strdupf");
+         STDERR_PRINT_GOTO (fail, "buffer message with prefix strdupf");
 
       log_buffer_write_string (s_logs[INTERNAL_LOG], log_buffer_message);
 
       term_message = strdupf ("%s %s %s\n", formatted_prefix,
                               formatted_thread_prefix, message);
       if (term_message == NULL)
-         PRINT_GOTO (fail, "term message strdupf");
+         STDERR_PRINT_GOTO (fail, "term message strdupf");
 
       free (thread_prefix);
       free (log_buffer_message);
@@ -156,7 +149,7 @@ vlog_to_file (FILE* output, LogLevel log_level, const char* fmt, va_list args)
 
       term_message = strdupf ("%s %s\n", formatted_prefix, message);
       if (term_message == NULL)
-         PRINT_GOTO (fail, "term message strdupf");
+         STDERR_PRINT_GOTO (fail, "term message strdupf");
    }
 
    fputs (term_message, output);
@@ -239,7 +232,7 @@ raylib_tracelog_callback (int log_level, const char* fmt, va_list args)
 
    char* message = vstrdupf (fmt, args);
    if (message == NULL)
-      PRINT_GOTO (fail, "message vstrdupf");
+      STDERR_PRINT_GOTO (fail, "message vstrdupf");
 
    switch (log_level)
    {

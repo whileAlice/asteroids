@@ -2,6 +2,7 @@
 
 #include "error.h"
 #include "font.h"
+#include "log.h"
 #include "math_utils.h"
 #include "raylib.h"
 #include "string.h"
@@ -183,6 +184,11 @@ draw_glyph (int origin_x, int origin_y, size_t glyph_index)
                                   s_font->glyph_margins.top +
                                   s_font->glyph_margins.bottom;
 
+   if (origin_x * -1 > s_font->glyph_width)
+      return;
+   if (origin_y * -1 > s_font->glyph_height)
+      return;
+
    int row          = 0;
    int init_sheet_x = 0 + s_font->glyph_margins.left;
    for (size_t i = 0; i < glyph_index; ++i)
@@ -198,14 +204,29 @@ draw_glyph (int origin_x, int origin_y, size_t glyph_index)
 
    int sheet_y = row * total_glyph_height + s_font->glyph_margins.top;
 
+   int effective_glyph_width  = s_font->glyph_width;
+   int effective_glyph_height = s_font->glyph_height;
+
+   if (origin_x < 0)
+   {
+      effective_glyph_width += origin_x;
+      init_sheet_x          -= origin_x;
+   }
+
+   if (origin_y < 0)
+   {
+      effective_glyph_height += origin_y;
+      sheet_y                -= origin_y;
+   }
+
    // TODO: make a function out of this
    const int start_x = CLAMP (origin_x, 0, s_buffer->width - 1);
    const int start_y = CLAMP (origin_y, 0, s_buffer->height - 1);
 
    const int end_x =
-      CLAMPR (start_x + s_font->glyph_width - 1, s_buffer->width - 1);
+      CLAMPR (start_x + effective_glyph_width - 1, s_buffer->width - 1);
    const int end_y =
-      CLAMPR (start_y + s_font->glyph_height - 1, s_buffer->height - 1);
+      CLAMPR (start_y + effective_glyph_height - 1, s_buffer->height - 1);
 
    // TODO: this could be generalized
    Color3* pixels_buf   = (Color3*)s_buffer->data;
@@ -232,28 +253,29 @@ draw_glyph (int origin_x, int origin_y, size_t glyph_index)
    }
 }
 
-void
-draw_text_i (int origin_x, int origin_y, int max_width, const char* text)
+size_t
+draw_text_i (int origin_x, int origin_y, int max_width, int max_height,
+             const char* text)
 {
    assert (s_font->glyph_count > 0);
 
-   const int text_len         = (int)strlen (text);
-   const int stride_x         = s_font->glyph_width + s_font->glyph_spacing;
-   const int stride_y         = s_font->glyph_height + s_font->glyph_spacing;
-   int       current_origin_x = origin_x;
-   int       current_origin_y = origin_y;
+   const size_t text_len = strlen (text);
+   const int    stride_x = s_font->glyph_width + s_font->glyph_spacing;
+   const int    stride_y = s_font->glyph_height + s_font->glyph_spacing;
 
-   for (int i = 0; i < text_len; ++i)
+   const int max_x = max_width ? CLAMPR (origin_x + max_width, s_buffer->width)
+                               : s_buffer->width;
+   const int max_y = max_height
+                      ? CLAMPR (origin_y + max_height, s_buffer->height)
+                      : s_buffer->height;
+
+   int current_origin_x = origin_x;
+   int current_origin_y = origin_y;
+
+   for (size_t i = 0; i < text_len; ++i)
    {
       if (max_width == 0 && current_origin_x >= s_buffer->width)
-         return;
-
-      if (max_width > 0 &&
-          current_origin_x > max_width - s_font->glyph_width + 1)
-      {
-         current_origin_x  = origin_x;
-         current_origin_y += stride_y;
-      }
+         return i;
 
       switch (text[i])
       {
@@ -263,6 +285,15 @@ draw_text_i (int origin_x, int origin_y, int max_width, const char* text)
             current_origin_y += stride_y;
             continue;
       }
+
+      if (max_width > 0 && current_origin_x > max_x - s_font->glyph_width + 1)
+      {
+         current_origin_x  = origin_x;
+         current_origin_y += stride_y;
+      }
+
+      if (current_origin_y > max_y)
+         return i;
 
       const int glyph_index = text[i] - 33;
 
@@ -275,17 +306,20 @@ draw_text_i (int origin_x, int origin_y, int max_width, const char* text)
       draw_glyph (current_origin_x, current_origin_y, glyph_index);
       current_origin_x += stride_x;
    }
+
+   return 0;
 }
 
 void
-draw_text (Vector2 origin, int max_width, const char* text)
+draw_text (Vector2 origin, int max_width, int max_height, const char* text)
 {
    draw_text_i ((int)roundf (origin.x), (int)roundf (origin.y), max_width,
-                text);
+                max_height, text);
 }
 
 void
-draw_textf_i (int origin_x, int origin_y, int max_width, const char* fmt, ...)
+draw_textf_i (int origin_x, int origin_y, int max_width, int max_height,
+              const char* fmt, ...)
 {
    va_list args;
    va_start (args, fmt);
@@ -294,12 +328,12 @@ draw_textf_i (int origin_x, int origin_y, int max_width, const char* fmt, ...)
 
    va_end (args);
 
-   draw_text_i (origin_x, origin_y, max_width, str);
+   draw_text_i (origin_x, origin_y, max_width, max_height, str);
    free (str);
 }
 
 void
-draw_textf (Vector2 origin, int max_width, const char* fmt, ...)
+draw_textf (Vector2 origin, int max_width, int max_height, const char* fmt, ...)
 {
    va_list args;
    va_start (args, fmt);
@@ -308,58 +342,63 @@ draw_textf (Vector2 origin, int max_width, const char* fmt, ...)
 
    va_end (args);
 
-   draw_text (origin, max_width, str);
+   draw_text (origin, max_width, max_height, str);
    free (str);
 }
 
+// TODO: center vertically as well
 int
-draw_text_center_i (int origin_x, int origin_y, int max_width, const char* text)
+draw_text_center_i (int origin_x, int origin_y, int max_width, int max_height,
+                    const char* text)
 {
    int text_width = get_text_width (text);
 
    int origin_x_centered =
       center_horizontally_i (origin_x, text_width, max_width);
-   draw_text_i (origin_x_centered, origin_y, max_width * 2, text);
+   draw_text_i (origin_x_centered, origin_y, max_width * 2, max_height, text);
 
    return origin_x_centered;
 }
 
 Vector2
-draw_text_center (Vector2 origin, int max_width, const char* text)
+draw_text_center (Vector2 origin, int max_width, int max_height,
+                  const char* text)
 {
    int text_width = get_text_width (text);
 
    Vector2 origin_centered =
       center_horizontally (origin, text_width, max_width);
-   draw_text (origin_centered, max_width * 2, text);
+   draw_text (origin_centered, max_width * 2, max_height, text);
 
    return origin_centered;
 }
 
 int
-draw_textf_center_i (int origin_x, int origin_y, int max_width, const char* fmt,
-                     ...)
+draw_textf_center_i (int origin_x, int origin_y, int max_width, int max_height,
+                     const char* fmt, ...)
 {
    va_list args;
    va_start (args, fmt);
 
    char* str = vstrdupf (fmt, args);
 
-   int new_origin_x = draw_text_center_i (origin_x, origin_y, max_width, str);
+   int new_origin_x =
+      draw_text_center_i (origin_x, origin_y, max_width, max_height, str);
    free (str);
 
    return new_origin_x;
 }
 
 Vector2
-draw_textf_center (Vector2 origin, int max_width, const char* fmt, ...)
+draw_textf_center (Vector2 origin, int max_width, int max_height,
+                   const char* fmt, ...)
 {
    va_list args;
    va_start (args, fmt);
 
    char* str = vstrdupf (fmt, args);
 
-   Vector2 new_origin = draw_text_center (origin, max_width, str);
+   Vector2 new_origin = draw_text_center (origin, max_width, max_height, str);
    free (str);
 
    return new_origin;

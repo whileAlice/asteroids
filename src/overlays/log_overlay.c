@@ -9,6 +9,7 @@
 
 static Image* s_overlay;
 static char*  s_logs[LOG_COUNT];
+static size_t s_log_indices[LOG_COUNT];
 
 bool
 log_overlay_init (Context* c)
@@ -62,7 +63,10 @@ log_overlay_draw (Context* c)
    brighten_image_by_percentage (s_overlay, s_overlay, 20);
    draw_rgb_overlay (s_overlay);
 
-   draw_text_i (5, 5, c->pixel_buffer->image->width - 5, s_logs[0]);
+   size_t last =
+      draw_text_i (0, 0, c->pixel_buffer->image->width - 5, 100, s_logs[0]);
+   size_t last2 =
+      draw_text_i (0, 108, c->pixel_buffer->image->width - 5, 100, &s_logs[0][last]);
 
    for (size_t i = 0; i < LOG_COUNT; ++i)
       free (s_logs[i]);
