@@ -2,7 +2,6 @@
 
 #include "error.h"
 #include "font.h"
-#include "log.h"
 #include "math_utils.h"
 #include "raylib.h"
 #include "string.h"
@@ -12,6 +11,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#define MAX_TEXT_PAGE_INDICES 256
 
 static Image*           s_buffer;
 static const FixedFont* s_font;
@@ -257,6 +258,7 @@ size_t
 draw_text_i (int origin_x, int origin_y, int max_width, int max_height,
              const char* text)
 {
+   assert (text != NULL);
    assert (s_font->glyph_count > 0);
 
    const size_t text_len = strlen (text);
@@ -308,6 +310,97 @@ draw_text_i (int origin_x, int origin_y, int max_width, int max_height,
    }
 
    return 0;
+}
+
+// TODO: this is exactly like draw_text_i - can it be combined?
+size_t
+get_next_text_index_i (int origin_x, int origin_y, int max_width,
+                       int max_height, const char* text)
+{
+   assert (text != NULL);
+
+   const size_t text_len = strlen (text);
+   const int    stride_x = s_font->glyph_width + s_font->glyph_spacing;
+   const int    stride_y = s_font->glyph_height + s_font->glyph_spacing;
+
+   const int max_x = max_width ? CLAMPR (origin_x + max_width, s_buffer->width)
+                               : s_buffer->width;
+   const int max_y = max_height
+                      ? CLAMPR (origin_y + max_height, s_buffer->height)
+                      : s_buffer->height;
+
+   int current_origin_x = origin_x;
+   int current_origin_y = origin_y;
+
+   for (size_t i = 0; i < text_len; ++i)
+   {
+      if (max_width == 0 && current_origin_x >= s_buffer->width)
+         return i;
+
+      switch (text[i])
+      {
+         case ' ': current_origin_x += stride_x; continue;
+         case '\n':
+            current_origin_x  = origin_x;
+            current_origin_y += stride_y;
+            continue;
+      }
+
+      if (max_width > 0 && current_origin_x > max_x - s_font->glyph_width)
+      {
+         current_origin_x  = origin_x;
+         current_origin_y += stride_y;
+      }
+
+      if (current_origin_y > max_y)
+         return i;
+
+      const int glyph_index = text[i] - 33;
+
+      if (glyph_index < 0)
+      {
+         current_origin_x += stride_x;
+         continue;
+      }
+
+      current_origin_x += stride_x;
+   }
+
+   return 0;
+}
+
+Indices
+get_text_page_indices_i (int origin_x, int origin_y, int max_width,
+                         int max_height, const char* text)
+{
+   size_t data_tmp[MAX_TEXT_PAGE_INDICES];
+   data_tmp[0] = 0;
+
+   size_t i, next_index, total_index;
+   i = next_index = total_index = 0;
+   while (
+      (next_index = get_next_text_index_i (origin_x, origin_y, max_width,
+                                           max_height, &text[total_index])) > 0)
+   {
+      total_index   += next_index;
+      data_tmp[++i]  = total_index;
+   }
+
+   size_t  count     = i + 1;
+   size_t  data_size = sizeof (size_t) * count;
+   size_t* data      = malloc (data_size);
+   memcpy (data, data_tmp, data_size);
+
+   return (Indices){
+      .data  = data,
+      .count = count,
+   };
+}
+
+void
+indices_free (Indices indices)
+{
+   free (indices.data);
 }
 
 void

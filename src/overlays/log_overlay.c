@@ -63,10 +63,13 @@ log_overlay_draw (Context* c)
    brighten_image_by_percentage (s_overlay, s_overlay, 20);
    draw_rgb_overlay (s_overlay);
 
-   size_t last =
-      draw_text_i (0, 0, c->pixel_buffer->image->width - 5, 100, s_logs[0]);
-   size_t last2 =
-      draw_text_i (0, 108, c->pixel_buffer->image->width - 5, 100, &s_logs[0][last]);
+   Indices page_indices = get_text_page_indices_i (
+      0, 0, c->pixel_buffer->image->width - 5, 100, s_logs[0]);
+
+   draw_text_i (0, 0, c->pixel_buffer->image->width - 5, 100,
+                &s_logs[0][page_indices.data[page_indices.count - 1]]);
+
+   indices_free (page_indices);
 
    for (size_t i = 0; i < LOG_COUNT; ++i)
       free (s_logs[i]);

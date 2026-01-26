@@ -12,6 +12,11 @@ typedef struct color_3 {
    uint8_t b;
 } Color3;
 
+typedef struct indices {
+   size_t* data;
+   size_t  count;
+} Indices;
+
 // clang-format off
 
 /* sets target draw buffer */
@@ -55,6 +60,16 @@ void draw_glyph (int origin_x, int origin_y, size_t index);
 
 /* draws text using the statically set font (int) */
 size_t draw_text_i (int origin_x, int origin_y, int max_width, int max_height, const char* text);
+
+/* returns the index of the first character from the given text
+   that does not fit the given dimensions or 0 if everything fits */
+size_t get_next_text_index_i (int origin_x, int origin_y, int max_width, int max_height, const char* text);
+
+/* returns all indices for first characters on each page of the given text */
+Indices get_text_page_indices_i (int origin_x, int origin_y, int max_width, int max_height, const char* text);
+
+/* frees all indices */
+void indices_free (Indices indices);
 
 /* draws text using the statically set font */
 void draw_text (Vector2 origin, int max_width, int max_height, const char* text);
