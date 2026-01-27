@@ -34,6 +34,8 @@ typedef struct input {
    bool toggle_main_menu;
    bool log_page_up;
    bool log_page_down;
+   bool previous_log;
+   bool next_log;
    bool switch_fullscreen;
 } Input;
 

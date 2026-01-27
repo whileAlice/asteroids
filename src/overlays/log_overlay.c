@@ -87,6 +87,14 @@ log_overlay_update (Context* c, float dt)
    {
       next_log_page ();
    }
+   if (c->input->previous_log)
+   {
+      previous_log ();
+   }
+   if (c->input->next_log)
+   {
+      next_log ();
+   }
 }
 
 // TODO: colorful logs!
@@ -129,4 +137,22 @@ next_log_page (void)
       return;
 
    s_current_log_page += 1;
+}
+
+void
+previous_log (void)
+{
+   if (s_selected_log == 0)
+      return;
+
+   s_selected_log -= 1;
+}
+
+void
+next_log (void)
+{
+   if (s_selected_log == LOG_COUNT - 1)
+      return;
+
+   s_selected_log += 1;
 }
