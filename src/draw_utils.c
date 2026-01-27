@@ -13,7 +13,6 @@
 #include <string.h>
 
 #define MAX_TEXT_PAGE_INDICES 256
-#define MAX_TEXT_LINE_INDICES 4096
 
 static Image*           s_buffer;
 static const FixedFont* s_font;
@@ -421,30 +420,20 @@ get_text_page_indices_i (int origin_x, int origin_y, int max_width,
    };
 }
 
-Indices
-get_text_line_indices_i (int origin_x, int max_width, const char* text)
+void
+copy_text_line_indices_i (Indices* indices, int origin_x, int max_width,
+                          const char* text)
 {
-   size_t data_tmp[MAX_TEXT_LINE_INDICES];
-
    size_t i, next_index, total_index;
    i = next_index = total_index = 0;
-   data_tmp[0]                  = 0;
    while ((next_index = get_next_text_line_index_i (origin_x, max_width,
                                                     &text[total_index])) > 0)
    {
-      total_index   += next_index;
-      data_tmp[++i]  = total_index;
+      total_index        += next_index;
+      indices->data[++i]  = total_index;
    }
 
-   size_t  count     = i + 1;
-   size_t  data_size = sizeof (size_t) * count;
-   size_t* data      = malloc (data_size);
-   memcpy (data, data_tmp, data_size);
-
-   return (Indices){
-      .data  = data,
-      .count = count,
-   };
+   indices->count = i + 1;
 }
 
 void

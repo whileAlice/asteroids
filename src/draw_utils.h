@@ -72,8 +72,9 @@ size_t get_next_text_line_index_i (int origin_x, int max_width, const char* text
 /* returns all indices for first characters on each page of the given text */
 Indices get_text_page_indices_i (int origin_x, int origin_y, int max_width, int max_height, const char* text);
 
-/* returns all indices for first characters of each line of the given text */
-Indices get_text_line_indices_i (int origin_x, int max_width, const char* text);
+/* copies all indices for first characters of each line of the given text
+   into the given Indices struct */
+void copy_text_line_indices_i (Indices* indices, int origin_x, int max_width, const char* text);
 
 /* frees all indices */
 void indices_free (Indices indices);
