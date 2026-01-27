@@ -24,8 +24,6 @@ game_init (Context* c)
    if (!add_overlay (c, OSD_OVERLAY))
       ERROR_RETURN (false, "add osd overlay");
 
-   c->state->should_show_osd = true;
-
    return true;
 }
 

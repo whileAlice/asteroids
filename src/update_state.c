@@ -13,7 +13,9 @@ update_state (Context* c)
    if (c->input->toggle_log)
    {
       c->state->should_show_log = !c->state->should_show_log;
-      // TODO: improve this
+      // TODO: improve this. has_overlay should be true if _at least one_
+      // overlay is active; or maybe just detect the average brightness
+      // of the background?
       c->state->has_overlay = c->state->should_show_log;
    }
 
