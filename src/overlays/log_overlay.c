@@ -19,7 +19,8 @@ static char*   s_logs[LOG_COUNT];
 static Indices s_log_indices;
 static size_t  s_current_log_page;
 static size_t  s_last_log_page;
-static LogIdx  s_selected_log = INTERNAL_LOG;
+static LogIdx  s_selected_log      = INTERNAL_LOG;
+static bool    s_should_reset_page = true;
 
 bool
 log_overlay_init (Context* c)
@@ -40,13 +41,6 @@ log_overlay_init (Context* c)
    s_log_indices.data = calloc (LINE_INDEX_COUNT, sizeof (size_t));
    if (s_log_indices.data == NULL)
       ERROR_RETURN (false, "log indices data calloc");
-
-   copy_text_line_indices_i (&s_log_indices, LOG_LEFT_PADDING,
-                             c->pixel_buffer->image->width,
-                             s_logs[s_selected_log]);
-
-   s_last_log_page    = s_log_indices.count / LINES_PER_PAGE;
-   s_current_log_page = s_last_log_page;
 
    return true;
 }
@@ -70,15 +64,6 @@ log_overlay_update (Context* c, float dt)
    if (!c->state->should_show_log)
       return;
 
-   for (size_t i = 0; i < LOG_COUNT; ++i)
-      log_copy (s_logs[i], (LogIdx)i);
-
-   copy_text_line_indices_i (&s_log_indices, LOG_LEFT_PADDING,
-                             c->pixel_buffer->image->width,
-                             s_logs[s_selected_log]);
-
-   s_last_log_page = s_log_indices.count / LINES_PER_PAGE;
-
    if (c->input->log_page_up)
    {
       previous_log_page ();
@@ -95,6 +80,17 @@ log_overlay_update (Context* c, float dt)
    {
       next_log ();
    }
+
+   for (size_t i = 0; i < LOG_COUNT; ++i)
+      log_copy (s_logs[i], (LogIdx)i);
+
+   copy_text_line_indices_i (&s_log_indices, LOG_LEFT_PADDING,
+                             c->pixel_buffer->image->width,
+                             s_logs[s_selected_log]);
+
+   s_last_log_page = (s_log_indices.count - 1) / LINES_PER_PAGE;
+   if (s_should_reset_page)
+      s_current_log_page = s_last_log_page;
 }
 
 // TODO: colorful logs!
@@ -127,7 +123,8 @@ previous_log_page (void)
    if (s_current_log_page == 0)
       return;
 
-   s_current_log_page -= 1;
+   s_current_log_page  -= 1;
+   s_should_reset_page  = false;
 }
 
 void
@@ -137,6 +134,8 @@ next_log_page (void)
       return;
 
    s_current_log_page += 1;
+   if (s_current_log_page == s_last_log_page)
+      s_should_reset_page = true;
 }
 
 void
@@ -145,7 +144,8 @@ previous_log (void)
    if (s_selected_log == 0)
       return;
 
-   s_selected_log -= 1;
+   s_selected_log      -= 1;
+   s_should_reset_page  = true;
 }
 
 void
@@ -154,5 +154,6 @@ next_log (void)
    if (s_selected_log == LOG_COUNT - 1)
       return;
 
-   s_selected_log += 1;
+   s_selected_log      += 1;
+   s_should_reset_page  = true;
 }

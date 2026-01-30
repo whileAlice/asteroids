@@ -101,10 +101,10 @@ log_buffer_copy (char* dst, LogBuffer* lb)
       memcpy (dst, lb->data, lb->size);
    else
    {
-      const size_t top_part_size = lb->capacity - lb->pos;
+      const size_t top_part_size = lb->size - lb->pos - 1;
 
-      memcpy (dst, &lb->data[lb->pos + 1], top_part_size);
-      memcpy (&dst[top_part_size], lb->data, lb->size - top_part_size);
+      memcpy (dst, &lb->data[lb->pos + 1], top_part_size * sizeof (char));
+      memcpy (&dst[top_part_size], lb->data, (lb->size - top_part_size) * sizeof (char));
    }
 }
 
